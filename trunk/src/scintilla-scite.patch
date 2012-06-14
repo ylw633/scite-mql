@@ -1,0 +1,68 @@
+# HG changeset patch
+# User ylw
+# Date 1339714866 18000
+# Node ID 5eb80d5a604cf3d5a3ad751f8d8cda117178d960
+# Parent  3131ae4ff2e6ee5c79d33837f8c8e7b740243fff
+add MQL compiler error message recognization support
+
+diff -r 3131ae4ff2e6 -r 5eb80d5a604c scintilla/include/Scintilla.iface
+--- a/scintilla/include/Scintilla.iface	Thu Jun 14 17:58:28 2012 -0500
++++ b/scintilla/include/Scintilla.iface	Thu Jun 14 18:01:06 2012 -0500
+@@ -2893,6 +2893,7 @@
+ val SCE_ERR_TIDY=19
+ val SCE_ERR_JAVA_STACK=20
+ val SCE_ERR_VALUE=21
++val SCE_ERR_MQL=22
+ # Lexical states for SCLEX_BATCH
+ lex Batch=SCLEX_BATCH SCE_BAT_
+ val SCE_BAT_DEFAULT=0
+diff -r 3131ae4ff2e6 -r 5eb80d5a604c scintilla/lexers/LexOthers.cxx
+--- a/scintilla/lexers/LexOthers.cxx	Thu Jun 14 17:58:28 2012 -0500
++++ b/scintilla/lexers/LexOthers.cxx	Thu Jun 14 18:01:06 2012 -0500
+@@ -32,6 +32,13 @@
+ 	return strncmp(haystack, needle, strlen(needle)) == 0;
+ }
+ 
++static int strchacnt(const char *haystack, const char needle) {
++	int count = 0;
++	for (int i = 0; i < strlen(haystack); i++)
++		if (haystack[i] == needle) count++;
++	return count;
++}
++
+ static bool Is0To9(char ch) {
+ 	return (ch >= '0') && (ch <= '9');
+ }
+@@ -1013,6 +1020,9 @@
+ 	           strstr(lineBuffer, ".java:")) {
+ 		// Java stack back trace
+ 		return SCE_ERR_JAVA_STACK;
++	} else if (strchacnt(lineBuffer, ';') >= 4) {
++		// metalang error / warning
++		return SCE_ERR_MQL;
+ 	} else {
+ 		// Look for one of the following formats:
+ 		// GCC: <filename>:<line>:<message>
+diff -r 3131ae4ff2e6 -r 5eb80d5a604c scite/src/SciTEBuffers.cxx
+--- a/scite/src/SciTEBuffers.cxx	Thu Jun 14 17:58:28 2012 -0500
++++ b/scite/src/SciTEBuffers.cxx	Thu Jun 14 18:01:06 2012 -0500
+@@ -1999,6 +1999,19 @@
+ 			}
+ 			break;
+ 		}
++
++	case SCE_ERR_MQL: {
++			// Visual *
++			char *lineSt = strrchr(cdoc, ';');
++			lineSt[0] = 0;
++			lineSt = strrchr(cdoc, ';') + 1; // find the 2nd last ;
++			char *colSt = strchr(lineSt, ':');
++			if (!colSt)
++				return -1;
++			colSt[0] = 0;
++			column = atoi(colSt + 1) - 1;
++			return atoi(lineSt) - 1;
++		}
+ 	}	// switch
+ 	return -1;
+ }
