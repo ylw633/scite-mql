@@ -1,14 +1,18 @@
-# HG changeset patch
-# User ylw
-# Date 1339714866 18000
-# Node ID 5eb80d5a604cf3d5a3ad751f8d8cda117178d960
-# Parent  3131ae4ff2e6ee5c79d33837f8c8e7b740243fff
-add MQL compiler error message recognization support
-
-diff -r 3131ae4ff2e6 -r 5eb80d5a604c scintilla/include/Scintilla.iface
---- a/scintilla/include/Scintilla.iface	Thu Jun 14 17:58:28 2012 -0500
-+++ b/scintilla/include/Scintilla.iface	Thu Jun 14 18:01:06 2012 -0500
-@@ -2893,6 +2893,7 @@
+diff -r 78c482660e9a scintilla/include/Scintilla.iface
+--- a/scintilla/include/Scintilla.iface	Fri Jun 15 14:31:34 2012 -0500
++++ b/scintilla/include/Scintilla.iface	Fri Jun 15 14:34:17 2012 -0500
+@@ -2540,6 +2540,10 @@
+ val SCE_C_STRINGRAW=20
+ val SCE_C_TRIPLEVERBATIM=21
+ val SCE_C_HASHQUOTEDSTRING=22
++val SCE_C_KEYWORD6=23
++val SCE_C_KEYWORD7=24
++val SCE_C_KEYWORD8=25
++val SCE_C_KEYWORD9=26
+ # Lexical states for SCLEX_D
+ lex D=SCLEX_D SCE_D_
+ val SCE_D_DEFAULT=0
+@@ -2893,6 +2897,7 @@
  val SCE_ERR_TIDY=19
  val SCE_ERR_JAVA_STACK=20
  val SCE_ERR_VALUE=21
@@ -16,9 +20,70 @@ diff -r 3131ae4ff2e6 -r 5eb80d5a604c scintilla/include/Scintilla.iface
  # Lexical states for SCLEX_BATCH
  lex Batch=SCLEX_BATCH SCE_BAT_
  val SCE_BAT_DEFAULT=0
-diff -r 3131ae4ff2e6 -r 5eb80d5a604c scintilla/lexers/LexOthers.cxx
---- a/scintilla/lexers/LexOthers.cxx	Thu Jun 14 17:58:28 2012 -0500
-+++ b/scintilla/lexers/LexOthers.cxx	Thu Jun 14 18:01:06 2012 -0500
+diff -r 78c482660e9a scintilla/lexers/LexCPP.cxx
+--- a/scintilla/lexers/LexCPP.cxx	Fri Jun 15 14:31:34 2012 -0500
++++ b/scintilla/lexers/LexCPP.cxx	Fri Jun 15 14:34:17 2012 -0500
+@@ -244,6 +244,10 @@
+             "Documentation comment keywords",
+             "Global classes and typedefs",
+             "Preprocessor definitions",
++			"Third keywords set",
++			"Fouth keywords set",
++			"Fifth keywords set",
++			"Sixth keywords set",
+             0,
+ };
+ 
+@@ -320,7 +324,11 @@
+ 	WordList keywords2;
+ 	WordList keywords3;
+ 	WordList keywords4;
+-	WordList ppDefinitions;
++	WordList ppDefinitions; // keywords5
++	WordList keywords6;
++	WordList keywords7;
++	WordList keywords8;
++	WordList keywords9;
+ 	std::map<std::string, std::string> preprocessorDefinitionsStart;
+ 	OptionsCPP options;
+ 	OptionSetCPP osCPP;
+@@ -402,6 +410,18 @@
+ 	case 4:
+ 		wordListN = &ppDefinitions;
+ 		break;
++	case 5:
++		wordListN = &keywords6;
++		break;
++	case 6:
++		wordListN = &keywords7;
++		break;
++	case 7:
++		wordListN = &keywords8;
++		break;
++	case 8:
++		wordListN = &keywords9;
++		break;
+ 	}
+ 	int firstModification = -1;
+ 	if (wordListN) {
+@@ -588,6 +608,14 @@
+ 						sc.ChangeState(SCE_C_WORD2|activitySet);
+ 					} else if (keywords4.InList(s)) {
+ 						sc.ChangeState(SCE_C_GLOBALCLASS|activitySet);
++					} else if (keywords6.InList(s)) {
++						sc.ChangeState(SCE_C_KEYWORD6|activitySet);
++					} else if (keywords7.InList(s)) {
++						sc.ChangeState(SCE_C_KEYWORD7|activitySet);
++					} else if (keywords8.InList(s)) {
++						sc.ChangeState(SCE_C_KEYWORD8|activitySet);
++					} else if (keywords9.InList(s)) {
++						sc.ChangeState(SCE_C_KEYWORD9|activitySet);
+ 					}
+ 					const bool literalString = sc.ch == '\"';
+ 					if (literalString || sc.ch == '\'') {
+diff -r 78c482660e9a scintilla/lexers/LexOthers.cxx
+--- a/scintilla/lexers/LexOthers.cxx	Fri Jun 15 14:31:34 2012 -0500
++++ b/scintilla/lexers/LexOthers.cxx	Fri Jun 15 14:34:17 2012 -0500
 @@ -32,6 +32,13 @@
  	return strncmp(haystack, needle, strlen(needle)) == 0;
  }
@@ -43,14 +108,27 @@ diff -r 3131ae4ff2e6 -r 5eb80d5a604c scintilla/lexers/LexOthers.cxx
  	} else {
  		// Look for one of the following formats:
  		// GCC: <filename>:<line>:<message>
-diff -r 3131ae4ff2e6 -r 5eb80d5a604c scite/src/SciTEBuffers.cxx
---- a/scite/src/SciTEBuffers.cxx	Thu Jun 14 17:58:28 2012 -0500
-+++ b/scite/src/SciTEBuffers.cxx	Thu Jun 14 18:01:06 2012 -0500
-@@ -1999,6 +1999,19 @@
+diff -r 78c482660e9a scite/src/IFaceTable.cxx
+--- a/scite/src/IFaceTable.cxx	Fri Jun 15 14:31:34 2012 -0500
++++ b/scite/src/IFaceTable.cxx	Fri Jun 15 14:34:17 2012 -0500
+@@ -671,6 +671,10 @@
+ 	{"SCE_C_GLOBALCLASS",19},
+ 	{"SCE_C_HASHQUOTEDSTRING",22},
+ 	{"SCE_C_IDENTIFIER",11},
++	{"SCE_C_KEYWORD6",23},
++	{"SCE_C_KEYWORD7",24},
++	{"SCE_C_KEYWORD8",25},
++	{"SCE_C_KEYWORD9",26},
+ 	{"SCE_C_NUMBER",4},
+ 	{"SCE_C_OPERATOR",10},
+ 	{"SCE_C_PREPROCESSOR",9},
+diff -r 78c482660e9a scite/src/SciTEBuffers.cxx
+--- a/scite/src/SciTEBuffers.cxx	Fri Jun 15 14:31:34 2012 -0500
++++ b/scite/src/SciTEBuffers.cxx	Fri Jun 15 14:34:17 2012 -0500
+@@ -1999,6 +1999,18 @@
  			}
  			break;
  		}
-+
 +	case SCE_ERR_MQL: {
 +			// Visual *
 +			char *lineSt = strrchr(cdoc, ';');
