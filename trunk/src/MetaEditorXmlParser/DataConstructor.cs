@@ -33,14 +33,14 @@ namespace MetaEditorXmlParser
 
     public void ProduceChmMaterial(string directory)
     {
-        //string fileList = "";
-        //foreach (var n in PageNodes)
-        //{
-        //    var fn = ScribeHtml(n, directory);
-        //    fileList += fn + "\n";
-        //}
+        string fileList = "";
+        foreach (var n in PageNodes)
+        {
+            var fn = ScribeHtml(n, directory);
+            fileList += fn + "\n";
+        }
 
-        //ScibeHhp(fileList, directory);
+        ScibeHhp(fileList, directory);
         ScribeHhc(directory);
         ScribeHhk(directory);
     }
@@ -99,6 +99,7 @@ namespace MetaEditorXmlParser
         using (StreamWriter sw = new StreamWriter(Path.Combine(directory, "mql.hhp"), false, Encoding.UTF8))
         {
             sw.WriteLine(@"[OPTIONS]
+[OPTIONS]
 Compatibility=1.1 Or later
 Binary TOC=Yes
 Default window=Main
@@ -106,11 +107,10 @@ Contents file=mql.hhc
 Index file=mql.hhk
 Display compile progress=Yes
 Full-text search=Yes
-Auto Index=Yes
-;Auto TOC=Yes
+Default topic=index.html
 
 [WINDOWS]
-Main=,""mql.hhc"",""mql.hhk"",,""index.html"",,,,,0x20,,0x11EE,,,,,,,,
+Main=,""mql.hhc"",""mql.hhk"",,""index.html"",,,,,0x10063560,,0x70387E,,,,,,,,
 ");
             sw.WriteLine(fileList);
         }
@@ -168,7 +168,8 @@ Main=,""mql.hhc"",""mql.hhk"",,""index.html"",,,,,0x20,,0x11EE,,,,,,,,
                 {
                     case "variable":
                     case "function":
-                        var k = n.Title.Replace("()", "").Replace("[]", "");
+                        int c = n.Title.IndexOf(' ');
+                        var k = (n.Title.IndexOf(' ') > 0 ? n.Title.Substring(0, c) : n.Title).Replace("()", "").Replace("[]", "");
                         if (!keywordsDict.ContainsKey(k))
                             keywordsDict[k] = new List<BaseNode>();
                         if (!keywordsDict[k].Any(x => x == n))
