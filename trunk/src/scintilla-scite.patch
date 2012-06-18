@@ -1,6 +1,6 @@
 diff -r 78c482660e9a scintilla/include/Scintilla.iface
 --- a/scintilla/include/Scintilla.iface	Fri Jun 15 14:31:34 2012 -0500
-+++ b/scintilla/include/Scintilla.iface	Fri Jun 15 14:34:17 2012 -0500
++++ b/scintilla/include/Scintilla.iface	Mon Jun 18 14:37:00 2012 -0500
 @@ -2540,6 +2540,10 @@
  val SCE_C_STRINGRAW=20
  val SCE_C_TRIPLEVERBATIM=21
@@ -12,17 +12,18 @@ diff -r 78c482660e9a scintilla/include/Scintilla.iface
  # Lexical states for SCLEX_D
  lex D=SCLEX_D SCE_D_
  val SCE_D_DEFAULT=0
-@@ -2893,6 +2897,7 @@
+@@ -2893,6 +2897,8 @@
  val SCE_ERR_TIDY=19
  val SCE_ERR_JAVA_STACK=20
  val SCE_ERR_VALUE=21
 +val SCE_ERR_MQL=22
++val SCE_ERR_MQLWRN = 23
  # Lexical states for SCLEX_BATCH
  lex Batch=SCLEX_BATCH SCE_BAT_
  val SCE_BAT_DEFAULT=0
 diff -r 78c482660e9a scintilla/lexers/LexCPP.cxx
 --- a/scintilla/lexers/LexCPP.cxx	Fri Jun 15 14:31:34 2012 -0500
-+++ b/scintilla/lexers/LexCPP.cxx	Fri Jun 15 14:34:17 2012 -0500
++++ b/scintilla/lexers/LexCPP.cxx	Mon Jun 18 14:37:00 2012 -0500
 @@ -244,6 +244,10 @@
              "Documentation comment keywords",
              "Global classes and typedefs",
@@ -83,7 +84,7 @@ diff -r 78c482660e9a scintilla/lexers/LexCPP.cxx
  					if (literalString || sc.ch == '\'') {
 diff -r 78c482660e9a scintilla/lexers/LexOthers.cxx
 --- a/scintilla/lexers/LexOthers.cxx	Fri Jun 15 14:31:34 2012 -0500
-+++ b/scintilla/lexers/LexOthers.cxx	Fri Jun 15 14:34:17 2012 -0500
++++ b/scintilla/lexers/LexOthers.cxx	Mon Jun 18 14:37:00 2012 -0500
 @@ -32,6 +32,13 @@
  	return strncmp(haystack, needle, strlen(needle)) == 0;
  }
@@ -98,19 +99,20 @@ diff -r 78c482660e9a scintilla/lexers/LexOthers.cxx
  static bool Is0To9(char ch) {
  	return (ch >= '0') && (ch <= '9');
  }
-@@ -1013,6 +1020,9 @@
+@@ -1013,6 +1020,10 @@
  	           strstr(lineBuffer, ".java:")) {
  		// Java stack back trace
  		return SCE_ERR_JAVA_STACK;
 +	} else if (strchacnt(lineBuffer, ';') >= 4) {
 +		// metalang error / warning
-+		return SCE_ERR_MQL;
++		const char *lineSt = strrchr(lineBuffer, ';');
++		return (lineSt[-1] != ';') ? SCE_ERR_MQL : SCE_ERR_MQLWRN;
  	} else {
  		// Look for one of the following formats:
  		// GCC: <filename>:<line>:<message>
 diff -r 78c482660e9a scite/src/IFaceTable.cxx
 --- a/scite/src/IFaceTable.cxx	Fri Jun 15 14:31:34 2012 -0500
-+++ b/scite/src/IFaceTable.cxx	Fri Jun 15 14:34:17 2012 -0500
++++ b/scite/src/IFaceTable.cxx	Mon Jun 18 14:37:00 2012 -0500
 @@ -671,6 +671,10 @@
  	{"SCE_C_GLOBALCLASS",19},
  	{"SCE_C_HASHQUOTEDSTRING",22},
@@ -124,13 +126,12 @@ diff -r 78c482660e9a scite/src/IFaceTable.cxx
  	{"SCE_C_PREPROCESSOR",9},
 diff -r 78c482660e9a scite/src/SciTEBuffers.cxx
 --- a/scite/src/SciTEBuffers.cxx	Fri Jun 15 14:31:34 2012 -0500
-+++ b/scite/src/SciTEBuffers.cxx	Fri Jun 15 14:34:17 2012 -0500
-@@ -1999,6 +1999,18 @@
++++ b/scite/src/SciTEBuffers.cxx	Mon Jun 18 14:37:00 2012 -0500
+@@ -1999,6 +1999,17 @@
  			}
  			break;
  		}
 +	case SCE_ERR_MQL: {
-+			// Visual *
 +			char *lineSt = strrchr(cdoc, ';');
 +			lineSt[0] = 0;
 +			lineSt = strrchr(cdoc, ';') + 1; // find the 2nd last ;
