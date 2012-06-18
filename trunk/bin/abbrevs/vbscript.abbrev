@@ -1,0 +1,33 @@
+# VB Script Abbreviations
+
+#New script file
+1=' Script Name|\n' Version: 1.0\n' Author: \n' ------------------------------------------------\n' Description: \n' ------------------------------------------------\nOption Explicit\nDim WshShell, FSO, SciTE\nSet WshShell = CreateObject("WScript.Shell")\nSet FSO = CreateObject("Scripting.FileSystemObject")\nConst ForReading = 1, ForWriting = 2, ForAppending = 8\nSet SciTE = CreateObject("SciTE.Helper")\n
+
+#Code Snippets
+do=Do While||Until i| < 9\n\t\n\tIf a = 5 Then Exit Do\n\t\nLoop\n
+loop=Do\n\t\n\tIf a| = 5 Then Exit Do\n\t\nLoop While||Until i < 9\n
+for=For i| = 0 To 9 Step 2\n\t\n\tIf a = i Then Exit For\n\t\nNext\n
+each=For Each f| In Folder.Files\n\t\nNext\n
+sel=Select Case Var\n\tCase 1|\n\t\t\n\tCase 2\n\t\t\n\tCase Else\n\t\t\nEnd Select\n
+dyna=Dim aTmp()\nRedim aTmp(-1)\nRedim Preserve aTmp(UBound(aTmp) + 1)\naTmp(UBound(aTmp)) = 
+eh=WScript.Echo "|"
+
+#Object References
+wsh=Set WshShell = CreateObject("WScript.Shell")\n
+fso=Set FSO = CreateObject("Scripting.FileSystemObject")\nConst ForReading = 1, ForWriting = 2, ForAppending = 8\n
+net=Set Network = CreateObject("WScript.Network")\n
+dic=Set Dict = CreateObject("Scripting.Dictionary")\n
+shell=Set Shell = CreateObject("Shell.Application")\n
+ie=Set IE = CreateObject("InternetExplorer.Application")\n
+tla=Set tla = CreateObject("TLI.TLIApplication")\n
+sc=Set sc = CreateObject("MSScriptControl.ScriptControl")\n
+xml=Set xml = CreateObject("Microsoft.XMLHTTP")\n
+
+#Procedures and Functions
+fileread=' Read File\nFunction ReadFile(filename)\n\tDim file\n\tIf FSO.FileExists(filename) Then\n\t\tIf FSO.GetFile(filename).Size > 0 Then\n\t\t\tSet file = FSO.OpenTextFile(filename)\n\t\t\tReadFile = file.ReadAll\n\t\t\tfile.Close\n\t\tEnd If\n\tEnd If\nEnd Function\n
+filewrite=' Write File\nSub WriteFile(text, filename)\n\tDim FSO, File\n\tConst ForReading = 1, ForWriting = 2, ForAppending = 8\n\tSet File = FSO.OpenTextFile(filename, ForWriting, True)\n\tFile.Write text\n\tFile.Close\nEnd Sub\n
+cdscr=' Change dir to script path\nscript_path = FSO.GetParentFolderName(WScript.ScriptFullName)\nWshShell.CurrentDirectory = script_path\n
+urlget=' Get web page contents\nFunction GetXMLdata(url)\n\tDim Req\n\tSet Req = CreateObject("Microsoft.XMLHTTP")\n\tOn Error Resume Next\n\tReq.Open "GET", url, False\n\tReq.send vbNull\n\tIf Err.Number = 0 Then\n\t\tDo\n\t\t\tIf Req.Status = 200 Then\n\t\t\t\tGetXMLdata = Req.responseText\n\t\t\tElse\n\t\t\t\tWScript.Echo "> There was a problem retrieving the XML data: " & Req.statusText\n\t\t\tEnd If\n\t\t\tWScript.Sleep 10\n\t\tLoop While Req.readyState <> 4\n\tElse\n\t\tWScript.Echo "Error open URL: " & url\n\tEnd If\nEnd Function\n
+dir=' Enumerate folder with subfolders\nSub EnumerateFiles(Folder)\n\tDim File\n\tFor Each File In Folder.Files\n\t\tWScript.Echo File.Path\n\tNext\nEnd Sub\n\nSub EnumerateSubFolders(Folder)\n\tDim SubFolder\n\tEnumerateFiles Folder\n\tFor Each SubFolder In Folder.SubFolders\n\t\tEnumerateSubFolders SubFolder\n\tNext\nEnd Sub\n\nSub EnumerateFolderWithSubFolders(folder_name)\n\tDim FSO, Folder\n\tSet FSO = CreateObject("Scripting.FileSystemObject")\n\tSet Folder = FSO.GetFolder(folder_name)\n\tEnumerateSubFolders Folder\nEnd Sub\n\nEnumerateFolderWithSubFolders "c:\\WINDOWS\\Web\\"\n
+getoutput=' Getting StdOut from a console command\nFunction GetStdOut(cmdline)\n\tDim fileOut, File, strCmd\n\tfileOut = FSO.GetTempName\n\tstrCmd = "%COMSPEC% /c " & cmdline & " >" & fileOut\n\tWshShell.Run strCmd, 0, True\n\tIf FSO.FileExists(fileOut) Then\n\t\tIf FSO.GetFile(fileOut).Size > 0 Then\n\t\t\tSet File = FSO.OpenTextFile(fileOut)\n\t\t\tGetStdOut = File.ReadAll\n\t\t\tFile.Close\n\t\tEnd If\n\t\tFSO.DeleteFile fileOut\n\tEnd If\nEnd Function\n\nWScript.Echo GetStdOut("set")\n
+replace=' Replace text with RegExp\nFunction ReplaceRe(text, find_patrn, repl_patrn)\n\tDim regEx\n\tSet regEx = New RegExp\n\tWith regEx\n\t\t.Pattern = find_patrn\n\t\t.Global = True\n\t\t.IgnoreCase = True\n\tEnd With\n\tReplaceRe = regEx.Replace(text, repl_patrn)\nEnd Function\n\nWScript.Echo ReplaceRe("One 1 Two 2 Three 3", "(\\S+)(\\s+)(\\S+)", "$3$2$1")\n

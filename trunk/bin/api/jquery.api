@@ -1,0 +1,142 @@
+$(html)  根据提供的原始HTML标记字符串，动态创建由jQuery对象包装的DOM元素。
+$(elements)  为一个或多个DOM元素捆绑jQuery功能。
+$(fn)  $(document).ready()的简写方式，允许你绑定一个在DOM文档载入完成后执行的函数。
+$(expr, context)  这个函数接收一个包含CSS或基本的XPath选择符的字符串，然后用这个字符串去匹配一组元素。
+extend(prop)  扩展jQuery对象。可以用于把函数添加到jQuery名称空间中，以及添加插件方法（插件）。
+noConfilict()  运行这个函数将变量$的控制权让渡给第一个实现它的那个库。这样可以确保jQuery不会与其他库的$对象发生冲突。
+each(fn)  以每一个匹配的元素作为上下文来执行一个函数
+eq(pos)  将匹配的元素集合缩减为一个元素。这个元素在匹配元素集合中的位置变为0，而集合长度变成1。
+get()  取得所有匹配的（DOM）元素集合。这是取得所有匹配元素的一种向后兼容的方式（不同于jQuery对象，而实际上两者都是元素数组）。
+get(num)  取得其中一个匹配的元素。 num表示取得第几个匹配的元素。
+gt(pos)  将匹配的元素集合缩减为给定位置之后的所有元素。这个元素在匹配元素集合中的位置变为0，而长度变成1。
+index(subject)  搜索与参数表示的对象匹配的元素，并返回相应元素的索引值。如果找到了匹配的元素，从0开始返回；如果没有找到匹配的元素，返回-1。
+length
+lt(pos)  将匹配的元素集合缩减为给定位置之前的所有元素。这个元素在匹配元素集合中的位置变为0，而长度变成1。
+size()  当前匹配的元素数量。
+addClass(class) 为每个匹配的元素添加指定的类名。
+attr(name) 取得第一个匹配元素的属性值。通过这个方法可以方便地从第一个匹配元素中获取一个属性的值。
+attr(properties) 将一个“名/值”形式的对象设置为所有匹配元素的属性。
+attr(key, value) 为所有匹配的元素设置一个属性值。
+attr(key, fn) 为所有匹配的元素设置一个计算的属性值。
+html() 取得第一个匹配元素的html内容。这个函数不能用于XML文档。
+html(val) 设置每一个匹配元素的html内容。这个函数不能用于XML文档。
+removeAttr(name) 从每一个匹配的元素中删除一个属性。
+removeClass(class) 从所有匹配的元素中删除全部或者指定的类。
+text() 取得所有匹配元素的内容。结果是由所有匹配元素包含的文本内容组合起来的文本。这个方法对HTML和XML文档都有效。
+text(val) 设置所有匹配元素的文本内容。这个函数与html()函数具有同样的效果。
+toggleClass(class) 如果存在（不存在）就删除（添加）一个类。
+val() 获得第一个匹配元素的当前值。
+val(val) 设置每一个匹配元素的值。
+after(content)  在每个匹配的元素之后插入内容。
+append(content)  向每个匹配的元素内部追加内容。
+appendTo(expr)  把所有匹配的元素追加到另一个、指定的元素元素集合中。
+before(content)  在每个匹配的元素之前插入内容。
+clone(deep)  克隆匹配的DOM元素并且选中这些克隆的副本。
+empty()  删除匹配的元素集合中所有的子节点。
+insertAfter(expr)  把所有匹配的元素插入到另一个、指定的元素元素集合的后面。
+insertBefore(expr)  把所有匹配的元素插入到另一个、指定的元素元素集合的前面。
+prepend(content)  向每个匹配的元素内部前置内容。
+prependTo(expr)  把所有匹配的元素前置到另一个、指定的元素元素集合中
+remove(expr)  从DOM中删除所有匹配的元素。
+wrap(html)  把所有匹配的元素用其他元素的结构化标记包装起来。
+wrap(elem)  把所有匹配的元素用其他元素的结构化标记包装起来。
+add(expr)  把与表达式匹配的元素添加到jQuery对象中
+add(html)  向匹配的元素集合中添加更多动态创建的元素。
+add(elements)  把一个或多个DOM元素添加到匹配的元素集合中。
+children(expr)  取得一个包含匹配的元素集合中每一个元素的所有唯一子元素的元素集合。
+contains(str)  把元素集合筛选为包含指定文本（区分大小写）的元素。
+end()  结束最近的“破坏性”操作，把匹配的元素列表回复到前一个状态。
+filter(expression)  从匹配的元素集合中删除那些不符合指定的筛选条件的元素（即返回与指定表达式匹配的元素集合）。
+filter(filter)  从匹配的元素集合中删除那些不符合指定的筛选条件的元素（即返回与指定表达式匹配的元素集合）。
+find(expr)  搜索所有与指定表达式匹配的元素。
+is(expr)  用一个表达式来检查当前选择的元素集合，如果其中至少有一个元素符合这个给定的表达式就返回true。
+next(expr)  取得一个包含匹配的元素集合中每一个元素紧邻的后面同辈元素的元素集合。
+not(el)  从匹配的元素集合中删除指定的元素。
+not(expr)  从匹配的元素集合中删除与指定的表达式匹配的元素。
+not(elements)  从匹配的元素集合中删除所有符合条件的元素集合。
+parent(expr)  取得一个包含着所有匹配元素的唯一父元素的元素集合。
+parents(expr)  取得一个包含着所有匹配元素的唯一祖先元素的元素集合（不包含根元素）。
+prev(expr)  取得一个包含匹配的元素集合中每一个元素紧邻的前一个同辈元素的元素集合。
+siblings(expr)  取得一个包含匹配的元素集合中每一个元素的所有唯一同辈元素的元素集合。
+css(name)  访问第一个匹配元素的样式属性。
+css(properties)  把一个“名/值对”对象设置为所有匹配元素的样式属性。
+css(key, value)  在所有匹配的元素中，设置一个样式属性的值。
+height()  取得第一个匹配元素当前计算的高度值（px）。
+height(val)  为每个匹配的元素设置CSS高度(width)属性的值。
+width()  取得第一个匹配元素当前计算的宽度值（px）。
+width(val)  为每个匹配的元素设置CSS宽度(width)属性的值。
+browser  包含从navigator.userAgent属性中读取的用户代理标签（代理检测）。
+each(obj, fn)  一个通用的迭代函数，可用于近似地迭代对象和数组。
+extend(target, prop1, propN)  用一个或多个其他对象来扩展一个对象，返回这个被扩展的对象。
+grep(array, fn, inv)  使用筛选函数，从一个数组中筛选项目。
+map(array, fn)  把一个数组中的项目转换到另一个数组中。
+merge(first, second)  合并两个数组，删除其中重复的项目。
+trim(str)  删除字符串两端的空白字符。
+animate(params, speed, easing, callback)  用于创建自定义动画的函数。这个函数的关键在于指定动画形式及结果样式属性对象。
+fadeIn(speed, callback)  通过不透明度的变化来实现所有匹配元素的淡入效果，并在动画完成后可选地触发一个回调函数。
+fadeOut(speed, callback)  通过不透明度的变化来实现所有匹配元素的淡出效果，并在动画完成后可选地触发一个回调函数。
+fadeTo(speed, opacity, callback)  把所有匹配元素的不透明度以渐进方式调整到指定的不透明度，并在动画完成后可选地触发一个回调函数。
+hide()  隐藏显示的元素。
+hide(speed, callback)  以优雅的动画隐藏所有匹配的元素，并在显示完成后可选地触发一个回调函数。
+show()  显示隐藏的匹配元素。
+show(speed, callback)  以优雅的动画显示所有匹配的元素，并在显示完成后可选地触发一个回调函数。
+slideDown(speed, callback)  通过高度变化（向下增大）来动态地显示所有匹配的元素，在显示完成后可选地触发一个回调函数。
+slideToggle(speed, callback)  通过高度变化来切换所有匹配元素的可见性，并在切换完成后可选地触发一个回调函数。
+slideUp(speed, callback)  通过高度变化（向上减小）来动态地隐藏所有匹配的元素，在隐藏完成后可选地触发一个回调函数。
+toggle()  切换元素的可见状态。如果元素是可见的，切换为隐藏的。
+bind(type, data, fn)  为每一个匹配元素的特定事件（像click）绑定一个事件处理器函数。
+blur()  触发每一个匹配元素的blur事件。
+blur(fn)  在每一个匹配元素的blur事件中绑定一个处理函数。
+change(fn)  在每一个匹配元素的change事件中绑定一个处理函数
+click()  触发每一个匹配元素的click事件。
+click(fn)  在每一个匹配元素的click事件中绑定一个处理函数。
+dblclick(fn)  在每一个匹配元素的dblclick事件中绑定一个处理函数。
+error(fn)  在每一个匹配元素的error事件中绑定一个处理函数。
+focus()  触发每一个匹配元素的focus事件。
+focus(fn)  在每一个匹配元素的focus事件中绑定一个处理函数。
+hover(over, out)  一个模仿悬停事件（鼠标移动到一个对象上面及移出这个对象）的方法。
+keydown(fn)  在每一个匹配元素的keydown事件中绑定一个处理函数。
+keypress(fn)  在每一个匹配元素的keypress事件中绑定一个处理函数。
+keyup(fn)  在每一个匹配元素的keyup事件中绑定一个处理函数。
+load(fn)  在每一个匹配元素的load事件中绑定一个处理函数。
+mousedown(fn)  在每一个匹配元素的mousedown事件中绑定一个处理函数。
+mousemove(fn)  在每一个匹配元素的mousemove事件中绑定一个处理函数。
+mouseout(fn)  在每一个匹配元素的mouseout事件中绑定一个处理函数。
+mouseover(fn)  在每一个匹配元素的mouseover事件中绑定一个处理函数。
+mouseup(fn)  在每一个匹配元素的mouseup事件中绑定一个处理函数。
+one(type, data, fn)  为每一个匹配元素的特定事件（像click）绑定一个事件处理器函数。
+ready(fn)  当DOM载入就绪可以查询及操纵时绑定一个要执行的函数。
+resize(fn)  在每一个匹配元素的resize事件中绑定一个处理函数。
+scroll(fn)  在每一个匹配元素的scroll事件中绑定一个处理函数。
+select()  触发每一个匹配元素的select事件。
+select(fn)  在每一个匹配元素的select事件中绑定一个处理函数。
+submit()  触发每一个匹配元素的submit事件。
+submit(fn)    在每一个匹配元素的submit事件中绑定一个处理函数。
+toggle(even, odd)  每次点击时切换要调用的函数。（even 偶次，odd 偶次）
+trigger(type)  在每一个匹配的元素上触发某类事件。
+unbind(type, fn)  反绑定，从每一个匹配的元素中删除绑定的事件。
+unload(fn)  在每一个匹配元素的unload事件中绑定一个处理函数。
+ajax(properties)  使用HTTP请求（XMLHttpRequest）载入一个远程页面。
+ajaxSetup(settings)  为AJAX请求设定全局设置。
+ajaxTimeout(time)  设置AJAX请求的超时所需具体的时间要求。
+get(url, params, callback)  使用HTTP GET请求（XMLHttpRequest）载入远程页面。
+getIfModified(url, params, callback)  使用HTTP请求（XMLHttpRequest）载入自上次接收后产生变化的远程页面。
+getJSON(url, params, callback)  使用HTTP请求（XMLHttpRequest）载入JSON数据。
+getScript(url, callback)  使用HTTP请求（XMLHttpRequest）载入并执行远程JavaScript文件。
+post(url, params, callback)  使用HTTP POST请求（XMLHttpRequest）载入远程页面。
+ajaxComplete(callback)  当AJAX请求完成时，执行一个附加函数。
+ajaxError(callback)  当AJAX请求失败时，执行一个附加函数。
+ajaxSend(callback)  在AJAX请求发送前，执行一个附加函数。
+ajaxStart(callback)  在AJAX请求开始并且没有任何返回状态时，执行一个附加函数。
+ajaxStop(callback)  在AJAX请求结束后，执行一个附加函数。
+ajaxSuccess(callback)  当AJAX请求成功完成时，执行一个附加函数。
+load(url, params, callback)  从一个远程文件中载入HTML并把它注入DOM。
+loadIfModified(url, params, callback)  从一个自上次接收后产生变化的远程文件中载入HTML并把它注入DOM。
+serialize()  Serialize化输入的所有元素。
+Accordion(settings)  Make the selected elements Accordion widgets. 
+activate(index)  Activate a content part of the Accordion programmatically with the position zero-based index.
+button(hash)  Creates a button from an image element.
+center()  Takes all matched elements and centers them, absolutely, within the context of their parent element. 
+cookie(name)  Get the value of a cookie with the given name.
+cookie(name, value, options)  Create a cookie with the given name and value and other optional parameters.
+  
