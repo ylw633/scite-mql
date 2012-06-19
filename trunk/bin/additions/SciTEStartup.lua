@@ -15,3 +15,5 @@ dofile (props["SciteDefaultHome"].."\\additions\\Snippets.lua")
 dofile (props["SciteDefaultHome"].."\\additions\\PairedTags.lua")
 --SmartHighlight
 dofile (props["SciteDefaultHome"].."\\additions\\SmartHighlight.lua")
+
+dofile (props["SciteDefaultHome"].."\\additions\\select_block.lua")
