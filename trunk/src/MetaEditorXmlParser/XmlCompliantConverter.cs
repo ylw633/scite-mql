@@ -15,7 +15,7 @@ namespace MetaEditorXmlParser
 
       string innerText = element.InnerText();
       int idxFirstTag = innerText.Length;
-      if (element.HasElements && element.Name != "parameter")
+      if (element.HasElements)
           idxFirstTag = innerText.IndexOf("<" + element.Elements().ElementAt(0).Name);
 
       //if (idxFirstTag > 0)

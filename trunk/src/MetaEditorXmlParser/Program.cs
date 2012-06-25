@@ -12,12 +12,12 @@ namespace MetaEditorXmlParser
     {
       var runner = new DataConstructor();
       runner.Analyze();
-      runner.ProduceChmMaterial("html");
-      //foreach (var f in runner.PageNodes.Where(e => e is FunctionNode))
-      //  Console.WriteLine(((FunctionNode)f).ToSciteApiString());
+      //runner.ProduceChmMaterial("html");
+      foreach (var f in runner.PageNodes.Where(e => e is FunctionNode))
+        Console.WriteLine(((FunctionNode)f).ToSciteApiString());
       //foreach (var s in runner.Constants)
       //    Console.Write(s + " ");
-      Console.ReadLine();
+      //Console.ReadLine();
     }
   }
 }
