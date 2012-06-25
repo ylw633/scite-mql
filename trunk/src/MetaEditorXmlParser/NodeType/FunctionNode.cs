@@ -17,18 +17,18 @@ namespace MetaEditorXmlParser.NodeType
 
     public string ToSciteApiString()
     {
+      Parameters = ExtractParameter(Element);
       string desc = Content.Substring(0, Content.IndexOf('.') + 1); // get first sentenece
-      string s = Name + "(";
+      string s = (Name.IndexOf(' ') > 0 ? Name.Remove(Name.IndexOf(' ')) : Name) + "(";
       if (Parameters != null)
-        s = Parameters.Aggregate(s, (current, p) => current + (p.Type + " " + p.Name.Replace("<nobr>", "").Replace("</nobr>", "") + ", "));
-      return s.TrimEnd().TrimEnd(',') + ")\\n\\n" + desc.Trim();
+        s = Parameters.Aggregate(s, (current, p) => current + (p.Type + (!string.IsNullOrWhiteSpace(p.Name) ? " " + p.Name.Replace("<nobr>", "").Replace("</nobr>", "") : "") + ", "));
+      return s.TrimEnd().TrimEnd(',') + ")\\n\\n" + desc.Trim().Replace("\n", " ");
     }
 
     protected override void Parse(XElement element)
     {
       Name = element.Element("caption").Value.Replace("()", "");
       ReturnType = element.Element("type").Value;
-      Parameters = ExtractParameter(element);
     }
   }
 }

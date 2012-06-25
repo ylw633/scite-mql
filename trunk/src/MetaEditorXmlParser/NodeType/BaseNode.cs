@@ -22,9 +22,9 @@ namespace MetaEditorXmlParser.NodeType
 
     public Parameter(XElement element)
     {
-      Name = element.Element("name") != null ? element.Element("name").Value : null;
-      Type = element.Element("type") != null ? element.Element("type").Value : null;
-      Description = element.Element("description") != null ? element.Element("description").Value : null;
+      Name = element.Element("name") != null ? element.Element("name").Value : string.Empty;
+      Type = element.Element("type") != null ? element.Element("type").Value : string.Empty;
+      Description = element.Element("description") != null ? element.Element("description").Value : string.Empty;
     }
   }
 
