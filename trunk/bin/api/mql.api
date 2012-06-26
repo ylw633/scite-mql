@@ -1,268 +1,259 @@
-AccountBalance()\n\nReturns balance value of the current account (the amount of money on the account).
-AccountCredit()\n\nReturns credit value of the current account.
-AccountCompany()\n\nReturns the brokerage company name where the current account was registered.
-AccountCurrency()\n\nReturns currency name of the current account.
-AccountEquity()\n\nReturns equity value of the current account.
-AccountFreeMargin()\n\nReturns free margin value of the current account.
-AccountFreeMarginCheck(string symbol, int cmd, double volume)\n\nReturns free margin that remains after the specified position has been opened at the current price on the current account.
-AccountFreeMarginMode()\n\nCalculation mode of free margin allowed to open positions on the current account.
-AccountLeverage()\n\nReturns leverage of the current account.
-AccountMargin()\n\nReturns margin value of the current account.
-AccountName()\n\nReturns the current account name.
-AccountNumber()\n\nReturns the number of the current account.
-AccountProfit()\n\nReturns profit value of the current account.
-AccountServer()\n\nReturns the connected server name.
-AccountStopoutLevel()\n\nReturns the value of the Stop Out level.
-AccountStopoutMode()\n\nReturns the calculation mode for the Stop Out level.
-ArrayBsearch(double array[], double value, int count, int start, int direction)\n\nIf the element with the specified value doesn't exist in the array, the function returns the index of the nearest smallest value of the elements between which the searched value is located.
-ArrayCopy(object dest[], object source[], int start_dest, int start_source, int count)\n\nCopies an array to another one.
-ArrayCopyRates(double dest_array[], string symbol, int timeframe)\n\nCopies rates to the two-dimensional array from chart RateInfo array and returns copied bars amount, or -1 if failed.
-ArrayCopySeries(double array[], int series_index, string symbol, int timeframe)\n\nCopies a series array to another one and returns the count of the copied elements.
-ArrayDimension(object array[])\n\nReturns the multidimensional array rank.
-ArrayGetAsSeries(object array[])\n\nReturns TRUE if array is organized as a series array (array elements are indexed from the last to the first one), otherwise returns FALSE.
-ArrayInitialize(double array[], double value)\n\nSets all elements of a numeric array to the same value.
-ArrayIsSeries(object array[])\n\nReturns TRUE if the array under check is a series array (Time[],Open[],Close[],High[],Low[], or Volume[]), otherwise returns FALSE.
-ArrayMaximum(double array[], int count, int start)\n\nSearches for the element with maximum value.
-ArrayMinimum(double array[], int count, int start)\n\nSearches for the element with minimum value.
-ArrayRange(object array[], int range_index)\n\nReturns the count of elements in the given dimension of the array.
-ArrayResize(object array[], int new_size)\n\nSets a new size for the first dimension.
-ArraySetAsSeries(double array[], bool set)\n\nSets indexing direction of the array.
-ArraySize(object array[])\n\nReturns the count of elements contained in the array.
-ArraySort(double array[], int count, int start, int sort_dir)\n\nSorts numeric arrays by first dimension.
-GetLastError()\n\nThe function returns the <a href="help://constants_errors">last occurred error</a>, then the value of special 
-      <a href="help://runtime_errors">last_error</a> variable where the last error code is stored will be zeroized.
-IsConnected()\n\nThe function returns the status of the main connection between client terminal and server that performs data pumping.
-IsDemo()\n\nReturns TRUE if the expert runs on a demo account, otherwise returns FALSE.
-IsDllsAllowed()\n\nReturns TRUE if the function DLL call is allowed for the expert, otherwise returns FALSE.
-IsExpertEnabled()\n\nReturns TRUE if expert advisors are enabled for running, otherwise returns FALSE.
-IsLibrariesAllowed()\n\nReturns TRUE if the expert can call library function, otherwise returns FALSE.
-IsOptimization()\n\nReturns TRUE if expert runs in the strategy tester optimization mode, otherwise returns FALSE.
-IsStopped()\n\nReturns TRUE if the program (an expert or a script) has been commanded to stop its operation, otherwise returns FALSE.
-IsTesting()\n\nReturns TRUE if expert runs in the testing mode, otherwise returns FALSE.
-IsTradeAllowed()\n\nReturns TRUE if the expert is allowed to trade and a thread for trading is not occupied, otherwise returns FALSE.
-IsTradeContextBusy()\n\nReturns TRUE if a thread for trading is occupied by another expert advisor, otherwise returns FALSE.
-IsVisualMode()\n\nReturns TRUE if the expert is tested with checked "Visual Mode" button, otherwise returns FALSE.
-UninitializeReason()\n\nReturns the code of the uninitialization reason for the experts, custom indicators, and scripts.
-TerminalCompany()\n\nReturns the name of company owning the client terminal.
-TerminalName()\n\nReturns client terminal name.
-TerminalPath()\n\nReturns the directory, from which the client terminal was launched.
-Alert( )\n\nDisplays a dialog box containing the user-defined data.
-Comment( )\n\nThe function outputs the comment defined by the user in the left top corner of the chart.
-GetTickCount()\n\nThe GetTickCount() function retrieves the number of milliseconds that have elapsed since the system was started.
-MarketInfo(string symbol, int type)\n\nReturns various data about securities listed in the Market Watch window.
-MessageBox(string text, string caption, int flags)\n\nThe MessageBox function creates, displays, and operates message box.
-PlaySound(string filename)\n\nFunction plays a sound file.
-Print( )\n\nPrints a message to the experts log.
-SendFTP(string filename, string ftp_path)\n\nSends the file to the FTP server set in the Tools-&gt;Options-&gt;Publisher tab.
-SendMail(string subject, string some_text)\n\nSends a message to the e-mail set in the Tools-&gt;Options-&gt;EMail tab.
-SendNotification(string message)\n\nSends Push notification to mobile terminals whose MetaQuotes IDs are specified on the "Notifications" tab in options window.
-Sleep(int milliseconds)\n\nThe Sleep() function suspends execution of the current expert within the specified interval.
-CharToStr(int char_code)\n\nConversion of the symbol code into a one-character string.
-DoubleToStr(double value, int digits)\n\nReturns text string with the specified numerical value converted into a specified precision format.
-NormalizeDouble(double value, int digits)\n\nRounds the floating point value to the given precision.
-StrToDouble(string value)\n\nConverts string representation of number to double type (double-precision format with floating point).
-StrToInteger(string value)\n\nConverts string containing the value character representation into a value of the int (integer) type.
-StrToTime(string value)\n\nConverts string in the format "yyyy.
-TimeToStr(datetime value, int mode)\n\nConverts value containing time in seconds that has passed since January 1, 1970, into a string of "yyyy.
-IndicatorBuffers(int count)\n\nAllocates memory for buffers used for custom indicator calculations.
-IndicatorCounted()\n\nThe function returns the amount of bars not changed after the indicator had been launched last.
-IndicatorDigits(int digits)\n\nSets precision format (the count of digits after decimal point) to visualize indicator values.
-IndicatorShortName(string name)\n\nSets the "short" name of a custom indicator to be shown in the DataWindow and in the chart subwindow.
-SetIndexArrow(int index, int code)\n\nSets an arrow symbol for indicators line of the <a href="help://constants_drawstyles">DRAW_ARROW</a> type.
-SetIndexBuffer(int index, double array[])\n\nBinds the array variable declared at a global level to the custom indicator pre-defined buffer.
-SetIndexDrawBegin(int index, int begin)\n\nSets the bar number (from the data beginning) from which the drawing of the given indicator line must start.
-SetIndexEmptyValue(int index, double value)\n\nSets drawing line empty value.
-SetIndexLabel(int index, string text)\n\nSets drawing line description for showing in the DataWindow and in the tooltip.
-SetIndexShift(int index, int shift)\n\nSets offset for the drawing line.
-SetIndexStyle(int index, int type, int style, int width, color clr)\n\nSets the new type, style, width and color for a given indicator line.
-SetLevelStyle(int draw_style, int line_width, color clr)\n\nThe function sets a new style, width and color of horizontal levels of indicator to be output in a separate window.
-SetLevelValue(int level, double value)\n\nThe function sets a value for a given horizontal level of the indicator to be output in a separate window.
-Day()\n\nReturns the current day of the month, i.
-DayOfWeek()\n\nReturns the current zero-based day of the week (0-Sunday,1,2,3,4,5,6) of the last known server time.
-DayOfYear()\n\nReturns the current day of the year (1 means 1 January,.
-Hour()\n\nReturns the hour (0,1,2,.
-Minute()\n\nReturns the current minute (0,1,2,.
-Month()\n\nReturns the current month as number (1-January,2,3,4,5,6,7,8,9,10,11,12), i.
-Seconds()\n\nReturns the amount of seconds elapsed from the beginning of the current minute of the last known server time by the moment of the program start (this value will not change within the time of the program execution).
-TimeCurrent()\n\nReturns the last known server time (time of incoming of the latest quote) as number of seconds elapsed from 00:00 January 1, 1970.
-TimeDay(datetime date)\n\nReturns day of month (1 - 31) for the specified date.
-TimeDayOfWeek(datetime date)\n\nReturns the zero-based day of week (0 means Sunday,1,2,3,4,5,6) for the specified date.
-TimeDayOfYear(datetime date)\n\nReturns day (1 means 1 January,.
-TimeHour(datetime time)\n\nReturns the hour for the specified time.
-TimeLocal()\n\nReturns local computer time as number of seconds elapsed from 00:00 January 1, 1970.
-TimeMinute(datetime time)\n\nReturns the minute for the specified time.
-TimeMonth(datetime time)\n\nReturns the month number for the specified time.
-TimeSeconds(datetime time)\n\nReturns the amount of seconds elapsed from the beginning of the minute for the specified time.
-TimeYear(datetime time)\n\nReturns year for the specified date.
-Year()\n\nReturns the current year, i.
-FileClose(int handle)\n\nCloses file previously opened by the <a href="help://files_FileOpen">FileOpen()</a> function.
-FileDelete(string filename)\n\nRemoves specified file name.
-FileFlush(int handle)\n\nFlushes all data stored in the file buffer to the disk.
-FileIsEnding(int handle)\n\nReturns logical true if file pointer is at the end of the file, otherwise returns false.
-FileIsLineEnding(int handle)\n\nFor CSV file returns logical true if file pointer is at the end of the line, otherwise returns false.
-FileOpen(string filename, int mode, int delimiter)\n\nOpens file for input and/or output.
-FileOpenHistory(string filename, int mode, int delimiter)\n\nOpens file in the current history directory (<em>terminal_directory\history\server_name</em>) or in its subfolders.
-FileReadArray(int handle, object array[], int start, int count)\n\nReads the specified amount of elements from the binary file into array.
-FileReadDouble(int handle, int size)\n\nReads the double-precision number with floating point from the current binary file position.
-FileReadInteger(int handle, int size)\n\nThe function reads the integer from the current binary file position.
-FileReadNumber(int handle)\n\nRead the number from the current file position before the delimiter.
-FileReadString(int handle, int length)\n\nThe function reads the string from the current file position.
-FileSeek(int handle, int offset, int origin)\n\nThe function moves the file pointer to a new position that is an offset, in bytes, from the beginning, the end or the 
-current file position.
-FileSize(int handle)\n\nThe function returns file size in bytes.
-FileTell(int handle)\n\nReturns the current position of the file pointer.
-FileWrite(int handle,  )\n\nThe function is intended for writing of data into a CSV file, delimiter being inserted automatically.
-FileWriteArray(int handle, object array[], int start, int count)\n\nThe function writes the array to a binary file.
-FileWriteDouble(int handle, double value, int size)\n\nThe function writes a double value with floating point to a binary file.
-FileWriteInteger(int handle, int value, int size)\n\nThe function writes the integer value to a binary file.
-FileWriteString(int handle, string value, int length)\n\nThe function writes the string to a binary file from the current file position.
-GlobalVariableCheck(string name)\n\nReturns TRUE if the global variable exists, otherwise, returns FALSE.
-GlobalVariableDel(string name)\n\nDeletes the global variable.
-GlobalVariableGet(string name)\n\nReturns the value of an existing global variable or 0 if an error occurs.
-GlobalVariableName(int index)\n\nThe function returns the name of a global variable by its index in the list of global variables.
-GlobalVariableSet(string name, double value)\n\nSets a new value of the global variable.
-GlobalVariableSetOnCondition(string name, double value, double check_value)\n\nSets the new value of the existing global variable if the current value
-equals to the third parameter <i>check_value</i>.
-GlobalVariablesDeleteAll(string prefix_name)\n\nDeletes global variables.
-GlobalVariablesTotal()\n\nThe function returns the total count of global variables.
-MathAbs(double value)\n\nReturns the absolute value (modulus) of the specified numeric value.
-MathArccos(double x)\n\nThe MathArccos function returns the arccosine of <i>x</i> within the range 0 to £k (in radians).
-MathArcsin(double x)\n\nThe MathArcsin function returns the arcsine of <i>x</i> in the range -£k/2 to £k/2 radians.
-MathArctan(double x)\n\nThe MathArctan returns the arctangent of <i>x</i>.
-MathCeil(double x)\n\nThe MathCeil function returns a numeric value representing the smallest integer
-that exceeds or equals to <i>x</i>.
-MathCos(double value)\n\nReturns the cosine of the specified angle.
-MathExp(double d)\n\nReturns the value of <b>e</b> raised to the power of <i>d</i>.
-MathFloor(double x)\n\nThe MathFloor function returns a numeric value representing the largest integer that is less than or equal to <i>x</i>.
-MathLog(double x)\n\nThe MathLog function returns the natural logarithm of <i>x</i> if successful.
-MathMax(double value1, double value2)\n\nReturns the maximum value of two numeric values.
-MathMin(double value1, double value2)\n\nReturns the minimum value of two numeric values.
-MathMod(double value, double value2)\n\nThe function returns the floating-point remainder of division of two numbers.
-MathPow(double base, double exponent)\n\nReturns the value of the base expression raised to the specified power (exponent value).
-MathRand()\n\nThe MathRand function returns a pseudorandom integer within the range of 0 to 32767.
-MathRound(double value)\n\nReturns value rounded to the nearest integer of the specified numeric value.
-MathSin(double value)\n\nReturns the sine of the specified angle.
-MathSqrt(double x)\n\nThe MathSqrt function returns the square root of <i>x</i>.
-MathSrand(int seed)\n\nThe MathSrand() function sets the starting point for generating a series of pseudorandom integers.
-MathTan(double x)\n\nMathTan returns the tangent of <i>x</i>.
-ObjectCreate(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3)\n\nCreation of an object with the specified name, type and initial coordinates in the specified window.
-ObjectDelete(string name)\n\nDeletes object having the specified name.
-ObjectDescription(string name)\n\nReturn object description.
-ObjectFind(string name)\n\nSearch for an object having the specified name.
-ObjectGet(string name, int index)\n\nThe function returns the value of the specified object property.
-ObjectGetFiboDescription(string name, int index)\n\nThe function returns the level description of a Fibonacci object.
-ObjectGetShiftByValue(string name, double value)\n\nThe function calculates and returns bar index (shift related to the current bar) for the given price.
-ObjectGetValueByShift(string name, int shift)\n\nThe function calculates and returns the price value for the specified bar (shift related to the current bar).
-ObjectMove(string name, int point, datetime time1, double price1)\n\nThe function moves an object coordinate in the chart.
-ObjectName(int index)\n\nThe function returns the object name by its index in the objects list.
-ObjectsDeleteAll(int window, int type)\n\nRemoves all objects of the specified type and in the specified sub-window of the chart.
-ObjectSet(string name, int index, double value)\n\nChanges the value of the specified object property.
-ObjectSetFiboDescription(string name, int index, string text)\n\nThe function assigns a new description to a level of a Fibonacci object.
-ObjectSetText(string name, string text, int font_size, string font, color text_color)\n\nChanges the object description.
-ObjectsTotal(int type)\n\nReturns total amount of objects of the specified type in the chart.
-ObjectType(string name)\n\nThe function returns the <a href="help://constants_objects">object type</a> value.
-StringConcatenate( )\n\nForms a string of the data passed and returns it.
-StringFind(string text, string matched_text, int start)\n\nSearch for a substring.
-StringGetChar(string text, int pos)\n\nReturns character (code) from the specified position in the string.
-StringLen(string text)\n\nReturns character count in a string.
-StringSetChar(string text, int pos, int value)\n\nReturns the string copy with changed character in the specified position.
-StringSubstr(string text, int start, int length)\n\nExtracts a substring from text string starting from the given position.
-StringTrimLeft(string text)\n\nThe function cuts line feed characters, spaces 
-and tabs in the left part of the string.
-StringTrimRight(string text)\n\nThe function cuts line feed characters, spaces 
-and tabs in the right part of the string.
-iAC(string symbol, int timeframe, int shift)\n\nCalculates the Bill Williams' Accelerator/Decelerator oscillator.
-iAD(string symbol, int timeframe, int shift)\n\nCalculates the Accumulation/Distribution indicator and returns its value.
-iAlligator(string symbol, int timeframe, int jaw_period, int jaw_shift, int teeth_period, int teeth_shift, int lips_period, int lips_shift, int ma_method, int applied_price, int mode, int shift)\n\nCalculates the Bill Williams' Alligator and returns its value.
-iADX(string symbol, int timeframe, int period, int applied_price, int mode, int shift)\n\nCalculates the Movement directional index and returns its value.
-iATR(string symbol, int timeframe, int period, int shift)\n\nCalculates the Indicator of the average true range and returns its value.
-iAO(string symbol, int timeframe, int shift)\n\nCalculates the Bill Williams' Awesome oscillator and returns its value.
-iBearsPower(string symbol, int timeframe, int period, int applied_price, int shift)\n\nCalculates the Bears Power indicator and returns its value.
-iBands(string symbol, int timeframe, int period, int deviation, int bands_shift, int applied_price, int mode, int shift)\n\nCalculates the Bollinger bands indicator and returns its value.
-iBandsOnArray(double array[], int total, int period, int deviation, int bands_shift, int mode, int shift)\n\nCalculation of the Bollinger Bands indicator on data stored in a numeric array.
-iBullsPower(string symbol, int timeframe, int period, int applied_price, int shift)\n\nCalculates the Bulls Power indicator and returns its value.
-iCCI(string symbol, int timeframe, int period, int applied_price, int shift)\n\nCalculates the Commodity channel index and returns its value.
-iCCIOnArray(double array[], int total, int period, int shift)\n\nCalculation of the Commodity Channel Index on data stored in a numeric array.
-iCustom(string symbol, int timeframe, string name,  , int mode, int shift)\n\nCalculates the specified custom indicator and returns its value.
-iDeMarker(string symbol, int timeframe, int period, int shift)\n\nCalculates the DeMarker indicator and returns its value.
-iEnvelopes(string symbol, int timeframe, int ma_period, int ma_method, int ma_shift, int applied_price, double deviation, int mode, int shift)\n\nCalculates the Envelopes indicator and returns its value.
-iEnvelopesOnArray(double array[], int total, int ma_period, int ma_method, int ma_shift, double deviation, int mode, int shift)\n\nCalculation of the Envelopes indicator on data stored in a numeric array.
-iForce(string symbol, int timeframe, int period, int ma_method, int applied_price, int shift)\n\nCalculates the Force index and returns its value.
-iFractals(string symbol, int timeframe, int mode, int shift)\n\nCalculates the Fractals and returns its value.
-iGator(string symbol, int timeframe, int jaw_period, int jaw_shift, int teeth_period, int teeth_shift, int lips_period, int lips_shift, int ma_method, int applied_price, int mode, int shift)\n\nGator oscillator calculation.
-iIchimoku(string symbol, int timeframe, int tenkan_sen, int kijun_sen, int senkou_span_b, int mode, int shift)\n\nCalculates the Ichimoku Kinko Hyo and returns its value.
-iBWMFI(string symbol, int timeframe, int shift)\n\nCalculates the Bill Williams Market Facilitation index and returns its value.
-iMomentum(string symbol, int timeframe, int period, int applied_price, int shift)\n\nCalculates the Momentum indicator and returns its value.
-iMomentumOnArray(double array[], int total, int period, int shift)\n\nCalculation of the Momentum indicator on data stored in a numeric array.
-iMFI(string symbol, int timeframe, int period, int shift)\n\nCalculates the Money flow index and returns its value.
-iMA(string symbol, int timeframe, int period, int ma_shift, int ma_method, int applied_price, int shift)\n\nCalculates the Moving average indicator and returns its value.
-iMAOnArray(double array[], int total, int period, int ma_shift, int ma_method, int shift)\n\nCalculation of the Moving Average on data stored in a numeric array.
-iOsMA(string symbol, int timeframe, int fast_ema_period, int slow_ema_period, int signal_period, int applied_price, int shift)\n\nCalculates the Moving Average of Oscillator and returns its value.
-iMACD(string symbol, int timeframe, int fast_ema_period, int slow_ema_period, int signal_period, int applied_price, int mode, int shift)\n\nCalculates the Moving averages convergence/divergence and returns its value.
-iOBV(string symbol, int timeframe, int applied_price, int shift)\n\nCalculates the On Balance Volume indicator and returns its value.
-iSAR(string symbol, int timeframe, double step, double maximum, int shift)\n\nCalculates the Parabolic Stop and Reverse system and returns its value.
-iRSI(string symbol, int timeframe, int period, int applied_price, int shift)\n\nCalculates the Relative strength index and returns its value.
-iRSIOnArray(double array[], int total, int period, int shift)\n\nCalculation of the Relative Strength Index on data stored in a numeric array.
-iRVI(string symbol, int timeframe, int period, int mode, int shift)\n\nCalculates the Relative Vigor index and returns its value.
-iStdDev(string symbol, int timeframe, int ma_period, int ma_shift, int ma_method, int applied_price, int shift)\n\nCalculates the Standard Deviation indicator and returns its value.
-iStdDevOnArray(double array[], int total, int ma_period, int ma_shift, int ma_method, int shift)\n\nCalculation of the Standard Deviation indicator on data stored in a numeric array.
-iStochastic(string symbol, int timeframe, int , int , int slowing, int method, int price_field, int mode, int shift)\n\nCalculates the Stochastic oscillator and returns its value.
-iWPR(string symbol, int timeframe, int period, int shift)\n\nCalculates the Larry William's percent range indicator and returns its value.
-iBars(string symbol, int timeframe)\n\nReturns the number of bars on the specified chart.
-iBarShift(string symbol, int timeframe, datetime time, bool exact)\n\nSearch for bar by open time.
-iClose(string symbol, int timeframe, int shift)\n\nReturns <b>Close</b> value for the bar of indicated <i>symbol</i> with <i>timeframe</i> and <i>shift</i>.
-iHigh(string symbol, int timeframe, int shift)\n\nReturns <b>High</b> value for the bar of indicated <i>symbol</i> with <i>timeframe</i> and <i>shift</i>.
-iHighest(string symbol, int timeframe, int type, int count, int start)\n\nReturns the shift of the maximum value over a specific number of periods depending on type.
-iLow(string symbol, int timeframe, int shift)\n\nReturns <b>Low</b> value for the bar of indicated <i>symbol</i> with <i>timeframe</i> and <i>shift</i>.
-iLowest(string symbol, int timeframe, int type, int count, int start)\n\nReturns the shift of the least value over a specific number of periods depending on type.
-iOpen(string symbol, int timeframe, int shift)\n\nReturns <b>Open</b> value for the bar of indicated <i>symbol</i> with <i>timeframe</i> and <i>shift</i>.
-iTime(string symbol, int timeframe, int shift)\n\nReturns <b>Time</b> value for the bar of indicated <i>symbol</i> with <i>timeframe</i> and <i>shift</i>.
-iVolume(string symbol, int timeframe, int shift)\n\nReturns <b>Tick Volume</b> value for the bar of indicated <i>symbol</i> with <i>timeframe</i> and <i>shift</i>.
-OrderClose(int ticket, double lots, double price, int slippage, color Color)\n\nCloses opened order.
-OrderCloseBy(int ticket, int opposite, color Color)\n\nCloses an opened order by another opposite opened order.
-OrderClosePrice()\n\nReturns close price for the currently selected order.
-OrderCloseTime()\n\nReturns close time for the currently selected order.
-OrderComment()\n\nReturns comment for the selected order.
-OrderCommission()\n\nReturns calculated commission for the currently selected order.
-OrderDelete(int ticket, color Color)\n\nDeletes previously opened pending order.
-OrderExpiration()\n\nReturns expiration date for the selected pending order.
-OrderLots()\n\nReturns amount of lots for the selected order.
-OrderMagicNumber()\n\nReturns an identifying (magic) number for the currently selected order.
-OrderModify(int ticket, double price, double stoploss, double takeprofit, datetime expiration, color arrow_color)\n\nModification of characteristics for the previously opened position or pending orders.
-OrderOpenPrice()\n\nReturns open price for the currently selected order.
-OrderOpenTime()\n\nReturns open time for the currently selected order.
-OrderPrint()\n\nPrints information about the selected order in the log in the following format:<br /><a href="help://trading_OrderTicket">ticket number;</a><a href="help://trading_OrderOpenTime">open time;</a><a href="help://trading_OrderType">trade operation;</a><a href="help://trading_OrderLots">amount of lots;</a><a href="help://trading_OrderOpenPrice">open price;</a><a href="help://trading_OrderStopLoss">Stop Loss;</a><a href="help://trading_OrderTakeProfit">Take Profit;</a><a href="help://trading_OrderCloseTime">close time;</a><a href="help://trading_OrderClosePrice">close price;</a><a href="help://trading_OrderCommission">commission;</a><a href="help://trading_OrderSwap">swap;</a><a href="help://trading_OrderProfit">profit;</a><a href="help://trading_OrderComment">comment;</a><a href="help://trading_OrderMagicNumber">magic number;</a><a href="help://trading_OrderExpiration">pending order expiration date.
-OrderProfit()\n\nReturns the net profit value (without swaps or commissions) for the selected order.
-OrderSelect(int index, int select, int pool)\n\nThe function selects an order for further processing.
-OrderSend(string symbol, int cmd, double volume, double price, int slippage, double stoploss, double takeprofit, string comment, int magic, datetime expiration, color arrow_color)\n\nThe main function used to open a position or place a pending order.
-OrdersHistoryTotal()\n\nReturns the number of closed orders in the account history loaded into the terminal.
-OrderStopLoss()\n\nReturns stop loss value for the currently selected order.
-OrdersTotal()\n\nReturns market and pending orders count.
-OrderSwap()\n\nReturns swap value for the currently selected order.
-OrderSymbol()\n\nReturns the order symbol value for selected order.
-OrderTakeProfit()\n\nReturns take profit value for the currently selected order.
-OrderTicket()\n\nReturns ticket number for the currently selected order.
-OrderType()\n\nReturns order operation type for the currently selected order.
-HideTestIndicators(bool hide)\n\nThe function sets a flag hiding indicators called by the Expert Advisor.
-Period()\n\nReturns the amount of minutes determining the used <a href="help://constants_timeframes">period</a> (chart timeframe).
-RefreshRates()\n\nRefreshing of data in <a href="help://predefined_variables">pre-defined variables and series arrays</a>.
-Symbol()\n\nReturns a text string with the name of the current financial instrument.
-WindowBarsPerChart()\n\nFunction returns the amount of bars visible on the chart.
-WindowExpertName()\n\nReturns name of the executed expert, script, custom indicator, or library, depending on the MQL4 program, from which 
-this function has been called.
-WindowFind(string name)\n\nIf indicator with <i>name</i> was found, the function returns the window index containing this specified indicator, otherwise it returns -1.
-WindowFirstVisibleBar()\n\nThe function returns the first visible bar number in the current chart window.
-WindowHandle(string symbol, int timeframe)\n\nReturns the system window handler containing the given chart.
-WindowIsVisible(int index)\n\nReturns TRUE if the chart subwindow is visible, otherwise returns FALSE.
-WindowOnDropped()\n\nReturns window index where expert, custom indicator or script was dropped.
-WindowPriceMax(int index)\n\nReturns maximal value of the vertical scale of the specified subwindow of the current chart
- (0-main chart window, the indicators' subwindows are numbered starting from 1).
-WindowPriceMin(int index)\n\nReturns minimal value of the vertical scale of the specified subwindow of the current chart
- (0-main chart window, the indicators' subwindows are numbered starting from 1).
-WindowPriceOnDropped()\n\nReturns the price part of the chart point where expert or script was dropped.
-WindowRedraw()\n\nRedraws the current chart forcedly.
-WindowScreenShot(string filename, int size_x, int size_y, int start_bar, int chart_scale, int chart_mode)\n\nSaves current chart screen shot as a GIF file.
-WindowTimeOnDropped()\n\nReturns the time part of the chart point where expert or script was dropped.
-WindowsTotal()\n\nReturns count of indicator windows on the chart (including main chart).
-WindowXOnDropped()\n\nReturns the value at X axis in pixels for the chart window client area point at which the expert or script was dropped.
-WindowYOnDropped()\n\nReturns the value at Y axis in pixels for the chart window client area point at which the expert or script was dropped.
+AccountBalance()\n\n Returns balance value of the current account (the amount of money on the account).
+AccountCredit()\n\n Returns credit value of the current account.
+AccountCompany()\n\n Returns the brokerage company name where the current account was registered.
+AccountCurrency()\n\n Returns currency name of the current account.
+AccountEquity()\n\n Returns equity value of the current account.
+AccountFreeMargin()\n\n Returns free margin value of the current account.
+AccountFreeMarginCheck(string symbol, int cmd, double volume)\n\n Returns free margin that remains after the specified position has been opened at the current price on the current account.
+AccountFreeMarginMode()\n\n Calculation mode of free margin allowed to open positions on the current account.
+AccountLeverage()\n\n Returns leverage of the current account.
+AccountMargin()\n\n Returns margin value of the current account.
+AccountName()\n\n Returns the current account name.
+AccountNumber()\n\n Returns the number of the current account.
+AccountProfit()\n\n Returns profit value of the current account.
+AccountServer()\n\n Returns the connected server name.
+AccountStopoutLevel()\n\n Returns the value of the Stop Out level.
+AccountStopoutMode()\n\n Returns the calculation mode for the Stop Out level.
+ArrayBsearch(double array[], double value, int count, int start, int direction)\n\n If the element with the specified value doesn't exist in the array, the function returns the index of the nearest smallest value of the elements between which the searched value is located.
+ArrayCopy(object& dest[], object source[], int start_dest, int start_source, int count)\n\n Copies an array to another one.
+ArrayCopyRates(double& dest_array[], string symbol, int timeframe)\n\n Copies rates to the two-dimensional array from chart RateInfo array and returns copied bars amount, or -1 if failed.
+ArrayCopySeries(double& array[], int series_index, string symbol, int timeframe)\n\n Copies a series array to another one and returns the count of the copied elements.
+ArrayDimension(object array[])\n\n Returns the multidimensional array rank.
+ArrayGetAsSeries(object array[])\n\n Returns TRUE if array is organized as a series array (array elements are indexed from the last to the first one), otherwise returns FALSE.
+ArrayInitialize(double& array[], double value)\n\n Sets all elements of a numeric array to the same value.
+ArrayIsSeries(object array[])\n\n Returns TRUE if the array under check is a series array (Time[],Open[],Close[],High[],Low[], or Volume[]), otherwise returns FALSE.
+ArrayMaximum(double array[], int count, int start)\n\n Searches for the element with maximum value.
+ArrayMinimum(double array[], int count, int start)\n\n Searches for the element with minimum value.
+ArrayRange(object array[], int range_index)\n\n Returns the count of elements in the given dimension of the array.
+ArrayResize(object& array[], int new_size)\n\n Sets a new size for the first dimension.
+ArraySetAsSeries(double& array[], bool set)\n\n Sets indexing direction of the array.
+ArraySize(object array[])\n\n Returns the count of elements contained in the array.
+ArraySort(double& array[], int count, int start, int sort_dir)\n\n Sorts numeric arrays by first dimension.
+GetLastError()\n\n The function returns the last occurred error, then the value of special last_error variable where the last error code is stored will be zeroized.
+IsConnected()\n\n The function returns the status of the main connection between client terminal and server that performs data pumping.
+IsDemo()\n\n Returns TRUE if the expert runs on a demo account, otherwise returns FALSE.
+IsDllsAllowed()\n\n Returns TRUE if the function DLL call is allowed for the expert, otherwise returns FALSE.
+IsExpertEnabled()\n\n Returns TRUE if expert advisors are enabled for running, otherwise returns FALSE.
+IsLibrariesAllowed()\n\n Returns TRUE if the expert can call library function, otherwise returns FALSE.
+IsOptimization()\n\n Returns TRUE if expert runs in the strategy tester optimization mode, otherwise returns FALSE.
+IsStopped()\n\n Returns TRUE if the program (an expert or a script) has been commanded to stop its operation, otherwise returns FALSE.
+IsTesting()\n\n Returns TRUE if expert runs in the testing mode, otherwise returns FALSE.
+IsTradeAllowed()\n\n Returns TRUE if the expert is allowed to trade and a thread for trading is not occupied, otherwise returns FALSE.
+IsTradeContextBusy()\n\n Returns TRUE if a thread for trading is occupied by another expert advisor, otherwise returns FALSE.
+IsVisualMode()\n\n Returns TRUE if the expert is tested with checked "Visual Mode" button, otherwise returns FALSE.
+UninitializeReason()\n\n Returns the code of the uninitialization reason for the experts, custom indicators, and scripts.
+TerminalCompany()\n\n Returns the name of company owning the client terminal.
+TerminalName()\n\n Returns client terminal name.
+TerminalPath()\n\n Returns the directory, from which the client terminal was launched.
+Alert(...)\n\n Displays a dialog box containing the user-defined data.
+Comment(...)\n\n The function outputs the comment defined by the user in the left top corner of the chart.
+GetTickCount()\n\n The GetTickCount() function retrieves the number of milliseconds that have elapsed since the system was started.
+MarketInfo(string symbol, int type)\n\n Returns various data about securities listed in the Market Watch window.
+MessageBox(string text, string caption, int flags)\n\n The MessageBox function creates, displays, and operates message box.
+PlaySound(string filename)\n\n Function plays a sound file.
+Print(...)\n\n Prints a message to the experts log.
+SendFTP(string filename, string ftp_path)\n\n Sends the file to the FTP server set in the Tools-&gt;Options-&gt;Publisher tab.
+SendMail(string subject, string some_text)\n\n Sends a message to the e-mail set in the Tools-&gt;Options-&gt;EMail tab.
+SendNotification(string message)\n\n Sends Push notification to mobile terminals whose MetaQuotes IDs are specified on the "Notifications" tab in options window.
+Sleep(int milliseconds)\n\n The Sleep() function suspends execution of the current expert within the specified interval.
+CharToStr(int char_code)\n\n Conversion of the symbol code into a one-character string.
+DoubleToStr(double value, int digits)\n\n Returns text string with the specified numerical value converted into a specified precision format.
+NormalizeDouble(double value, int digits)\n\n Rounds the floating point value to the given precision.
+StrToDouble(string value)\n\n Converts string representation of number to double type (double-precision format with floating point).
+StrToInteger(string value)\n\n Converts string containing the value character representation into a value of the int (integer) type.
+StrToTime(string value)\n\n Converts string in the format "yyyy.mm.dd hh:mi" to datetime type (the amount of seconds that have passed since 1 Jan., 1970).
+TimeToStr(datetime value, int mode)\n\n Converts value containing time in seconds that has passed since January 1, 1970, into a string of "yyyy.mm.dd hh:mi" format.
+IndicatorBuffers(int count)\n\n Allocates memory for buffers used for custom indicator calculations.
+IndicatorCounted()\n\n The function returns the amount of bars not changed after the indicator had been launched last.
+IndicatorDigits(int digits)\n\n Sets precision format (the count of digits after decimal point) to visualize indicator values.
+IndicatorShortName(string name)\n\n Sets the "short" name of a custom indicator to be shown in the DataWindow and in the chart subwindow.
+SetIndexArrow(int index, int code)\n\n Sets an arrow symbol for indicators line of the DRAW_ARROW type.
+SetIndexBuffer(int index, double array[])\n\n Binds the array variable declared at a global level to the custom indicator pre-defined buffer.
+SetIndexDrawBegin(int index, int begin)\n\n Sets the bar number (from the data beginning) from which the drawing of the given indicator line must start.
+SetIndexEmptyValue(int index, double value)\n\n Sets drawing line empty value.
+SetIndexLabel(int index, string text)\n\n Sets drawing line description for showing in the DataWindow and in the tooltip.
+SetIndexShift(int index, int shift)\n\n Sets offset for the drawing line.
+SetIndexStyle(int index, int type, int style, int width, color clr)\n\n Sets the new type, style, width and color for a given indicator line.
+SetLevelStyle(int draw_style, int line_width, color clr)\n\n The function sets a new style, width and color of horizontal levels of indicator to be output in a separate window.
+SetLevelValue(int level, double value)\n\n The function sets a value for a given horizontal level of the indicator to be output in a separate window.
+Day()\n\n Returns the current day of the month, i.e., the day of month of the last known server time.
+DayOfWeek()\n\n Returns the current zero-based day of the week (0-Sunday,1,2,3,4,5,6) of the last known server time.
+DayOfYear()\n\n Returns the current day of the year (1 means 1 January,..,365(6) does 31 December), i.e., the day of year of the last known server time.
+Hour()\n\n Returns the hour (0,1,2,..23) of the last known server time by the moment of the program start (this value will not change within the time of the program execution).
+Minute()\n\n Returns the current minute (0,1,2,..59) of the last known server time by the moment of the program start (this value will not change within the time of the program execution).
+Month()\n\n Returns the current month as number (1-January,2,3,4,5,6,7,8,9,10,11,12), i.e., the number of month of the last known server time.
+Seconds()\n\n Returns the amount of seconds elapsed from the beginning of the current minute of the last known server time by the moment of the program start (this value will not change within the time of the program execution).
+TimeCurrent()\n\n Returns the last known server time (time of incoming of the latest quote) as number of seconds elapsed from 00:00 January 1, 1970.
+TimeDay(datetime date)\n\n Returns day of month (1 - 31) for the specified date.
+TimeDayOfWeek(datetime date)\n\n Returns the zero-based day of week (0 means Sunday,1,2,3,4,5,6) for the specified date.
+TimeDayOfYear(datetime date)\n\n Returns day (1 means 1 January,..,365(6) does 31 December) of year for the specified date.
+TimeHour(datetime time)\n\n Returns the hour for the specified time.
+TimeLocal()\n\n Returns local computer time as number of seconds elapsed from 00:00 January 1, 1970.
+TimeMinute(datetime time)\n\n Returns the minute for the specified time.
+TimeMonth(datetime time)\n\n Returns the month number for the specified time.
+TimeSeconds(datetime time)\n\n Returns the amount of seconds elapsed from the beginning of the minute for the specified time.
+TimeYear(datetime time)\n\n Returns year for the specified date.
+Year()\n\n Returns the current year, i.e., the year of the last known server time.
+FileClose(int handle)\n\n Closes file previously opened by the FileOpen() function.
+FileDelete(string filename)\n\n Removes specified file name.
+FileFlush(int handle)\n\n Flushes all data stored in the file buffer to the disk.
+FileIsEnding(int handle)\n\n Returns logical true if file pointer is at the end of the file, otherwise returns false.
+FileIsLineEnding(int handle)\n\n For CSV file returns logical true if file pointer is at the end of the line, otherwise returns false.
+FileOpen(string filename, int mode, int delimiter)\n\n Opens file for input and/or output.
+FileOpenHistory(string filename, int mode, int delimiter)\n\n Opens file in the current history directory (terminal_directory\history\server_name) or in its subfolders.
+FileReadArray(int handle, object& array[], int start, int count)\n\n Reads the specified amount of elements from the binary file into array.
+FileReadDouble(int handle, int size)\n\n Reads the double-precision number with floating point from the current binary file position.
+FileReadInteger(int handle, int size)\n\n The function reads the integer from the current binary file position.
+FileReadNumber(int handle)\n\n Read the number from the current file position before the delimiter.
+FileReadString(int handle, int length)\n\n The function reads the string from the current file position.
+FileSeek(int handle, int offset, int origin)\n\n The function moves the file pointer to a new position that is an offset, in bytes, from the beginning, the end or the current file position.
+FileSize(int handle)\n\n The function returns file size in bytes.
+FileTell(int handle)\n\n Returns the current position of the file pointer.
+FileWrite(int handle, ...)\n\n The function is intended for writing of data into a CSV file, delimiter being inserted automatically.
+FileWriteArray(int handle, object array[], int start, int count)\n\n The function writes the array to a binary file.
+FileWriteDouble(int handle, double value, int size)\n\n The function writes a double value with floating point to a binary file.
+FileWriteInteger(int handle, int value, int size)\n\n The function writes the integer value to a binary file.
+FileWriteString(int handle, string value, int length)\n\n The function writes the string to a binary file from the current file position.
+GlobalVariableCheck(string name)\n\n Returns TRUE if the global variable exists, otherwise, returns FALSE.
+GlobalVariableDel(string name)\n\n Deletes the global variable.
+GlobalVariableGet(string name)\n\n Returns the value of an existing global variable or 0 if an error occurs.
+GlobalVariableName(int index)\n\n The function returns the name of a global variable by its index in the list of global variables.
+GlobalVariableSet(string name, double value)\n\n Sets a new value of the global variable.
+GlobalVariableSetOnCondition(string name, double value, double check_value)\n\n Sets the new value of the existing global variable if the current value equals to the third parameter check_value.
+GlobalVariablesDeleteAll(string prefix_name)\n\n Deletes global variables.
+GlobalVariablesTotal()\n\n The function returns the total count of global variables.
+MathAbs(double value)\n\n Returns the absolute value (modulus) of the specified numeric value.
+MathArccos(double x)\n\n The MathArccos function returns the arccosine of x within the range 0 to £k (in radians).
+MathArcsin(double x)\n\n The MathArcsin function returns the arcsine of x in the range -£k/2 to £k/2 radians.
+MathArctan(double x)\n\n The MathArctan returns the arctangent of x.
+MathCeil(double x)\n\n The MathCeil function returns a numeric value representing the smallest integer that exceeds or equals to x.
+MathCos(double value)\n\n Returns the cosine of the specified angle.
+MathExp(double d)\n\n Returns the value of e raised to the power of d.
+MathFloor(double x)\n\n The MathFloor function returns a numeric value representing the largest integer that is less than or equal to x.
+MathLog(double x)\n\n The MathLog function returns the natural logarithm of x if successful.
+MathMax(double value1, double value2)\n\n Returns the maximum value of two numeric values.
+MathMin(double value1, double value2)\n\n Returns the minimum value of two numeric values.
+MathMod(double value, double value2)\n\n The function returns the floating-point remainder of division of two numbers.
+MathPow(double base, double exponent)\n\n Returns the value of the base expression raised to the specified power (exponent value).
+MathRand()\n\n The MathRand function returns a pseudorandom integer within the range of 0 to 32767.
+MathRound(double value)\n\n Returns value rounded to the nearest integer of the specified numeric value.
+MathSin(double value)\n\n Returns the sine of the specified angle.
+MathSqrt(double x)\n\n The MathSqrt function returns the square root of x.
+MathSrand(int seed)\n\n The MathSrand() function sets the starting point for generating a series of pseudorandom integers.
+MathTan(double x)\n\n MathTan returns the tangent of x.
+ObjectCreate(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3)\n\n Creation of an object with the specified name, type and initial coordinates in the specified window.
+ObjectDelete(string name)\n\n Deletes object having the specified name.
+ObjectDescription(string name)\n\n Return object description.
+ObjectFind(string name)\n\n Search for an object having the specified name.
+ObjectGet(string name, int index)\n\n The function returns the value of the specified object property.
+ObjectGetFiboDescription(string name, int index)\n\n The function returns the level description of a Fibonacci object.
+ObjectGetShiftByValue(string name, double value)\n\n The function calculates and returns bar index (shift related to the current bar) for the given price.
+ObjectGetValueByShift(string name, int shift)\n\n The function calculates and returns the price value for the specified bar (shift related to the current bar).
+ObjectMove(string name, int point, datetime time1, double price1)\n\n The function moves an object coordinate in the chart.
+ObjectName(int index)\n\n The function returns the object name by its index in the objects list.
+ObjectsDeleteAll(int window, int type)\n\n Removes all objects of the specified type and in the specified sub-window of the chart.
+ObjectSet(string name, int index, double value)\n\n Changes the value of the specified object property.
+ObjectSetFiboDescription(string name, int index, string text)\n\n The function assigns a new description to a level of a Fibonacci object.
+ObjectSetText(string name, string text, int font_size, string font, color text_color)\n\n Changes the object description.
+ObjectsTotal(int type)\n\n Returns total amount of objects of the specified type in the chart.
+ObjectType(string name)\n\n The function returns the object type value.
+StringConcatenate(...)\n\n Forms a string of the data passed and returns it.
+StringFind(string text, string matched_text, int start)\n\n Search for a substring.
+StringGetChar(string text, int pos)\n\n Returns character (code) from the specified position in the string.
+StringLen(string text)\n\n Returns character count in a string.
+StringSetChar(string text, int pos, int value)\n\n Returns the string copy with changed character in the specified position.
+StringSubstr(string text, int start, int length)\n\n Extracts a substring from text string starting from the given position.
+StringTrimLeft(string text)\n\n The function cuts line feed characters, spaces and tabs in the left part of the string.
+StringTrimRight(string text)\n\n The function cuts line feed characters, spaces and tabs in the right part of the string.
+iAC(string symbol, int timeframe, int shift)\n\n Calculates the Bill Williams' Accelerator/Decelerator oscillator.
+iAD(string symbol, int timeframe, int shift)\n\n Calculates the Accumulation/Distribution indicator and returns its value.
+iAlligator(string symbol, int timeframe, int jaw_period, int jaw_shift, int teeth_period, int teeth_shift, int lips_period, int lips_shift, int ma_method, int applied_price, int mode, int shift)\n\n Calculates the Bill Williams' Alligator and returns its value.
+iADX(string symbol, int timeframe, int period, int applied_price, int mode, int shift)\n\n Calculates the Movement directional index and returns its value.
+iATR(string symbol, int timeframe, int period, int shift)\n\n Calculates the Indicator of the average true range and returns its value.
+iAO(string symbol, int timeframe, int shift)\n\n Calculates the Bill Williams' Awesome oscillator and returns its value.
+iBearsPower(string symbol, int timeframe, int period, int applied_price, int shift)\n\n Calculates the Bears Power indicator and returns its value.
+iBands(string symbol, int timeframe, int period, int deviation, int bands_shift, int applied_price, int mode, int shift)\n\n Calculates the Bollinger bands indicator and returns its value.
+iBandsOnArray(double array[], int total, int period, int deviation, int bands_shift, int mode, int shift)\n\n Calculation of the Bollinger Bands indicator on data stored in a numeric array.
+iBullsPower(string symbol, int timeframe, int period, int applied_price, int shift)\n\n Calculates the Bulls Power indicator and returns its value.
+iCCI(string symbol, int timeframe, int period, int applied_price, int shift)\n\n Calculates the Commodity channel index and returns its value.
+iCCIOnArray(double array[], int total, int period, int shift)\n\n Calculation of the Commodity Channel Index on data stored in a numeric array.
+iCustom(string symbol, int timeframe, string name, ..., int mode, int shift)\n\n Calculates the specified custom indicator and returns its value.
+iDeMarker(string symbol, int timeframe, int period, int shift)\n\n Calculates the DeMarker indicator and returns its value.
+iEnvelopes(string symbol, int timeframe, int ma_period, int ma_method, int ma_shift, int applied_price, double deviation, int mode, int shift)\n\n Calculates the Envelopes indicator and returns its value.
+iEnvelopesOnArray(double array[], int total, int ma_period, int ma_method, int ma_shift, double deviation, int mode, int shift)\n\n Calculation of the Envelopes indicator on data stored in a numeric array.
+iForce(string symbol, int timeframe, int period, int ma_method, int applied_price, int shift)\n\n Calculates the Force index and returns its value.
+iFractals(string symbol, int timeframe, int mode, int shift)\n\n Calculates the Fractals and returns its value.
+iGator(string symbol, int timeframe, int jaw_period, int jaw_shift, int teeth_period, int teeth_shift, int lips_period, int lips_shift, int ma_method, int applied_price, int mode, int shift)\n\n Gator oscillator calculation.
+iIchimoku(string symbol, int timeframe, int tenkan_sen, int kijun_sen, int senkou_span_b, int mode, int shift)\n\n Calculates the Ichimoku Kinko Hyo and returns its value.
+iBWMFI(string symbol, int timeframe, int shift)\n\n Calculates the Bill Williams Market Facilitation index and returns its value.
+iMomentum(string symbol, int timeframe, int period, int applied_price, int shift)\n\n Calculates the Momentum indicator and returns its value.
+iMomentumOnArray(double array[], int total, int period, int shift)\n\n Calculation of the Momentum indicator on data stored in a numeric array.
+iMFI(string symbol, int timeframe, int period, int shift)\n\n Calculates the Money flow index and returns its value.
+iMA(string symbol, int timeframe, int period, int ma_shift, int ma_method, int applied_price, int shift)\n\n Calculates the Moving average indicator and returns its value.
+iMAOnArray(double array[], int total, int period, int ma_shift, int ma_method, int shift)\n\n Calculation of the Moving Average on data stored in a numeric array.
+iOsMA(string symbol, int timeframe, int fast_ema_period, int slow_ema_period, int signal_period, int applied_price, int shift)\n\n Calculates the Moving Average of Oscillator and returns its value.
+iMACD(string symbol, int timeframe, int fast_ema_period, int slow_ema_period, int signal_period, int applied_price, int mode, int shift)\n\n Calculates the Moving averages convergence/divergence and returns its value.
+iOBV(string symbol, int timeframe, int applied_price, int shift)\n\n Calculates the On Balance Volume indicator and returns its value.
+iSAR(string symbol, int timeframe, double step, double maximum, int shift)\n\n Calculates the Parabolic Stop and Reverse system and returns its value.
+iRSI(string symbol, int timeframe, int period, int applied_price, int shift)\n\n Calculates the Relative strength index and returns its value.
+iRSIOnArray(double array[], int total, int period, int shift)\n\n Calculation of the Relative Strength Index on data stored in a numeric array.
+iRVI(string symbol, int timeframe, int period, int mode, int shift)\n\n Calculates the Relative Vigor index and returns its value.
+iStdDev(string symbol, int timeframe, int ma_period, int ma_shift, int ma_method, int applied_price, int shift)\n\n Calculates the Standard Deviation indicator and returns its value.
+iStdDevOnArray(double array[], int total, int ma_period, int ma_shift, int ma_method, int shift)\n\n Calculation of the Standard Deviation indicator on data stored in a numeric array.
+iStochastic(string symbol, int timeframe, int %Kperiod, int %Dperiod, int slowing, int method, int price_field, int mode, int shift)\n\n Calculates the Stochastic oscillator and returns its value.
+iWPR(string symbol, int timeframe, int period, int shift)\n\n Calculates the Larry William's percent range indicator and returns its value.
+iBars(string symbol, int timeframe)\n\n Returns the number of bars on the specified chart.
+iBarShift(string symbol, int timeframe, datetime time, bool exact)\n\n Search for bar by open time.
+iClose(string symbol, int timeframe, int shift)\n\n Returns Close value for the bar of indicated symbol with timeframe and shift.
+iHigh(string symbol, int timeframe, int shift)\n\n Returns High value for the bar of indicated symbol with timeframe and shift.
+iHighest(string symbol, int timeframe, int type, int count, int start)\n\n Returns the shift of the maximum value over a specific number of periods depending on type.
+iLow(string symbol, int timeframe, int shift)\n\n Returns Low value for the bar of indicated symbol with timeframe and shift.
+iLowest(string symbol, int timeframe, int type, int count, int start)\n\n Returns the shift of the least value over a specific number of periods depending on type.
+iOpen(string symbol, int timeframe, int shift)\n\n Returns Open value for the bar of indicated symbol with timeframe and shift.
+iTime(string symbol, int timeframe, int shift)\n\n Returns Time value for the bar of indicated symbol with timeframe and shift.
+iVolume(string symbol, int timeframe, int shift)\n\n Returns Tick Volume value for the bar of indicated symbol with timeframe and shift.
+OrderClose(int ticket, double lots, double price, int slippage, color Color)\n\n Closes opened order.
+OrderCloseBy(int ticket, int opposite, color Color)\n\n Closes an opened order by another opposite opened order.
+OrderClosePrice()\n\n Returns close price for the currently selected order.
+OrderCloseTime()\n\n Returns close time for the currently selected order.
+OrderComment()\n\n Returns comment for the selected order.
+OrderCommission()\n\n Returns calculated commission for the currently selected order.
+OrderDelete(int ticket, color Color)\n\n Deletes previously opened pending order.
+OrderExpiration()\n\n Returns expiration date for the selected pending order.
+OrderLots()\n\n Returns amount of lots for the selected order.
+OrderMagicNumber()\n\n Returns an identifying (magic) number for the currently selected order.
+OrderModify(int ticket, double price, double stoploss, double takeprofit, datetime expiration, color arrow_color)\n\n Modification of characteristics for the previously opened position or pending orders.
+OrderOpenPrice()\n\n Returns open price for the currently selected order.
+OrderOpenTime()\n\n Returns open time for the currently selected order.
+OrderPrint()\n\n Prints information about the selected order in the log in the following format:ticket number;open time;trade operation;amount of lots;open price;Stop Loss;Take Profit;close time;close price;commission;swap;profit;comment;magic number;pending order expiration date. Order must be selected by the OrderSelect() function.
+OrderProfit()\n\n Returns the net profit value (without swaps or commissions) for the selected order.
+OrderSelect(int index, int select, int pool)\n\n The function selects an order for further processing.
+OrderSend(string symbol, int cmd, double volume, double price, int slippage, double stoploss, double takeprofit, string comment, int magic, datetime expiration, color arrow_color)\n\n The main function used to open a position or place a pending order.
+OrdersHistoryTotal()\n\n Returns the number of closed orders in the account history loaded into the terminal.
+OrderStopLoss()\n\n Returns stop loss value for the currently selected order.
+OrdersTotal()\n\n Returns market and pending orders count.
+OrderSwap()\n\n Returns swap value for the currently selected order.
+OrderSymbol()\n\n Returns the order symbol value for selected order.
+OrderTakeProfit()\n\n Returns take profit value for the currently selected order.
+OrderTicket()\n\n Returns ticket number for the currently selected order.
+OrderType()\n\n Returns order operation type for the currently selected order.
+HideTestIndicators(bool hide)\n\n The function sets a flag hiding indicators called by the Expert Advisor.
+Period()\n\n Returns the amount of minutes determining the used period (chart timeframe).
+RefreshRates()\n\n Refreshing of data in pre-defined variables and series arrays.
+Symbol()\n\n Returns a text string with the name of the current financial instrument.
+WindowBarsPerChart()\n\n Function returns the amount of bars visible on the chart.
+WindowExpertName()\n\n Returns name of the executed expert, script, custom indicator, or library, depending on the MQL4 program, from which this function has been called.
+WindowFind(string name)\n\n If indicator with name was found, the function returns the window index containing this specified indicator, otherwise it returns -1.
+WindowFirstVisibleBar()\n\n The function returns the first visible bar number in the current chart window.
+WindowHandle(string symbol, int timeframe)\n\n Returns the system window handler containing the given chart.
+WindowIsVisible(int index)\n\n Returns TRUE if the chart subwindow is visible, otherwise returns FALSE.
+WindowOnDropped()\n\n Returns window index where expert, custom indicator or script was dropped.
+WindowPriceMax(int index)\n\n Returns maximal value of the vertical scale of the specified subwindow of the current chart (0-main chart window, the indicators' subwindows are numbered starting from 1).
+WindowPriceMin(int index)\n\n Returns minimal value of the vertical scale of the specified subwindow of the current chart (0-main chart window, the indicators' subwindows are numbered starting from 1).
+WindowPriceOnDropped()\n\n Returns the price part of the chart point where expert or script was dropped.
+WindowRedraw()\n\n Redraws the current chart forcedly.
+WindowScreenShot(string filename, int size_x, int size_y, int start_bar, int chart_scale, int chart_mode)\n\n Saves current chart screen shot as a GIF file.
+WindowTimeOnDropped()\n\n Returns the time part of the chart point where expert or script was dropped.
+WindowsTotal()\n\n Returns count of indicator windows on the chart (including main chart).
+WindowXOnDropped()\n\n Returns the value at X axis in pixels for the chart window client area point at which the expert or script was dropped.
+WindowYOnDropped()\n\n Returns the value at Y axis in pixels for the chart window client area point at which the expert or script was dropped.

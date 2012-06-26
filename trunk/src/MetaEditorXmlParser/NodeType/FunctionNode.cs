@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace MetaEditorXmlParser.NodeType
@@ -17,18 +18,22 @@ namespace MetaEditorXmlParser.NodeType
 
     public string ToSciteApiString()
     {
-      Parameters = ExtractParameter(Element);
-      string desc = Content.Substring(0, Content.IndexOf('.') + 1); // get first sentenece
+        var content = Regex.Split(Content, @"\.(([\s\n]+)|(\<br\s*/*\>))");
+      string desc = content[0] + "."; // get first sentenece
+        desc = Regex.Replace(desc, @"<[^>]*>", String.Empty); // strip out html tags
+        desc = Regex.Replace(desc, @"\s+", " "); // replace multiple white space to 1
+        desc = desc.Replace("\n", " ");
       string s = (Name.IndexOf(' ') > 0 ? Name.Remove(Name.IndexOf(' ')) : Name) + "(";
       if (Parameters != null)
-        s = Parameters.Aggregate(s, (current, p) => current + (p.Type + (!string.IsNullOrWhiteSpace(p.Name) ? " " + p.Name.Replace("<nobr>", "").Replace("</nobr>", "") : "") + ", "));
-      return s.TrimEnd().TrimEnd(',') + ")\\n\\n" + desc.Trim().Replace("\n", " ");
+          s = Parameters.Aggregate(s, (current, p) => current + (p.Type.Replace("&amp;", "&") + (!string.IsNullOrWhiteSpace(p.Name) ? " " + p.Name.Replace("<nobr>", "").Replace("</nobr>", "") : "") + ", "));
+      return s.TrimEnd().TrimEnd(',') + ")\\n\\n" + desc;
     }
 
     protected override void Parse(XElement element)
     {
       Name = element.Element("caption").Value.Replace("()", "");
       ReturnType = element.Element("type").Value;
+      Parameters = ExtractParameter(Element);
     }
   }
 }
