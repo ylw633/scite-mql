@@ -27,7 +27,9 @@ namespace MetaEditorXmlParser
       var elements = from c in XElement.Load("metaeditor.xml").Elements() select c;
       foreach (var e in elements)
       {
-          ProcessNode(e, Root);
+          var b = ProcessNode(e);
+          if (b != null)
+              Root.Children.Add(b);
       }
     }
 
@@ -45,34 +47,48 @@ namespace MetaEditorXmlParser
         ScribeHhk(directory);
     }
 
-    private void ProcessNode(XElement element, BaseNode parent)
+    private BaseNode ProcessNode(XElement element)
     {
       string name = element.Name.ToString();
+      
       switch (name)
       {
         case "content":
         case "example":
-          return;
+        case "tag":
+        case "caption":
+        case "type":
+        case "name":
+          case "keywords":
+          return null;
 
         case "styles":
           StyleNode = element;
-          return;      
+          return null;
+              
+          case "parameter":
+          element = XmlCompliantConverter.ParseNameValueToElement(element);
+          return null;
       }
-
       element = XmlCompliantConverter.ParseNameValueToElement(element);
-      BaseNode node = BaseNode.GetNode(element);
+        var children = new List<BaseNode>();
+      foreach (var e in element.Elements())
+      {
+          var n = ProcessNode(e);
+          if (n != null) children.Add(n);
+      }
+        BaseNode node = BaseNode.GetNode(element);
       if (!string.IsNullOrEmpty(node.Key)) // it's a page
       {
-          if (parent != null)
-              parent.Children.Add(node);
+          node.Children = children;
         PageNodes.Add(node);
       }
-      foreach (var e in element.Elements())
-          ProcessNode(e, node);
 
       if (node.Keywords != null)
         foreach (var s in node.Keywords)
           Constants.Add(s);
+
+      return node;
     }
 
     private string ScribeHtml(BaseNode node, string directory)
@@ -99,7 +115,6 @@ namespace MetaEditorXmlParser
         using (StreamWriter sw = new StreamWriter(Path.Combine(directory, "mql.hhp"), false, Encoding.UTF8))
         {
             sw.WriteLine(@"[OPTIONS]
-[OPTIONS]
 Compatibility=1.1 Or later
 Binary TOC=Yes
 Default window=Main

@@ -13,17 +13,33 @@ namespace MetaEditorXmlParser
     {
       Regex re = new Regex(@"([a-zA-Z_\.]+)=(.+)\n");
 
-      string innerText = element.InnerText();
-      int idxFirstTag = innerText.Length;
-      if (element.HasElements)
-          idxFirstTag = innerText.IndexOf("<" + element.Elements().ElementAt(0).Name);
-
-      //if (idxFirstTag > 0)
+      if (element.Name == "parameter")
       {
-        var ms = re.Matches(innerText.Substring(0, idxFirstTag));
-        foreach (Match m in ms)
-          element.Add(new XElement(m.Groups[1].Value.Trim(), m.Groups[2].Value.Trim()));
+          var ms = re.Matches(element.InnerText());
+          foreach (Match m in ms)
+              element.Add(new XElement(m.Groups[1].Value.Trim(), m.Groups[2].Value.Trim()));
       }
+      else
+      {
+          foreach (var n in element.Nodes())
+              if (n.NodeType == System.Xml.XmlNodeType.Text)
+              {
+                  var ms = re.Matches(n.ToString());
+                  foreach (Match m in ms)
+                      element.Add(new XElement(m.Groups[1].Value.Trim(), m.Groups[2].Value.Trim()));
+              }
+      }
+        //string innerText = element.InnerText();
+      //int idxFirstTag = innerText.Length;
+      //if (element.HasElements && element.Name != "parameter") // parameter sometimes will have "<nobr>" tag in it
+      //    idxFirstTag = innerText.IndexOf("<" + element.Elements().ElementAt(0).Name);
+
+      ////if (idxFirstTag > 0)
+      //{
+      //  var ms = re.Matches(innerText.Substring(0, idxFirstTag));
+      //  foreach (Match m in ms)
+      //    element.Add(new XElement(m.Groups[1].Value.Trim(), m.Groups[2].Value.Trim()));
+      //}
       return element;
     }
   }

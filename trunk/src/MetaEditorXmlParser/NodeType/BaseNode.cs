@@ -35,7 +35,7 @@ namespace MetaEditorXmlParser.NodeType
     public string Key { get { return Element == null || Element.Element("tag") == null ? null : Element.Element("tag").Value; } }
     public string Title { get { return Element == null || Element.Element("caption") == null ? null : Element.Element("caption").Value; } }
     public IList<string> Keywords { get; protected set; }
-    public IList<BaseNode> Children { get; protected set; }
+      public IList<BaseNode> Children { get; set; }
 
     public BaseNode(XElement element)
     {
@@ -63,17 +63,20 @@ namespace MetaEditorXmlParser.NodeType
     public virtual string ToHtml()
     {
       string html = Content;
-      var pm = ExtractParameter(Element);
       if (Element.Element("type") != null)
       {
-        string type = Element.Element("type").Value, name = Element.Element("caption").Value.TrimEnd('(', ')');
+        string type = Element.Element("type").Value,
+            name = (Element.Element("caption").Value.IndexOf(' ') > 0 ? Element.Element("caption").Value.Remove(Element.Element("caption").Value.IndexOf(' ')) : Element.Element("caption").Value).TrimEnd('(', ')');
         string declaration = @"<table class=""docvar"" border=""0"" cellpadding=""0"" cellspacing=""0""><tr valign=top><td><font color=blue>" + type + @"</font> <span class=""docfunc"">" + name + @"</span>";
         if (this is FunctionNode)
         {
             declaration += @"(</td><td>";
-            if (pm != null)
-                declaration = pm.Aggregate(declaration, (c, p) => c + (@"<td><font color=""blue"">" + p.Type + @"</font>&nbsp" + p.Name + ", "));
-            declaration = declaration.TrimEnd(' ', ',') + @")</td>";
+            if (((FunctionNode)this).Parameters != null)
+            {
+                declaration = ((FunctionNode)this).Parameters.Aggregate(declaration, (c, p) => c + ((string.IsNullOrEmpty(p.Name) ? p.Type : @"<td><font color=""blue"">" + p.Type + @"</font>&nbsp;" + p.Name) + ", &nbsp;"));
+                declaration = declaration.Remove(declaration.LastIndexOf(", &nbsp;"));
+            }
+            declaration += @")</td>";
         }
         else
         {
@@ -84,10 +87,10 @@ namespace MetaEditorXmlParser.NodeType
         html = declaration + html;
       }
 
-      if (pm != null)
+      if (this is FunctionNode && ((FunctionNode)this).Parameters != null)
       {
         string table = @"<div class=""doctabhdr"">Parameters:</div><table border=""0"" class=""docparams"" cellpadding=""2"" cellspacing=""2"">";
-        table = pm.Aggregate(table, (c, p) => c + (@"<tr><td valign=""top""><b>" + p.Name + @"</b></td><td nowrap valign=""top"">&nbsp; - &nbsp;</td><td width=""100%"">" + p.Description + @"</td></tr>"));
+          table = ((FunctionNode)this).Parameters.Aggregate(table, (c, p) => c + (@"<tr><td valign=""top""><b>" + (string.IsNullOrEmpty(p.Name) ? p.Type : p.Name) + @"</b></td><td nowrap valign=""top"">&nbsp; - &nbsp;</td><td width=""100%"">" + p.Description + @"</td></tr>"));
         table += "</table>";
 
         html += table;
