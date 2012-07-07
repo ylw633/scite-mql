@@ -25,12 +25,13 @@ namespace MetaEditorXmlParser.NodeType
         desc = desc.Replace("\n", " ");
       string s = (Name.IndexOf(' ') > 0 ? Name.Remove(Name.IndexOf(' ')) : Name) + "(";
       if (Parameters != null)
-          s = Parameters.Aggregate(s, (current, p) => current + (p.Type.Replace("&amp;", "&") + (!string.IsNullOrWhiteSpace(p.Name) ? " " + p.Name.Replace("<nobr>", "").Replace("</nobr>", "") : "") + ", "));
+          s = Parameters.Aggregate(s, (current, p) => current + (p.Type.Replace("&amp;", "&") + ((!string.IsNullOrWhiteSpace(p.Name) ? " " + p.Name.Replace("<nobr>", "").Replace("</nobr>", "") : "") + (string.IsNullOrEmpty(p.DefaultValue) ? "" : "=" + p.DefaultValue)) + ", "));
       return s.TrimEnd().TrimEnd(',') + ")\\n\\n" + desc;
     }
 
     protected override void Parse(XElement element)
     {
+        base.Parse(element);
       Name = element.Element("caption").Value.Replace("()", "");
       ReturnType = element.Element("type").Value;
       Parameters = ExtractParameter(Element);

@@ -12,6 +12,7 @@ namespace MetaEditorXmlParser.NodeType
     public string Name { get; set; }
     public string Type { get; set; }
     public string Description { get; set; }
+    public string DefaultValue { get; set; }
 
     public Parameter(string name, string type, string description)
     {
@@ -25,6 +26,7 @@ namespace MetaEditorXmlParser.NodeType
       Name = element.Element("name") != null ? element.Element("name").Value : string.Empty;
       Type = element.Element("type") != null ? element.Element("type").Value : string.Empty;
       Description = element.Element("description") != null ? element.Element("description").Value : string.Empty;
+        DefaultValue = element.Element("def_value") != null ? element.Element("def_value").Value : string.Empty;
     }
   }
 
@@ -73,7 +75,7 @@ namespace MetaEditorXmlParser.NodeType
             declaration += @"(</td><td>";
             if (((FunctionNode)this).Parameters != null)
             {
-                declaration = ((FunctionNode)this).Parameters.Aggregate(declaration, (c, p) => c + ((string.IsNullOrEmpty(p.Name) ? p.Type : @"<td><font color=""blue"">" + p.Type + @"</font>&nbsp;" + p.Name) + ", &nbsp;"));
+                declaration = ((FunctionNode)this).Parameters.Aggregate(declaration, (c, p) => c + ((string.IsNullOrEmpty(p.Name) ? p.Type : @"<td><font color=""blue"">" + p.Type + @"</font>&nbsp;" + p.Name + (string.IsNullOrEmpty(p.DefaultValue) ? "" : "=" + p.DefaultValue)) + ", &nbsp;"));
                 declaration = declaration.Remove(declaration.LastIndexOf(", &nbsp;"));
             }
             declaration += @")</td>";

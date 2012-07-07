@@ -13,7 +13,7 @@ namespace MetaEditorXmlParser
     public XElement StyleNode { get; private set; }
     public IList<BaseNode> PageNodes { get; private set; }
     public IList<string> Constants { get; private set; }
-    private BaseNode Root { get; set; }
+    public BaseNode Root { get; set; }
 
     public DataConstructor()
     {
@@ -86,7 +86,8 @@ namespace MetaEditorXmlParser
 
       if (node.Keywords != null)
         foreach (var s in node.Keywords)
-          Constants.Add(s);
+            if (!Constants.Contains(s))
+                Constants.Add(s);
 
       return node;
     }

@@ -1483,7 +1483,7 @@ It can be any of the following values:</p>
     <text>
       tag=constants_timeframes
       caption=Timeframes
-      keywords=;PERIOD_M1;PERIOD_M5;PERIOD_M15;PERIOD_H1;PERIOD_H4;PERIOD_D1;PERIOD_W1;PERIOD_MN1;
+      keywords=;PERIOD_M1;PERIOD_M5;PERIOD_M15;PERIOD_M30;PERIOD_H1;PERIOD_H4;PERIOD_D1;PERIOD_W1;PERIOD_MN1;
       <content>
 <p>Timeframe of the chart (chart period). It can be any of the following values:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
