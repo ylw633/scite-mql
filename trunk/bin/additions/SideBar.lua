@@ -1,65 +1,77 @@
 --[[--------------------------------------------------
 SideBar.lua
-Authors: Frank Wunderlich, mozers? VladVRO, frs, BioInfo, Tymur Gubayev KimHa
-version 1.10.3
+Authors: Frank Wunderlich, mozers™, VladVRO, frs, BioInfo, Tymur Gubayev, ur4ltz
+Version 1.27.13
 ------------------------------------------------------
-  Note: Needed gui.dll <http://scite-ru.googlecode.com/svn/trunk/lualib/gui/>
+  Note: Require gui.dll <http://scite-ru.googlecode.com/hg/lualib/gui/>
+               lpeg.dll <http://scite-ru.googlecode.com/hg/lualib/lpeg/>
+              shell.dll <http://scite-ru.googlecode.com/hg/lualib/shell/>
+             COMMON.lua (function GetCurrentWord)
+             eventmanager.lua (function AddEventHandler)
+
   Connection:
    In file SciTEStartup.lua add a line:
-	  dofile (props["SciteDefaultHome"].."\\tools\\SideBar.lua")
-   Set in a file .properties:
-	  command.checked.17.*=$(sidebar.show)
-	  command.name.17.*=SideBar
-	  command.17.*=SideBar_ShowHide
-	  command.mode.17.*=subsystem:lua,savebefore:non
+      dofile (props["SciteDefaultHome"].."\\tools\\SideBar.lua")
 
-	# Set show(1) or hide(0) to SciTE start
-	sidebar.show=1
-	# Set default settings for Functions/Procedures List
-	sidebar.functions.flags=1
-	sidebar.functions.params=1
---]]--------------------------------------------------n
--- you can choose to make it a stand-alone window; just uncomment this line:
-local win = false
--- local _DEBUG = true
+   Set in a file .properties:
+    command.checked.17.*=$(sidebar.show)
+    command.name.17.*=SideBar
+    command.17.*=SideBar_ShowHide
+    command.mode.17.*=subsystem:lua,savebefore:no
+
+    # Set window(1) or pane(0) (default = 0)
+    sidebar.win=1
+
+    # Set show(1) or hide(0) to SciTE start
+    sidebar.show=1
+
+    # Set sidebar width and position
+    sidebar.width=250 (default = 230)
+    sidebar.position=left or right (default = right)
+
+    # Set default settings for Functions/Procedures List
+    sidebar.functions.flags=1
+    sidebar.functions.params=1
+
+    # Set abbrev preview 1-calltip, 0-annotation(default)
+    sidebar.abbrev.calltip=1
+
+    # Set annotation style
+    style.*.255=fore:#808080,back:#FEFEFE
+--]]--------------------------------------------------
+require 'gui'
+require 'lpeg'
+require 'shell'
+
+-- local _DEBUG = true --включает вывод отладочной информации
+
+-- you can choose to make SideBar a stand-alone window
+local win = tonumber(props['sidebar.win']) == 1
+-- Переключатель способа предпросмотра аббревиатур: true = calltip, false = annotation
+local Abbreviations_USECALLTIPS = tonumber(props['sidebar.abbrev.calltip']) == 1
+-- отображение флагов/параметров по умолчанию:
 local _show_flags = tonumber(props['sidebar.functions.flags']) == 1
 local _show_params = tonumber(props['sidebar.functions.params']) == 1
 
---ȫ�� abbrev list
-local abbrev_list = {}
---ȫ��tree nodes
-local tree_nodes  = {}
-local file_mask = '*.*'
-
 local tab_index = 0
-local panel_width = 200
-local win_height = props['position.height']
-if win_height == '' then win_height = 600 end
+local panel_width = tonumber(props['sidebar.width']) or 216
+local win_height = tonumber(props['position.height']) or 600
+local sidebar_position = props['sidebar.position']=='left' and 'left' or 'right'
 
-local style   = props['style.*.32']
-local foreground = props['sidebar.foreground'];
-local background = props['sidebar.background'];
-if background == '' then
-	background = style:match('back:(#%x%x%x%x%x%x)')
-end
-if background ~= '' then
-	if foreground == '' then
-		foreground = style:match('fore:(#%x%x%x%x%x%x)')
-	end
-	if foreground == nil then foreground = '' end
-end
+local style = props['style.*.32']
+local colorback = style:match('back:(#%x%x%x%x%x%x)')
+local colorfore = style:match('fore:(#%x%x%x%x%x%x)') or '#000000'
+
 ----------------------------------------------------------
 -- Common functions
 ----------------------------------------------------------
 local function ReplaceWithoutCase(text, s_find, s_rep)
-	local i, j = 1
-	local replaced = nil
-	repeat
-		i, j = text:lower():find(s_find:lower(), j, true)
-		if j == nil then return text, replaced end
-		text = text:sub(1, i-1)..s_rep..text:sub(j+1)
-		replaced = true
-	until false
+	s_find = string.gsub(s_find, '.', function(ch)
+		local c,C = ch:lower(), ch:upper()
+		return c~=C and '['..c..C..']' -- i.e. ch was a letter
+				or '%'..ch -- not a letter, so escape it
+	end)
+	return string.gsub(text, s_find, s_rep)
 end
 
 local function ShowCompactedLine(line_num)
@@ -67,23 +79,11 @@ local function ShowCompactedLine(line_num)
 		while editor.FoldExpanded[ln] do ln = ln-1 end
 		return ln
 	end
-	while not editor.LineVisible[line_num] do
+	while not editor.LineVisible[line_num] do 
 		local x = GetFoldLine(line_num)
 		editor:ToggleFold(x)
 		line_num = x - 1
 	end
-end
-
-local function OpenFile(filename)
-	if filename:match(".session$") ~= nil then
-		filename = filename:gsub('\\','\\\\')
-		--scite.Perform ("loadsession:"..filename)
-	else
-		--�������⣬��Ҫת�����ܴ������ļ���/�ļ���
-		filename = charset_iconv('','utf-8',filename)
-		scite.Open(filename)
-	end
-	gui.pass_focus()
 end
 
 if _DEBUG then
@@ -98,8 +98,8 @@ local nametotime = {} -- maps names to starttimes
 		if nametotime[name] then
 			local d = os.clock() - nametotime[name]
 			print(name,('%.5fs'):format(d),...)
+			return d
 		end
-		return d
 	end -- _DEBUG.timer
 
 	_DEBUG.timerstop = function (name,...)
@@ -117,148 +117,156 @@ end
 ----------------------------------------------------------
 -- Create panels
 ----------------------------------------------------------
-tab0 = gui.panel(panel_width + 18)
+local tab0 = gui.panel(panel_width)
 
 local memo_path = gui.memo()
 tab0:add(memo_path, "top", 22)
+if colorback then memo_path:set_memo_colour('', colorback) end
 
 local list_dir_height = win_height/3
-if list_dir_height <= 0 then list_dir_height = 320 end
+if list_dir_height <= 0 then list_dir_height = 200 end
+local list_favorites = gui.list(true)
+list_favorites:add_column("Favorites", 600)
+tab0:add(list_favorites, "bottom", list_dir_height)
+if colorback then list_favorites:set_list_colour(colorfore,colorback) end
 
-local list_functions = gui.list(true)
-list_functions:add_column("Functions/Procedures", 400)
-tab0:add(list_functions, "bottom", list_dir_height)
-if background then list_functions:set_list_colour(foreground,background) end
-
-local list_dir = gui.list()
+local list_dir = gui.list(false,false)
 tab0:client(list_dir)
-if background then list_dir:set_list_colour(foreground,background) end
+if colorback then list_dir:set_list_colour(colorfore,colorback) end
 
-tab0:context_menu {
-	'New File\tCtrl+Alt+N|FileMan_NewFile',
+list_dir:context_menu {
 	'Change Dir|FileMan_ChangeDir',
-	'', -- separator
-	'Refresh|FileMan_Refresh',
 	'Show All|FileMan_MaskAllFiles',
 	'Only current ext|FileMan_MaskOnlyCurrentExt',
+	'', -- separator
+	'Open with SciTE|FileMan_OpenSelectedItems',
+	'Execute|FileMan_FileExec',
+	'Exec with Params|FileMan_FileExecWithParams',
 	'', -- separator
 	'Copy to...|FileMan_FileCopy',
 	'Move to...|FileMan_FileMove',
 	'Rename|FileMan_FileRename',
-	'Delete\tDelete|FileMan_FileDelete',
+	'Delete\tDel|FileMan_FileDelete',
 	'', -- separator
-	--'Execute|FileMan_FileExec',
-	--'Exec with Params|FileMan_FileExecWithParams',
-	'Sort by Order|Functions_SortByOrder',
-	'Sort by Name|Functions_SortByName',
-	--'', -- separator
-	'Show/Hide Flags|Functions_ToggleFlags',
-	'Show/Hide Parameters|Functions_ToggleParams',
-	'', -- separator
-	'Hide SideBar\tCtrl+0|SideBar_ShowHide',
+	'Add to Favorites\tIns|Favorites_AddFile',
+}
+
+list_favorites:context_menu {
+	'Add active buffer|Favorites_AddCurrentBuffer',
+	'Delete item\tDel|Favorites_DeleteItem',
 }
 -------------------------
-tab1 = gui.panel(panel_width + 18)
-local list_project = gui.tree(true)
-tab1:client(list_project)
-if background then list_project:set_tree_colour(foreground,background) end
+local tab1 = gui.panel(panel_width)
 
-tab1:context_menu {
-	'Open Dir As Project|Open_Project_Dir',
-	'Refresh...|Project_Refresh_Tree',
-	'New File|Project_NewFile',
-	'Rebuild Tags|Project_Build_Tags',
-	'',
-	'SVN Update ��|SVN_Update',
-	'SVN Commit ��|SVN_Commit',
-	'SVN Add ����|SVN_Add',
-	'',
-	'Hide SideBar|SideBar_ShowHide',
+local list_func_height = win_height/3
+if list_func_height <= 0 then list_func_height = 200 end
+local list_bookmarks = gui.list(true)
+list_bookmarks:add_column("@", 24)
+list_bookmarks:add_column("Bookmarks", 600)
+tab1:add(list_bookmarks, "bottom", list_func_height)
+if colorback then list_bookmarks:set_list_colour(colorfore,colorback) end
+
+local list_func = gui.list(true)
+list_func:add_column("Functions/Procedures", 600)
+tab1:client(list_func)
+if colorback then list_func:set_list_colour(colorfore,colorback) end
+
+list_func:context_menu {
+	'Sort by Order|Functions_SortByOrder',
+	'Sort by Name|Functions_SortByName',
+	'Show/Hide Flags|Functions_ToggleFlags',
+	'Show/Hide Parameters|Functions_ToggleParams',
 }
+-------------------------
+local tab2 = gui.panel(panel_width)
 
-------------------------
-
-tab2 = gui.panel(panel_width + 18)
 local list_abbrev = gui.list(true)
 list_abbrev:add_column("Abbrev", 60)
 list_abbrev:add_column("Expansion", 600)
 tab2:client(list_abbrev)
-if background then list_abbrev:set_list_colour(foreground,background) end
-
-tab2:context_menu {
-	'Edit Abbrev|Edit_Abbrev_File',
-	'',
-	'Hide SideBar|SideBar_ShowHide',
-}
+if colorback then list_abbrev:set_list_colour(colorfore,colorback) end
 
 -------------------------
 local win_parent
 if win then
 	win_parent = gui.window "Side Bar"
+	win_parent:size(panel_width + 24, 600)
+	win_parent:on_close(function() props['sidebar.show']=0 end)
 else
 	win_parent = gui.panel(panel_width)
 end
 
 local tabs = gui.tabbar(win_parent)
-tabs:add_tab("Files", tab0)
-tabs:add_tab("Project", tab1)
+tabs:add_tab("FileMan", tab0)
+tabs:add_tab("Func/Bmk", tab1)
 tabs:add_tab("Abbrev", tab2)
 win_parent:client(tab2)
 win_parent:client(tab1)
 win_parent:client(tab0)
 
-if tonumber(props['sidebar.show'])==1 then
-	local position = 'right'
-	if props['sidebar.position'] ~= nil then
-		position = props['sidebar.position'];
-	end
-	if win then
-		win_parent:size(panel_width + 24, 600)
-		win_parent:show()
-	else
-		gui.set_panel(win_parent,position)
-	end
-end
 ----------------------------------------------------------
 -- tab0:memo_path   Path and Mask
 ----------------------------------------------------------
 local current_path = ''
+local file_mask = '*.*'
 
 local function FileMan_ShowPath()
-	local rtf = [[{\rtf\ansi\ansicpg1251{\fonttbl{\f0\fcharset65001 Arial;}}{\colortbl;\red0\green0\blue255;\red255\green0\blue0;}\f0\fs16]]
+	local rtf = [[{\rtf{\fonttbl{\f0\fcharset204 Helv;}}{\colortbl;\red0\green0\blue255;\red255\green0\blue0;}\f0\fs16]]
 	local path = '\\cf1'..current_path:gsub('\\', '\\\\')
 	local mask = '\\cf2'..file_mask..'}'
 	memo_path:set_text(rtf..path..mask)
 end
 
+memo_path:on_key(function(key)
+	if key == 13 then
+		local new_path = memo_path:get_text()
+		if new_path ~= '' then
+			new_path = new_path:match('[^*]+')..'\\'
+			local is_folder = gui.files(new_path..'*', true)
+			if is_folder then
+				current_path = new_path
+			end
+		end
+		FileMan_ListFILL()
+		return true
+	end
+end)
+
 ----------------------------------------------------------
 -- tab0:list_dir   File Manager
 ----------------------------------------------------------
-local function FileMan_ListFILL()
+function FileMan_ListFILL()
 	if current_path == '' then return end
 	local folders = gui.files(current_path..'*', true)
 	if not folders then return end
-	list_dir:clear()
-	list_dir:add_item ('[..]', {'..','d'})
-	table.sort(folders)
+	local table_folders = {}
 	for i, d in ipairs(folders) do
-		if d ~='.svn' then -- escape SVN folder
-			list_dir:add_item(d .. '', {d,'d'})
-		end
+		table_folders[i] = {'['..d..']', {d,'d'}}
 	end
+	table.sort(table_folders, function(a, b) return a[1]:lower() < b[1]:lower() end)
 	local files = gui.files(current_path..file_mask)
-	table.sort(files)
+	local table_files = {}
 	if files then
 		for i, filename in ipairs(files) do
-			list_dir:add_item(filename .. '', {filename})
+			table_files[i] = {filename, {filename}}
 		end
+	end
+	table.sort(table_files, function(a, b) return a[1]:lower() < b[1]:lower() end)
+
+	list_dir:clear()
+	list_dir:add_item ('[..]', {'..','d'})
+	for i = 1, #table_folders do
+		list_dir:add_item(table_folders[i][1], table_folders[i][2])
+	end
+	for i = 1, #table_files do
+		list_dir:add_item(table_files[i][1], table_files[i][2])
 	end
 	list_dir:set_selected_item(0)
 	FileMan_ShowPath()
 end
 
-local function FileMan_GetSelectedItem()
-	local idx = list_dir:get_selected_item()
+local function FileMan_GetSelectedItem(idx)
+	if idx == nil then idx = list_dir:get_selected_item() end
 	if idx == -1 then return '' end
 	local data = list_dir:get_item_data(idx)
 	local dir_or_file = data[1]
@@ -279,10 +287,6 @@ end
 
 function FileMan_MaskAllFiles()
 	file_mask = '*.*'
-	FileMan_ListFILL()
-end
-
-function FileMan_Refresh()
 	FileMan_ListFILL()
 end
 
@@ -323,24 +327,6 @@ function FileMan_FileRename()
 	end
 end
 
-function FileMan_NewFile()
-	local filename_selected , attr = FileMan_GetSelectedItem()
-	if filename_selected == '' or attr == 'd' then
-		filename = 'newfile.*'
-	else
-		filename = 'newfile.'..filename_selected:gsub('.+%.','')
-	end
-	local filename_new = shell.inputbox("New File", "Enter new file name:", filename, function(name) return not name:match('[\\/:|*?"<>]') end)
-	if filename_new ~= nil then
-		temp = assert(io.open(current_path..filename_new,'w'))
-		if(temp ~= nil) then
-			io.close(temp)
-			FileMan_ListFILL()
-			OpenFile(current_path..filename_new)
-		end
-	end
-end
-
 function FileMan_FileDelete()
 	local filename, attr = FileMan_GetSelectedItem()
 	if filename == '' then return end
@@ -364,6 +350,63 @@ local function FileMan_FileExecWithSciTE(cmd, mode)
 	props["command.mode.0.*"] = p1
 end
 
+function FileMan_FileExec(params)
+	if params == nil then params = '' end
+	local filename = FileMan_GetSelectedItem()
+	if filename == '' then return end
+	local file_ext = filename:match("[^.]+$")
+	if file_ext == nil then return end
+	file_ext = '%*%.'..string.lower(file_ext)
+	
+	local function CommandBuild(lng)
+		local cmd = props['command.build.$(file.patterns.'..lng..')']
+		cmd = cmd:gsub(props["FilePath"], current_path..filename)
+		return cmd
+	end
+	-- Lua
+	if string.match(props['file.patterns.lua'], file_ext) then
+		dostring(params)
+		dofile(current_path..filename)
+	-- Batch
+	elseif string.match(props['file.patterns.batch'], file_ext) then
+		FileMan_FileExecWithSciTE(CommandBuild('batch'))
+		return
+	-- WSH
+	elseif string.match(props['file.patterns.wscript']..props['file.patterns.wsh'], file_ext) then
+		FileMan_FileExecWithSciTE(CommandBuild('wscript'))
+	-- Other
+	else
+		local ret, descr = shell.exec(current_path..filename..params)
+		if not ret then
+			print (">Exec: "..filename)
+			print ("Error: "..descr)
+		end
+	end
+end
+
+function FileMan_FileExecWithParams()
+	if scite.ShowParametersDialog('Exec "'..FileMan_GetSelectedItem()..'". Please set params:') then
+		local params = ''
+		for p = 1, 4 do
+			local ps = props[tostring(p)]
+			if ps ~= '' then
+				params = params..' '..ps
+			end
+		end
+		FileMan_FileExec(params)
+	end
+end
+
+local function OpenFile(filename)
+	if filename:match(".session$") ~= nil then
+		filename = filename:gsub('\\','\\\\')
+		scite.Perform ("loadsession:"..filename)
+	else
+		scite.Open(filename)
+	end
+	gui.pass_focus()
+end
+
 local function FileMan_OpenItem()
 	local dir_or_file, attr = FileMan_GetSelectedItem()
 	if dir_or_file == '' then return end
@@ -382,13 +425,27 @@ local function FileMan_OpenItem()
 	end
 end
 
+function FileMan_OpenSelectedItems()
+	local si = list_dir:get_selected_items()
+	for _,i in ipairs(si) do
+		local dir_or_file, attr = FileMan_GetSelectedItem(i)
+		if attr ~= 'd' then
+			OpenFile(current_path..dir_or_file)
+		end
+	end
+end
+
 list_dir:on_double_click(function()
 	FileMan_OpenItem()
 end)
 
 list_dir:on_key(function(key)
 	if key == 13 then -- Enter
-		FileMan_OpenItem()
+		if list_dir:selected_count() > 1 then
+			FileMan_OpenSelectedItems()
+		else
+			FileMan_OpenItem()
+		end
 	elseif key == 8 then -- BackSpace
 		list_dir:set_selected_item(0)
 		FileMan_OpenItem()
@@ -399,180 +456,125 @@ list_dir:on_key(function(key)
 	end
 end)
 
-----------------------------------
--- Project Functions
-----------------------------------
+----------------------------------------------------------
+-- tab0:list_favorites   Favorites
+----------------------------------------------------------
+local favorites_filename = props['SciteUserHome']..'\\favorites.lst'
+local list_fav_table = {}
 
-function Project_Fill_Tree(node,path)
-	if path == '' then return end
-	if tree_nodes[node] == nil then
-		--path = path:gsub('\\','\\\\');
-		if node==0 then
-			--add_tree(int parent,string caption,bool hasChildren,mixed data)
-			node = list_project:add_tree(node,path,true,{path,'d'})
-			tree_nodes[0] = true
-			tree_nodes['root'] = node
-		end
-		local folders = gui.files(path..'/*', true)
-		if folders then
-			for i, d in ipairs(folders) do
-				if d ~= '.svn' then -- escape SVN folder
-					list_project:add_tree(node,d,true,{path.."/"..d,'d'})
-				end
+local function Favorites_ListFILL()
+	list_favorites:clear()
+	table.sort(list_fav_table,
+		function(a, b)
+			local function IsSession(filepath)
+				return filepath:gsub('^.*%.',''):upper() == 'SESSION'
 			end
-			folders = nil
-			tree_nodes[node] = true
-		end
-		local files = gui.files(path..'/'..file_mask)
-		if files then
-			for i, filename in ipairs(files) do
-				list_project:add_tree(node,filename,false,{path.."/"..filename,'f'})
+			local isAses = IsSession(a[1]:lower())
+			local isBses = IsSession(b[1]:lower())
+			if (isAses and isBses) or not (isAses or isBses) then
+				return a[1]:lower() < b[1]:lower()
+			else
+				return isAses
 			end
-			files = nil
-			tree_nodes[node] = true
 		end
-		list_project:expand(tree_nodes['root'],true)
+	)
+	for _, file in ipairs(list_fav_table) do
+		list_favorites:add_item(file[1], file[2])
 	end
 end
 
-function Project_Tree_Clear()
-	list_project:clear_tree()
-	tree_nodes = {}
-end
-
-function Project_Build_Tags()
-	if (props['ProjectPath'] ~= nil and props['ProjectPath'] ~= '') then
-		scite.MenuCommand(1143)
-		reset_tags()
-	end
-end
-
-function Open_Project_Dir()
-	local Path = gui.select_dir_dlg('Please select a directory')
-	if Path == nil then return end
-	Project_Save_Path(Path)
-	Project_Tree_Clear()
-	Project_Fill_Tree(0,Path)
-	if tonumber(props['project.opendir.buildtags']) == 1 then
-		Project_Build_Tags()
-	end
-end
-
-function Project_NewFile()
-	filename = 'newfile.*'
-	local filename_new = shell.inputbox("New File", "Enter new file name:", filename, function(name) return not name:match('[\\/:|*?"<>]') end)
-	if filename_new ~= nil then
-		temp = assert(io.open(current_path..filename_new,'w'))
-		if(temp ~= nil) then
-			io.close(temp)
-			Project_Refresh_Tree()
-			OpenFile(current_path..filename_new)
+local function Favorites_OpenList()
+	local favorites_file = io.open(favorites_filename)
+	if favorites_file then
+		for fpath in favorites_file:lines() do
+			if fpath ~= '' then
+				fpath = ReplaceWithoutCase(fpath, '$(SciteDefaultHome)', props['SciteDefaultHome'])
+				local fname = fpath:gsub('.+\\','')
+				if fname == '' then fname = fpath:gsub('.+\\(.-)\\',' [%1]') end
+				list_fav_table[#list_fav_table+1] = {fname, fpath}
+			end
 		end
+		favorites_file:close()
 	end
+	Favorites_ListFILL()
 end
+Favorites_OpenList()
 
-function Project_Save_Path(path)
-	if path =='' then end
-	local file = io.open(props["SciteUserHome"] .."\\SciTE.project","w")
-	props['ProjectPath'] = path
-	if(file ~= nil) then
-		file:write(path)
-		file:close()
-	end
-end
-
-function Project_Get_Store_Path()
-	local file = io.open(props["SciteUserHome"] .."\\SciTE.project", "r")
-	if(file ~= nil) then
-		local ourline = file:read()
-		if ourline ~=nil then
-			props['ProjectPath'] = ourline
-			return ourline
+local function Favorites_SaveList()
+	if pcall(io.output, favorites_filename) then
+		for _, file in ipairs(list_fav_table) do
+			io.write(ReplaceWithoutCase(file[2], props['SciteDefaultHome'], '$(SciteDefaultHome)')..'\n')
 		end
-		file:close()
+		io.close()
 	end
-	return ''
 end
 
-function Project_Refresh_Tree()
-	Project_Tree_Clear()
-	Project_Fill_Tree(0,Project_Get_Store_Path())
+function Favorites_AddFile()
+	local fname, attr = FileMan_GetSelectedItem()
+	if fname == '' then return end
+	local fpath = current_path..fname
+	if attr == 'd' then
+		fname = ' ['..fname..']'
+		fpath = fpath:gsub('\\\.\.$', '')..'\\'
+	end
+	list_fav_table[#list_fav_table+1] = {fname, fpath}
+	Favorites_ListFILL()
+	Favorites_SaveList()
 end
 
-function Project_GetSelectedItem()
-	local data = list_project:get_tree_data()
-	if data then
-		local dir_or_file = data[1]
-		local attr = data[2]
-		return dir_or_file, attr
+function Favorites_AddCurrentBuffer()
+	list_fav_table[#list_fav_table+1] = {props['FileNameExt'], props['FilePath']}
+	Favorites_ListFILL()
+	Favorites_SaveList()
+end
+
+function Favorites_DeleteItem()
+	local idx = list_favorites:get_selected_item()
+	if idx == -1 then return end
+	list_favorites:delete_item(idx)
+	table.remove (list_fav_table, idx+1)
+	Favorites_SaveList()
+end
+
+local function Favorites_OpenFile()
+	local idx = list_favorites:get_selected_item()
+	if idx == -1 then return end
+	local fname = list_favorites:get_item_data(idx)
+	if fname:match('\\$') then
+		gui.chdir(fname)
+		current_path = fname
+		FileMan_ListFILL()
 	else
-		return nil,'n'
+		OpenFile(fname)
 	end
 end
 
-function SVN_Update()
-	local dir_or_file, attr = Project_GetSelectedItem()
-	if dir_or_file ~= nil then
-		svn_exec('update',dir_or_file)
-	end
+local function Favorites_ShowFilePath()
+	local sel_item = list_favorites:get_selected_item()
+	if sel_item == -1 then return end
+	local expansion = list_favorites:get_item_data(sel_item)
+	editor:CallTipCancel()
+	editor:CallTipShow(-2, expansion)
 end
 
-function SVN_Commit()
-	local dir_or_file, attr = Project_GetSelectedItem()
-	if dir_or_file ~= nil then
-		svn_exec('commit',dir_or_file)
-	end
-end
-
-function SVN_Add()
-	local dir_or_file, attr = Project_GetSelectedItem()
-	if dir_or_file ~= nil then
-		svn_exec('add',dir_or_file)
-	end
-end
-
------------------------------
--- Project Events
------------------------------
-
-list_project:on_select(function(item)
-	if item then
-		local data = list_project:get_tree_data(item)
-		if data[2] == 'd' then
-			Project_Fill_Tree(item,data[1])
-			current_path = data[1] .. '\\'
-		end
-	end
+list_favorites:on_select(function()
+	Favorites_ShowFilePath()
 end)
 
-list_project:on_double_click(function(item)
-	local data = list_project:get_tree_data(item)
-	if data[2] == 'f' then
-		OpenFile(data[1])
-	else
-		Project_Fill_Tree(item,data[1])
-	end
+list_favorites:on_double_click(function()
+	Favorites_OpenFile()
 end)
 
-list_project:on_key(function(key)
-	if key==13 then
-		--local item = list_project:get_selected_tree()
-		local data = list_project:get_tree_data()
-		if data[2] == 'f' then
-			OpenFile(data[1])
-		else
-			--to do something with dir
-			--Project_Fill_Tree(item,data[1])
-			list_project:toggle()
-		end
-	--elseif key==17 then
-	--	local item = list_project:get_tree_parent()
-	--	list_project:toggle(item)
+list_favorites:on_key(function(key)
+	if key == 13 then -- Enter
+		Favorites_OpenFile()
+	elseif key == 46 then -- Delete
+		Favorites_DeleteItem()
 	end
 end)
 
 ----------------------------------------------------------
--- tab0:list_functions   Functions/Procedures
+-- tab1:list_func   Functions/Procedures
 ----------------------------------------------------------
 local table_functions = {}
 -- 1 - function names
@@ -585,7 +587,7 @@ local Lang2lpeg = {}
 do
 	local P, V, Cg, Ct, Cc, S, R, C, Carg, Cf, Cb, Cp, Cmt = lpeg.P, lpeg.V, lpeg.Cg, lpeg.Ct, lpeg.Cc, lpeg.S, lpeg.R, lpeg.C, lpeg.Carg, lpeg.Cf, lpeg.Cb, lpeg.Cp, lpeg.Cmt
 
-	--@todo: ���������� ?�������������� lpeg.Cf
+	--@todo: переписать с использованием lpeg.Cf
 	local function AnyCase(str)
 		local res = P'' --empty pattern to start with
 		local ch, CH
@@ -598,13 +600,13 @@ do
 		return res
 	end
 
-	local PosToLine = function (pos) return editor:LineFromPosition(pos) end
+	local PosToLine = function (pos) return editor:LineFromPosition(pos-1) end
 
 --v------- common patterns -------v--
 	-- basics
 	local EOF = P(-1)
 	local BOF = P(function(s,i) return (i==1) and 1 end)
-	local NL = P"\n"-- + P"\f" -- pattern matching newline, platform-specific. \f = page break marker
+	local NL = P"\n"+P"\r\n"+P"\r"-- + P"\f" -- pattern matching newline, platform-specific. \f = page break marker
 	local AZ = R('AZ','az')+"_"
 	local N = R'09'
 	local ANY =  P(1)
@@ -631,32 +633,10 @@ do
 	local cl = cp/PosToLine -- line capture, uses editor:LineFromPosition
 	local par = C(P"("*(1-P")")^0*P")") -- captures parameters in parentheses
 --^------- common patterns -------^--
-	do --v----- MQL ------v--
-		-- define local patterns
-		local keywords = P'if'+P'else'+P'switch'+P'case'+P'while'+P'for'
-		local nokeyword = -(keywords)
-		local type = P"static "^-1*P"const "^-1*P"enum "^-1*P'*'^-1*IDENTIFIER*P'*'^-1
-		local funcbody = P"{"*(ESCANY-P"}")^0*P"}"
-		-- redefine common patterns
-		local IDENTIFIER = P'*'^-1*P'~'^-1*IDENTIFIER
-		IDENTIFIER = IDENTIFIER*(P"::"*IDENTIFIER)^-1
-		-- create flags:
-		type = Cg(type,'')
-		-- create additional captures
-		local I = nokeyword*C(IDENTIFIER)*cl
-		-- definitions to capture:
-		local funcdef = nokeyword*Ct((type*SC^1)^-1*I*SC^0*par*SC^0*(#funcbody))
-		local classconstr = nokeyword*Ct((type*SC^1)^-1*I*SC^0*par*SC^0*P':'*SC^0*IDENTIFIER*SC^0*(P"("*(1-P")")^0*P")")*SC^0*(#funcbody)) -- this matches smthing like PrefDialog::PrefDialog(QWidget *parent, blabla) : QDialog(parent)
-		-- resulting pattern, which does the work
-		local patt = (classconstr + funcdef + IGNORED^1 + IDENTIFIER + ANY)^0 * EOF
 
-		Lang2lpeg['MQL'] = lpeg.Ct(patt)
-	end --^----- MQL ------^--
-	
 	do --v------- asm -------v--
 		-- redefine common patterns
 		local SPACE = S' \t'^1
-		local NL = P"\r\n"
 
 		local IGNORED = (ESCANY - NL)^0 * NL -- just skip line by line
 
@@ -666,7 +646,7 @@ do
 		-- create flags:
 		F = Cg(F*Cc(true),'F')
 		-- create additional captures
-		I = C(IDENTIFIER)*cl
+		local I = C(IDENTIFIER)*cl
 		-- definitions to capture:
 		local par = C((ESCANY - NL)^0)
 		local def1 = I*SPACE*(p+F)
@@ -704,7 +684,7 @@ do
 		-- create flags
 		l = Cg(l*SC^1*Cc(true),'l')^-1
 		-- create additional captures
-		I = C(IDENTIFIER)*cl
+		local I = C(IDENTIFIER)*cl
 		-- definitions to capture:
 		local funcdef1 = l*f*SC^1*I*SC^0*par -- usual function declaration
 		local funcdef2 = l*I*SC^0*"="*SC^0*f*SC^0*par -- declaration through assignment
@@ -756,8 +736,8 @@ do
 
 	do --v----- C++ ------v--
 		-- define local patterns
-		local keywords = P'if'+P'else'+P'switch'+P'case'+P'while'
-		local nokeyword = -(keywords*SC^1)
+		local keywords = P'if'+P'else'+P'switch'+P'case'+P'while'+P'for'
+		local nokeyword = -(keywords)
 		local type = P"static "^-1*P"const "^-1*P"enum "^-1*P'*'^-1*IDENTIFIER*P'*'^-1
 		local funcbody = P"{"*(ESCANY-P"}")^0*P"}"
 		-- redefine common patterns
@@ -766,12 +746,12 @@ do
 		-- create flags:
 		type = Cg(type,'')
 		-- create additional captures
-		local I = C(IDENTIFIER)*cl
+		local I = nokeyword*C(IDENTIFIER)*cl
 		-- definitions to capture:
 		local funcdef = nokeyword*Ct((type*SC^1)^-1*I*SC^0*par*SC^0*(#funcbody))
-
+		local classconstr = nokeyword*Ct((type*SC^1)^-1*I*SC^0*par*SC^0*P':'*SC^0*IDENTIFIER*SC^0*(P"("*(1-P")")^0*P")")*SC^0*(#funcbody)) -- this matches smthing like PrefDialog::PrefDialog(QWidget *parent, blabla) : QDialog(parent)
 		-- resulting pattern, which does the work
-		local patt = (funcdef + IGNORED^1 + IDENTIFIER + ANY)^0 * EOF
+		local patt = (classconstr + funcdef + IGNORED^1 + IDENTIFIER + ANY)^0 * EOF
 
 		Lang2lpeg['C++'] = lpeg.Ct(patt)
 	end --^----- C++ ------^--
@@ -781,25 +761,31 @@ do
 		local NL = NL + P"\f"
 		local regexstr = P'/' * (ESCANY - (P'/' + NL))^0*(P'/' * S('igm')^0 + NL)
 		local STRING = STRING + regexstr
+		local IGNORED = SPACE + COMMENT + STRING
 		-- define local patterns
 		local f = P"function"
+		local m = P"method"
 		local funcbody = P"{"*(ESCANY-P"}")^0*P"}"
 		-- create additional captures
 		local I = C(IDENTIFIER)*cl
 		-- definitions to capture:
-		local funcdef = Ct(f*SC^1*I*SC^0*par*SC^0*(#funcbody))
-
+		local funcdef =  Ct((f+m)*SC^1*I*SC^0*par*SC^0*(#funcbody))
+		local eventdef = Ct(P"on"*SC^1*P'"'*I*P'"'*SC^0*(#funcbody))
 		-- resulting pattern, which does the work
-		local patt = (funcdef + IGNORED^1 + IDENTIFIER + 1)^0 * EOF
+		local patt = (funcdef + eventdef + IGNORED^1 + IDENTIFIER + 1)^0 * EOF
 
 		Lang2lpeg.JScript = lpeg.Ct(patt)
 	end --^----- JS ------^--
 
 	do --v----- VB ------v--
 		-- redefine common patterns
-		local STRING = P'"' * (ANY - (P'"' + NL))^0*(P'"' + NL)
-		local COMMENT = (P"'" + P"REM ") * (ANY - NL)^0*NL
+		local SPACE = (S(" \t")+P"_"*S(" \t")^0*(P"\r\n"))^1
 		local SC = SPACE
+		local NL = (P"\r\n")^1*SC^0
+		local STRING = P'"' * (ANY - (P'"' + P"\r\n"))^0*P'"'
+		local COMMENT = (P"'" + P"REM ") * (ANY - P"\r\n")^0
+		local IGNORED = SPACE + COMMENT + STRING
+		local I = C(IDENTIFIER)*cl
 		-- define local patterns
 		local f = AnyCase"function"
 		local p = AnyCase"property"
@@ -807,22 +793,35 @@ do
 			local get = AnyCase"get"
 			local set = AnyCase"set"
 		local s = AnyCase"sub"
-		-- create flags:
-		-- f = Cg(f*Cc(true),'f')
+		--local con=Cmt(AnyCase"const",(function(s,i) if _show_more then return i else return nil end end))
+		--local dim=Cmt(AnyCase"dim",(function(s,i) if _show_more then return i else return nil end end))
+
+		--local scr=P("<script>")
+		--local stt=P("<stringtable>")
+
 		local restype = (P"As"+P"as")*SPACE*Cg(C(AZ^1),'')
 		let = Cg(let*Cc(true),'pl')
 		get = Cg(get*Cc(true),'pg')
 		set = Cg(set*Cc(true),'ps')
-		p = p*SC^1*(let+get+set)
-		-- create additional captures
-		local I = C(IDENTIFIER)*cl
+		p = NL*p*SC^1*(let+get+set)
+		s = NL*Cg(s*Cc(true),'S')
+		f = NL*Cg(f*Cc(true),'F')
+		--dim = NL*Cg(dim*Cc(true),"D")
+		--con = NL*Cg(con*Cc(true),"C")
+
+		local e = NL*AnyCase"end"*SC^1*(AnyCase"sub"+AnyCase"function"+AnyCase"property")
+		local body = (IGNORED^1 + IDENTIFIER + 1 - f - s - p - e)^0*e
+
 		-- definitions to capture:
 		f = f*SC^1*I*SC^0*par
 		p = p*SC^1*I*SC^0*par
 		s = s*SC^1*I*SC^0*par
-		local def = Ct((f + s + p)*(SPACE*restype)^-1)
+		--con = con*SC^1*I
+		--dim = dim*SC^1*I
+		local def = Ct((f + s + p)*(SPACE*restype)^-1)*body --+ Ct(dim+con)
 		-- resulting pattern, which does the work
-		local patt = (def + IGNORED^1 + IDENTIFIER + 1)^0 * EOF
+
+		local patt = (def + IGNORED^1 + IDENTIFIER + (1-NL)^1 + NL)^0 * EOF
 
 		Lang2lpeg.VisualBasic = lpeg.Ct(patt)
 	end --^----- VB ------^--
@@ -837,7 +836,7 @@ do
 		-- create flags:
 		c = Cg(c*Cc(true),'class')
 		-- create additional captures
-		I = C(IDENTIFIER)*cl
+		local I = C(IDENTIFIER)*cl
 		-- definitions to capture:
 		local def = (c+d)*SPACE*I
 		def = (SPACE+P'')*Ct(def*SPACE^-1*par)*SPACE^-1*P':'
@@ -855,7 +854,7 @@ do
 		-- define local patterns
 		local d = P":"
 		-- create additional captures
-		I = C(IDENTIFIER)*cl
+		local I = C(IDENTIFIER)*cl
 		-- definitions to capture:
 		local def = d*SPACE*I
 		def = Ct(def*(SPACE*par)^-1)*IGNORED
@@ -877,7 +876,7 @@ do
 		local IGNORED = (ANY - NL)^0 * NL -- just skip line by line
 		local par = C(P"{"*(1-P"}")^0*P"}")/clear_spaces -- captures parameters in parentheses
 		-- create additional captures
-		I = C(IDENTIFIER)*cl
+		local I = C(IDENTIFIER)*cl
 		-- definitions to capture:
 		local def = Ct(I*SPACE*par)--*IGNORED
 		-- resulting pattern, which does the work
@@ -889,10 +888,10 @@ do
 	do --v----- * ------v--
 		-- redefine common patterns
 		local NL = P"\r\n"+P"\n"+P"\f"
-		local SC = S" \t\160" -- ��?��?��� ��?�� ������ ?����?160, �� �� ����������� ?SciTEGlobal.properties ��������������?����?[Warnings] 10 ��?
+		local SC = S" \t\160" -- без понятия что за символ с кодом 160, но он встречается в SciTEGlobal.properties непосредственно после [Warnings] 10 раз.
 		local COMMENT = P'#'*(ANY - NL)^0*NL
 		-- define local patterns
-		local somedef = S'fFsS'*S'uU'*S'bBnN'*AZ^0 --������? ������?��?������, ������?�� ����������?������?..
+		local somedef = S'fFsS'*S'uU'*S'bBnN'*AZ^0 --пытаемся поймать что-нибудь, похожее на определение функции...
 		local section = P'['*(ANY-P']')^1*P']'
 		-- create flags
 		local somedef = Cg(somedef, '')
@@ -906,10 +905,74 @@ do
 
 		-- resulting pattern, which does the work
 		local patt = (def2 + def1 + COMMENT + IDENTIFIER + 1)^0 * EOF
-		-- local patt = (def2 + def1 + IDENTIFIER + 1)^0 * EOF -- ���� ��������?
+		-- local patt = (def2 + def1 + IDENTIFIER + 1)^0 * EOF -- чуть медленнее
 
 		Lang2lpeg['*'] = lpeg.Ct(patt)
 	end --^----- * ------^--
+
+	do --v------- autohotkey -------v--
+		-- redefine
+		local NL = P'\n'+P'\r\n'
+		-- local NL = S'\r\n'
+		local ESCANY = P'`'*ANY + ANY
+		
+		-- helper
+		local I = (ESCANY-S'(){},=:;\r\n')^1
+		local LINE = (ESCANY-NL)^0
+		local block_comment = '/*' * (ESCANY - P'*/')^0 * (P('*/') + EOF)
+		local line_comment  = P';'*LINE*(NL + EOF)
+		local COMMENT = line_comment + block_comment
+		local BALANCED = P{ "{" * ((1 - S"{}") + V(1))^0 * "}" } -- capture balanced {}
+		-- definitions to capture:
+		local label     = C( I*P':'*#(1-S'=:'))*cl*LINE
+		local keystroke = C( I*P'::' )*cl*LINE
+		local hotstring = C( P'::'*I*P'::'*LINE )*cl
+		local directive = C( P'#'*I )*cl*LINE
+		local func      = C( I )*cl*par*(COMMENT+NL)^0*BALANCED
+		local def = Ct( keystroke + label + hotstring + directive + func )
+		-- resulting pattern, which does the work
+		local patt = (SPACE^0*def + NL + COMMENT + LINE*NL)^0 * LINE*(EOF) --+ error'invalid character')
+
+		Lang2lpeg.autohotkey = lpeg.Ct(patt)
+	end --do --^------- autohotkey -------^--
+
+	do --v----- SQL ------v--
+		-- redefine common patterns
+		--идентификатор может включать точку
+		local IDENTIFIER = AZ * (AZ+N+P".")^0
+		local STRING = (P'"' * (ANY - P'"')^0*P'"') + (P"'" * (ANY - P"'")^0*P"'")
+		local COMMENT = ((P"--" * (ANY - NL)^0*NL) + block_comment)^1
+		local SC = SPACE
+
+		local cr = AnyCase"create"*SC^1
+		local pr = AnyCase"proc"*AnyCase"edure"^0
+		local vi = AnyCase"view"
+		local tb = AnyCase"table"
+		local tr = AnyCase"trigger"
+		local IGNORED = SPACE + COMMENT + STRING
+		-- create flags
+		tr = Cg(cr*tr*SC^1*Cc(true),'tr')
+		tb = Cg(cr*tb*SC^1*Cc(true),'tb')
+		vi = Cg(cr*vi*SC^1*Cc(true),'vi')
+		pr = Cg(cr*pr*SC^1*Cc(true),'pr')
+
+		local I = C(IDENTIFIER)*cl
+		--параметры процедур и вью - всё от имени до as
+		local parpv = C((1-AnyCase"as")^0)*AnyCase"as"
+		--параметры таблиц содержат комментарии и параметры
+		local partb = C((P"("*(COMMENT + (1-S"()")+par)^1*P")"))
+		-- -- definitions to capture:
+		pr = pr*I*SC^0*parpv
+		vi = vi*I*SC^0*parpv
+		tb = tb*I*SC^0*partb
+		tr = tr*I*SC^1*AnyCase"on"*SC^1*I --"параметр" триггера - идентификатор после I
+		local def = Ct(( pr + vi + tb + tr))
+
+		-- resulting pattern, which does the work
+		local patt = (def + IGNORED^1 + IDENTIFIER + 1)^0 * EOF
+
+		Lang2lpeg.SQL = lpeg.Ct(patt)
+	end --^----- SQL ------^--
 
 end
 
@@ -925,11 +988,10 @@ local Lexer2Lang = {
 	['vbscript']='VisualBasic',
 	['css']='CSS',
 	['pascal']='Pascal',
-	['php']='Php',
 	['python']='Python',
+	['sql']='SQL',
 	['lua']='Lua',
 	['nncrontab']='nnCron',
-	['mql']='MQL',
 }
 
 local Ext2Lang = {}
@@ -941,12 +1003,12 @@ do -- Fill_Ext2Lang
 		[props['file.patterns.vb']]='VisualBasic',
 		[props['file.patterns.wscript']]='VisualBasic',
 		['*.css']='CSS',
+		['*.sql']='SQL',
 		[props['file.patterns.pascal']]='Pascal',
-		[props['file.patterns.php']]='Php',
 		[props['file.patterns.py']]='Python',
 		[props['file.patterns.lua']]='Lua',
 		[props['file.patterns.nncron']]='nnCron',
-		[props['file.patterns.mql']]='MQL',
+		['*.ahk']='autohotkey',
 	}
 	for i,v in pairs(patterns) do
 		for ext in (i..';'):gfind("%*%.([^;]+);") do
@@ -954,30 +1016,6 @@ do -- Fill_Ext2Lang
 		end
 	end
 end -- Fill_Ext2Lang
-
-local function GetFlagsAndCut(findString)
-	local findString = findString
-	local t = {}
-	findString,f = ReplaceWithoutCase(findString, "Sub ", "") -- VB
-	t["s"] = f and true
-	findString,f = ReplaceWithoutCase(findString, "Function ", "") -- JS, VB,...
-	t["f"] = f and true
-	findString,f = ReplaceWithoutCase(findString, "Procedure ", "") -- Pascal
-	t["p"] = f and true
-	findString,f = ReplaceWithoutCase(findString, "Proc ", "") -- C
-	t["p"] = t.p or (f and true)
-	findString,f = ReplaceWithoutCase(findString, "Property Let ", "") -- VB
-	t["pl"] = f and true
-	findString,f = ReplaceWithoutCase(findString, "Property Get ", "") -- VB
-	t["pg"] = f and true
-	findString,f = ReplaceWithoutCase(findString, "Property Set ", "") -- VB
-	t["ps"] = f and true
-	findString,f = ReplaceWithoutCase(findString, "CLASS ", "") -- Phyton
-	t["c"] = f and true
-	findString,f = ReplaceWithoutCase(findString, "DEF ", "") -- Phyton
-	t["d"] = f and true
-	return findString, t
-end
 
 local function Functions_GetNames()
 	_DEBUG.timerstart('Functions_GetNames')
@@ -990,28 +1028,24 @@ local function Functions_GetNames()
 	local start_code = Lang2CodeStart[lang]
 	local lpegPattern = Lang2lpeg[lang]
 	if not lpegPattern then
-		-- lang = Lexer2Lang[editor.LexerLanguage]
+		lang = Lexer2Lang[props['Language']]
 		start_code = Lang2CodeStart[lang]
 		lpegPattern = Lang2lpeg[lang]
-		if not tablePattern then
+		if not lpegPattern then
 			start_code = Lang2CodeStart['*']
 			lpegPattern = Lang2lpeg['*']
 		end
 	end
 	local textAll = editor:GetText()
-	local start_code_pos = 0
-	if start_code then
-		start_code_pos = editor:findtext(start_code, SCFIND_REGEXP)
-	end
+	local start_code_pos = start_code and editor:findtext(start_code, SCFIND_REGEXP) or 0
 
 	-- lpegPattern = nil
 	table_functions = lpegPattern:match(textAll, start_code_pos+1) -- 2nd arg is the symbol index to start with
-
 	_DEBUG.timerstop('Functions_GetNames','lpeg')
 end
 
 local function Functions_ListFILL()
-	if tonumber(props['sidebar.show'])~=1 or tab_index~=0 then return end
+	if tonumber(props['sidebar.show'])~=1 or tab_index~=1 then return end
 	if _sort == 'order' then
 		table.sort(table_functions, function(a, b) return a[2] < b[2] end)
 	else
@@ -1023,7 +1057,7 @@ local function Functions_ListFILL()
 			table.remove (table_functions, i)
 		end
 	end
-	list_functions:clear()
+	list_func:clear()
 
 	local function emptystr(...) return '' end
 	local function GetParams (funcitem)
@@ -1050,7 +1084,11 @@ local function Functions_ListFILL()
 		return GetFlags(funcitem)..funcitem[1]..GetParams(funcitem)
 	end
 	for _, a in ipairs(table_functions) do
-		list_functions:add_item(fixname(a), a[2])
+		local funcname = fixname(a)
+		if tonumber(props["editor.unicode.mode"]) == IDM_ENCODING_DEFAULT then
+			funcname = funcname:to_utf8(editor:codepage())
+		end
+		list_func:add_item(funcname, a[2])
 	end
 end
 
@@ -1075,84 +1113,191 @@ function Functions_ToggleFlags ()
 end
 
 local function Functions_GotoLine()
-	local sel_item = list_functions:get_selected_item()
+	local sel_item = list_func:get_selected_item()
 	if sel_item == -1 then return end
-	local pos = list_functions:get_item_data(sel_item)
+	local pos = list_func:get_item_data(sel_item)
 	if pos then
 		ShowCompactedLine(pos)
+		editor:GotoLine(pos + editor.LinesOnScreen/3*2)
+		if editor.FirstVisibleLine > (pos - 10) then editor:GotoLine(pos - editor.LinesOnScreen/3) end
 		editor:GotoLine(pos)
 		gui.pass_focus()
 	end
 end
 
-list_functions:on_double_click(function()
+list_func:on_double_click(function()
 	Functions_GotoLine()
 end)
 
-list_functions:on_key(function(key)
+list_func:on_key(function(key)
 	if key == 13 then -- Enter
 		Functions_GotoLine()
 	end
 end)
 
 ----------------------------------------------------------
+-- tab1:list_bookmarks   Bookmarks
+----------------------------------------------------------
+local table_bookmarks = {}
+
+local function GetBufferNumber()
+	local buf = props['BufferNumber']
+	if buf == '' then buf = 1 else buf = tonumber(buf) end
+	return buf
+end
+
+local function Bookmark_Add(line_number)
+	local line_text = editor:GetLine(line_number)
+	if line_text == nil then line_text = '' end
+	line_text = line_text:gsub('^%s+', ''):gsub('%s+', ' ')
+	if line_text == '' then
+		line_text = ' - empty line - ('..(line_number+1)..')'
+	end
+	for _, a in ipairs(table_bookmarks) do
+		if a.FilePath == props['FilePath'] and a.LineNumber == line_number then
+		return end
+	end
+	local bmk = {}
+	bmk.FilePath = props['FilePath']
+	bmk.BufferNumber = GetBufferNumber()
+	bmk.LineNumber = line_number
+	if tonumber(props["editor.unicode.mode"]) == IDM_ENCODING_DEFAULT then
+		line_text = line_text:to_utf8(editor:codepage())
+	end
+	bmk.LineText = line_text
+	table_bookmarks[#table_bookmarks+1] = bmk
+end
+
+local function Bookmark_Delete(line_number)
+	for i = #table_bookmarks, 1, -1 do
+		if table_bookmarks[i].FilePath == props['FilePath'] then
+			if line_number == nil then
+				table.remove(table_bookmarks, i)
+			elseif table_bookmarks[i].LineNumber == line_number then
+				table.remove(table_bookmarks, i)
+				break
+			end
+		end
+	end
+end
+
+local function Bookmarks_ListFILL()
+	if tonumber(props['sidebar.show'])~=1 or tab_index~=1 then return end
+	table.sort(table_bookmarks, function(a, b)
+									return a.BufferNumber < b.BufferNumber or
+											a.BufferNumber == b.BufferNumber and
+											a.LineNumber < b.LineNumber
+								end)
+	list_bookmarks:clear()
+	for _, bmk in ipairs(table_bookmarks) do
+		list_bookmarks:add_item({bmk.BufferNumber, bmk.LineText}, {bmk.FilePath, bmk.LineNumber})
+	end
+end
+
+local function Bookmarks_RefreshTable()
+	Bookmark_Delete()
+	for i = 0, editor.LineCount do
+		if editor:MarkerGet(i) == 2 then
+			Bookmark_Add(i)
+		end
+	end
+	Bookmarks_ListFILL()
+end
+
+local function Bookmarks_GotoLine()
+	local sel_item = list_bookmarks:get_selected_item()
+	if sel_item == -1 then return end
+	local pos = list_bookmarks:get_item_data(sel_item)
+	if pos then
+		scite.Open(pos[1]) -- FilePath
+		ShowCompactedLine(pos[2]) -- LineNumber
+		editor:GotoLine(pos[2])
+		gui.pass_focus()
+	end
+end
+
+list_bookmarks:on_double_click(function()
+	Bookmarks_GotoLine()
+end)
+
+list_bookmarks:on_key(function(key)
+	if key == 13 then -- Enter
+		Bookmarks_GotoLine()
+	end
+end)
+
+AddEventHandler("OnSendEditor", function(id_msg, wp, lp)
+	if id_msg == SCI_MARKERADD then
+		if lp == 1 then Bookmark_Add(wp) Bookmarks_ListFILL() end
+	elseif id_msg == SCI_MARKERDELETE then
+		if lp == 1 then Bookmark_Delete(wp) Bookmarks_ListFILL() end
+	elseif id_msg == SCI_MARKERDELETEALL then
+		if wp == 1 then Bookmark_Delete() Bookmarks_ListFILL() end
+	end
+end)
+
+AddEventHandler("OnClose", function(file)
+	for i = #table_bookmarks, 1, -1 do
+		if table_bookmarks[i].FilePath == file then
+			table.remove(table_bookmarks, i)
+		end
+	end
+	Bookmarks_ListFILL()
+end)
+
+----------------------------------------------------------
 -- tab2:list_abbrev   Abbreviations
 ----------------------------------------------------------
 local function Abbreviations_ListFILL()
-	local function ReadAbbrev(file)
-		local abbrev_file = io.open(file)
-		if abbrev_file then
-			for line in abbrev_file:lines() do
-				if line ~= '' then
-					local _abr, _exp = line:match('^([^#].-)=(.+)')
-					if _abr ~= nil then
-						list_abbrev:add_item({_abr, _exp}, {_abr, _exp})
-						abbrev_list[_abr] = _exp
-					else
-						local import_file = line:match('^import%s+(.+)')
-						if import_file ~= nil then
-							ReadAbbrev(file:match('.+[\\/]')..import_file)
-						end
-					end
-				end
-			end
-			abbrev_file:close()
-		end
-	end
 	list_abbrev:clear()
-	--local abbrev_filename = props['SciteDefaultHome'] .. '/abbrevs/' .. props['FileExt'] .. '.abbrev'
 	local abbrev_filename = props['AbbrevPath']
-	ReadAbbrev(abbrev_filename)
+	local abbr_table = ReadAbbrevFile(abbrev_filename)
+	if not abbr_table then return end
+	for i,v in ipairs(abbr_table) do
+		list_abbrev:add_item({v.abbr, v.exp:gsub('\t','\\t'):gsub('%%%%','%%')}, v.exp)
+	end
 end
 
+local Abbreviations_HideExpansion
+if Abbreviations_USECALLTIPS then
+	Abbreviations_HideExpansion = function ()
+		editor:CallTipCancel()
+	end
+else
+	Abbreviations_HideExpansion = function ()
+		editor:AnnotationClearAll()
+	end
+end
+
+local scite_InsertAbbreviation = scite_InsertAbbreviation or scite.InsertAbbreviation
 local function Abbreviations_InsertExpansion()
-	local begin = 0
 	local sel_item = list_abbrev:get_selected_item()
 	if sel_item == -1 then return end
-	local abbrev = list_abbrev:get_item_data(sel_item)
-	editor:BeginUndoAction()
-	editor:AddText(abbrev[1])
-	scite.MenuCommand(IDM_ABBREV)
-	editor:EndUndoAction()
-	gui.pass_focus()
-	editor:CallTipCancel()
+	local expansion = list_abbrev:get_item_data(sel_item)
+	scite_InsertAbbreviation(expansion)
+	gui.pass_focus() --don't need to call Abbreviations_HideExpansion(): on_focus will do
 end
 
 local function Abbreviations_ShowExpansion()
 	local sel_item = list_abbrev:get_selected_item()
 	if sel_item == -1 then return end
-	local list = list_abbrev:get_item_data(sel_item)
-	local expansion = list[2]
-	expansion = expansion:gsub('\\\\','\4'):gsub('\\r','\r'):gsub('(\\n','\n'):gsub('\\t','\t'):gsub('\4','\\')
-	editor:CallTipCancel()
-	editor:CallTipShow(editor.CurrentPos, expansion)
-end
+	local expansion = list_abbrev:get_item_data(sel_item)
+	expansion = expansion:gsub('\\\\','\4'):gsub('\\r','\r'):gsub('(\\n','\n'):gsub('\\t','\t'):gsub('\4','\\'):gsub('%%%%','%%')
+	local cp = editor:codepage()
+	if cp ~= 65001 then expansion = expansion:from_utf8(cp) end
 
-function Edit_Abbrev_File()
-	--scite.Open(props['SciteDefaultHome'] .. '/abbrevs/' .. props['FileExt'] .. '.abbrev')
-	scite.Open(props['AbbrevPath'])
+	local cur_pos = editor.CurrentPos
+	if Abbreviations_USECALLTIPS then
+		editor:CallTipCancel()
+		editor:CallTipShow(cur_pos, expansion)
+	else
+		editor:AnnotationClearAll()
+		editor.AnnotationVisible = ANNOTATION_BOXED
+		local linenr = editor:LineFromPosition(cur_pos)
+		editor.AnnotationStyle[linenr] = 255 -- номер стиля, в котором вы задали параметры для аннотаций
+		editor:AnnotationSetText(linenr, expansion:gsub('\t', '    '))
+	end
 end
-
 
 list_abbrev:on_double_click(function()
 	Abbreviations_InsertExpansion()
@@ -1165,142 +1310,107 @@ end)
 list_abbrev:on_key(function(key)
 	if key == 13 then -- Enter
 		Abbreviations_InsertExpansion()
+	elseif key == 27 then -- ESC
+		Abbreviations_HideExpansion()
 	end
+end)
+
+list_abbrev:on_focus(function(setfocus)
+	if not setfocus then Abbreviations_HideExpansion() end
 end)
 
 ----------------------------------------------------------
 -- Events
 ----------------------------------------------------------
+local line_count
+
 local function OnSwitch()
 	_DEBUG.timerstart('OnSwitch')
-	if tab0:bounds() then -- visible FileManager
+	line_count = editor.LineCount
+	if tab0:bounds() then -- visible FileMan
 		local path = props['FileDir']
 		if path == '' then return end
-		path = path:gsub('\\$','')..'\\'
-		if path ~= current_path then
-			current_path = path
-			FileMan_ListFILL()
-		end
+		current_path = path:gsub('\\$','')..'\\'
+		FileMan_ListFILL()
+	elseif tab1:bounds() then -- visible Funk/Bmk
 		Functions_GetNames()
 		Functions_ListFILL()
-	elseif tab1:bounds() then -- visible Project
-		Project_Fill_Tree(0,Project_Get_Store_Path())
+		Bookmarks_ListFILL()
 	elseif tab2:bounds() then -- visible Abbrev
 		Abbreviations_ListFILL()
 	end
-	if not tab2:bounds() then
-		editor:CallTipCancel()
-	end
 	_DEBUG.timerstop('OnSwitch')
 end
+AddEventHandler("OnSwitchFile", OnSwitch)
+AddEventHandler("OnOpen", OnSwitch)
+AddEventHandler("OnSave", OnSwitch)
 
 tabs:on_select(function(ind)
 	tab_index=ind
 	OnSwitch()
 end)
 
-function SideBar_ShowHide()
-	local position = 'right'
-	if props['sidebar.position'] ~= nil then
-		position = props['sidebar.position'];
-	end
-	if tonumber(props['sidebar.show'])==1 then
-		if win then
-			win_parent:hide()
-		else
-			gui.set_panel()
-		end
-		gui.pass_focus()
-		props['sidebar.show']=0
-	else
-		if win then
-			win_parent:show()
-		else
-			gui.set_panel(win_parent,position)
-		end
+--- Функции показывающие/прячущие боковую панель
+local SideBar_Show, SideBar_Hide
+if win then
+	SideBar_Show = function()
+		win_parent:show()
 		props['sidebar.show']=1
 		OnSwitch()
 	end
-end
-
-local function OnDocumentCountLinesChanged(def_line_count)
-	if tab0:bounds() then -- visible Function
-		local cur_line = editor:LineFromPosition(editor.CurrentPos)
-		for i = 1, #table_functions do
-			local table_line = table_functions[i][2]
-			if table_line > cur_line then
-				table_functions[i][2] = table_line + def_line_count
-			end
-		end
-		Functions_ListFILL()
+	SideBar_Hide = function()
+		win_parent:hide()
+		props['sidebar.show']=0
+	end
+else
+	SideBar_Show = function()
+		gui.set_panel(win_parent, sidebar_position)
+		props['sidebar.show']=1
+		OnSwitch()
+		gui.pass_focus()
+	end
+	SideBar_Hide = function()
+		gui.set_panel()
+		props['sidebar.show']=0
 	end
 end
 
--- Add user event handler OnSwitchFile
-local old_OnSwitchFile = OnSwitchFile
-function OnSwitchFile(file)
-	local result
-	if old_OnSwitchFile then result = old_OnSwitchFile(file) end
-	OnSwitch()
-	return result
+--- Переключает отображение боковой панели
+function SideBar_ShowHide()
+	if tonumber(props['sidebar.show'])==1 then
+		SideBar_Hide()
+	else
+		SideBar_Show()
+	end
 end
 
--- Add user event handler OnOpen
-local old_OnOpen = OnOpen
-function OnOpen(file)
-	local result
-	if old_OnOpen then result = old_OnOpen(file) end
-	OnSwitch()
-	return result
-end
-
--- Add user event handler OnKey
-local line_count = 0
-local old_OnKey = OnKey
-function OnKey(key, shift, ctrl, alt, char)
-	local result
-	if old_OnKey then result = old_OnKey(key, shift, ctrl, alt, char) end
-	if (editor.Focus) then
+-- Обновление списков Functions и Bookmarks при изменении кол-ва строк в активном документе
+AddEventHandler("OnUpdateUI", function()
+	if (editor.Focus and line_count) then
 		local line_count_new = editor.LineCount
 		local def_line_count = line_count_new - line_count
 		if def_line_count ~= 0 then
-			OnDocumentCountLinesChanged(def_line_count)
+			if tab1:bounds() then -- visible Funk/Bmk
+				local cur_line = editor:LineFromPosition(editor.CurrentPos)
+				for i = 1, #table_functions do
+					local table_line = table_functions[i][2]
+					if table_line > cur_line then
+						table_functions[i][2] = table_line + def_line_count
+					end
+				end
+				Functions_ListFILL()
+				Bookmarks_RefreshTable()
+			end
 			line_count = line_count_new
 		end
 	end
-	return result
-end
-
--- Add user event handler OnSave
-local old_OnSave = OnSave
-function OnSave(file)
-	local result
-	if old_OnSave then result = old_OnSave(file) end
-	Functions_GetNames()
-	Functions_ListFILL()
-	return result
-end
-
--- Add user event handler OnSendEditor
-local old_OnSendEditor = OnSendEditor
-function OnSendEditor(id_msg, wp, lp)
-	local result
-	if old_OnSendEditor then result = old_OnSendEditor(id_msg, wp, lp) end
-	return result
-end
-
--- Add user event handler OnFinalise
-local old_OnFinalise = OnFinalise
-function OnFinalise()
-	local result
-	if old_OnFinalise then result = old_OnFinalise() end
-	Favorites_SaveList()
-	return result
-end
+end)
 
 ----------------------------------------------------------
 -- Go to function definition
 ----------------------------------------------------------
+
+-- По имени функции находим строку с ее объявлением (инфа берется из table_functions)
 local function Func2Line(funcname)
 	if not next(table_functions) then
 		Functions_GetNames()
@@ -1312,85 +1422,79 @@ local function Func2Line(funcname)
 	end
 end
 
+-- Переход на строку с объявлением функции
 local function JumpToFuncDefinition()
-	local funcname = props['CurrentWord']
+	local funcname = GetCurrentWord()
 	local line = Func2Line(funcname)
 	if line then
 		_backjumppos = editor.CurrentPos
 		editor:GotoLine(line)
-		return true
+		return true -- обрываем дальнейшую обработку OnDoubleClick (выделение слова и пр.)
 	end
-	return false
 end
 
 local function JumpBack()
-	if not _backjumppos then return false end
-	editor:GotoPos(_backjumppos)
-	_backjumppos = nil
-	return true
+	if _backjumppos then
+		editor:GotoPos(_backjumppos)
+		_backjumppos = nil
+	end
 end
 
--- Add user event handler OnDoubleClick
-local old_OnDoubleClick = OnDoubleClick
-function OnDoubleClick(shift, ctrl, alt)
-	local result
-	if old_OnDoubleClick then result = old_OnDoubleClick(shift, ctrl, alt) end
+AddEventHandler("OnDoubleClick", function(shift, ctrl, alt)
 	if shift then
-		if JumpToFuncDefinition() then return true end
+		return JumpToFuncDefinition()
 	end
-	return result
-end
+end)
 
--- Add user event handler OnKey
-local old_OnKey = OnKey
-function OnKey(key, shift, ctrl, alt, char)
-	local result
-	if old_OnKey then result = old_OnKey(key, shift, ctrl, alt, char) end
-	if (editor.Focus) then
-		--if ctrl and key == 188 and JumpBack() then return true end --char == ','
-		--if ctrl and key == 190 and JumpToFuncDefinition() then return true end --char == '.'
-	else
-		if ctrl and alt and key == 78 then FileMan_NewFile() end -- ctrl+alt+N
-		if key ==27 and tonumber(props['sidebar.show']) == 1 then
-			gui.pass_focus()
-			return 0
-		end
-	end
-	return result
-end
-
---Active tab first,then switching...
-function SideBar_Switch_Tabs(option)
-	if tonumber(props['sidebar.show']) ~= 1 then return end
-	local index = tabs:tab_selected()
-	local curtab = eval("tab"..index)
-	if editor.Focus then
-		win_parent:client(curtab)
-	else
-		if option ~= '' and tonumber(option) < 0 then
-			index = index - 1
-		else
-			index = index + 1
-		end
-		if index == tabs:tab_count() then
-			index = 0
-		elseif index < 0 then
-			index = tabs:tab_count() - 1
-		end
-		tabs:set_tab(index)
-	end
-end
-
-AddEventHandler("OnUpdateUI", function()
-	if tonumber(props['sidebar.dock'])==1 then
-		if tonumber(props['sidebar.show'])==1 then
-			if win then
-				win_parent:hide()
-			else
-				gui.set_panel()
-			end
-			gui.pass_focus()
-			props['sidebar.show']=0
+AddEventHandler("OnKey", function(key, shift, ctrl, alt, char)
+	if editor.Focus and ctrl then
+		if key == 188 then -- '<'
+			JumpBack()
+		elseif key == 190 then -- '>'
+			JumpToFuncDefinition()
 		end
 	end
 end)
+
+----------------------------------------------------------
+-- Show Current Colour
+----------------------------------------------------------
+local function SetColour(colour)
+	if colour:match('%x%x%x%x%x%x') then
+		-- Set colour's value HEX
+		memo_path:set_memo_colour("", "#"..colour)
+	else
+		-- Set default colour
+		local def_bg = editor.StyleBack[32]
+		local b = math.floor(def_bg / 65536)
+		local g = math.floor((def_bg - b*65536) / 256)
+		local r = def_bg - b*65536 - g*256
+		local rgb_hex = string.format('#%2X%2X%2X', r, g, b)
+		memo_path:set_memo_colour("", rgb_hex)
+	end
+end
+
+AddEventHandler("OnDwellStart", function(pos, cur_word)
+	if pos ~= 0 then
+		SetColour(cur_word)
+	end
+end)
+props["dwell.period"] = 50
+
+local cur_word_old = ""
+AddEventHandler("OnKey", function()
+	if editor.Focus then
+		local cur_word = GetCurrentWord() -- слово, на котором стояла каретка ДО ТОГО КАК ЕЁ ПЕРЕМЕСТИЛИ
+		if cur_word ~= cur_word_old then
+			SetColour(cur_word)
+			cur_word_old = cur_word
+		end
+	end
+end)
+
+
+--========================================================
+-- now show SideBar:
+if tonumber(props['sidebar.show'])==1 then
+	AddEventHandler("OnOpen", SideBar_Show)
+end
