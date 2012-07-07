@@ -27,6 +27,12 @@ function OnUserListSelection(tp,str)
 	print(tp,str)
 end
 
+function GetCurrentWord()
+	local current_pos = editor.CurrentPos
+	return editor:textrange(editor:WordStartPosition(current_pos, true),
+							editor:WordEndPosition(current_pos, true))
+end
+
 ------------------------------------------
 --      SciTE Event Functions          --
 ------------------------------------------
