@@ -4,3 +4,4 @@ if errorlevel 1 goto end
 %2\other\refreshcrapt4.exe
 
 :end
+exit %ERRORLEVEL%
