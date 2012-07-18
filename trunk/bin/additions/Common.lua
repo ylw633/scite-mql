@@ -395,3 +395,48 @@ function ParseMarkStyle(prop_string)
 	end
 	return ret_number
 end
+
+function ReadAbbrevFile(file, abbr_table)
+	--[[------------------------------------------
+	@usage: for l in scite_io_lines('c:\\some.file') do print(l) end
+	  alternative:
+	f = io.open('s:\\some.file')
+	for l in scite_io_lines(f) do print(l) end
+	--]]------------------------------------------
+	local function scite_io_lines(file)
+		local line_iter = type(file)=='string' and io.lines(file) or file:lines()
+		local scite_iter = function()
+			local line = line_iter()
+			if not line then return end
+			-- start [SciTE]
+			while string.sub(line,-1)=='\\' do
+				line = string.sub(line,1,-2)..line_iter()
+			end
+			-- end [SciTE]
+			return line
+		end
+		return scite_iter
+	end
+	--------------------------------------------
+	local abbrev_file, err, errcode = io.open(file)
+	if not abbrev_file then return abbrev_file, err, errcode end
+
+	local abbr_table = abbr_table or {}
+	local ignorecomment = tonumber(props['abbrev.'..props['Language']..'.ignore.comment'])==1
+	for line in scite_io_lines(abbrev_file) do
+		if line ~= '' and (ignorecomment or line:sub(1,1) ~= '#' ) then
+			local _abr, _exp = line:match('^(.-)=(.+)')
+			if _abr then
+				abbr_table[#abbr_table+1] = {abbr=_abr, exp=_exp}
+			else
+				local import_file = line:match('^import%s+(.+)')
+				-- если обнаружена запись import, то рекурсивно вызываем эту же функцию
+				if import_file then
+					ReadAbbrevFile(file:match('.+\\')..import_file, abbr_table)
+				end
+			end
+		end
+	end
+	abbrev_file:close()
+	return abbr_table
+end
