@@ -26,7 +26,7 @@ using namespace std;
 
 typedef vector<HWND> HWNDVEC;
 
-static TCHAR* TitleTimeStrings[] = { _T(",M1]"), _T(",M5]"), _T(",M15]"), _T(",M30]"), _T(",H1]"), _T(",H4]"), _T(",D1]"), _T(",W1]") ,_T(",MN]") };
+//static TCHAR* TitleTimeStrings[] = { _T(",M1]"), _T(",M5]"), _T(",M15]"), _T(",M30]"), _T(",H1]"), _T(",H4]"), _T(",D1]"), _T(",W1]") ,_T(",MN]") };
 static ScanRange LparamScanRanges[] = { { 0xC100, 0xC500 }, { 0xC000, 0xC100 }, { 0xC500, 0xD000 }, { 0x0000, 0xC000 }, { 0xD000, 0xFFFF } };
 
 HWNDVEC _mt4s;
@@ -35,11 +35,13 @@ int _msg;
 BOOL CALLBACK ExamineWindow(HWND wnd, LPARAM lparam)
 {
 	TCHAR buffer[128];
-	GetWindowText(wnd, buffer, 128);
+	//GetWindowText(wnd, buffer, 128);
+	GetClassName(wnd, buffer, 128);
 	int idx = 0;
-	for (; idx < 9 && _tcsstr(buffer, TitleTimeStrings[idx]) == NULL; idx++) ;
 
-	if (idx < 9)
+	//for (; idx < 9 && _tcsstr(buffer, TitleTimeStrings[idx]) == NULL; idx++) ;
+	//if (idx < 9)
+	if (_tcsstr(buffer, _T("MetaQuotes::MetaTrader::4.00")) != NULL)
 		_mt4s.push_back(wnd);
 	return TRUE;
 }
