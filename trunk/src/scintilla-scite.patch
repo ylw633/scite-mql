@@ -1,6 +1,29 @@
-diff -r 78c482660e9a scintilla/include/Scintilla.iface
---- a/scintilla/include/Scintilla.iface	Fri Jun 15 14:31:34 2012 -0500
-+++ b/scintilla/include/Scintilla.iface	Mon Jun 18 14:37:00 2012 -0500
+diff -r be657e3ced19 scintilla/include/SciLexer.h
+--- a/scintilla/include/SciLexer.h	Mon Jul 23 00:20:07 2012 -0500
++++ b/scintilla/include/SciLexer.h	Mon Jul 23 00:52:24 2012 -0500
+@@ -160,6 +160,10 @@
+ #define SCE_C_STRINGRAW 20
+ #define SCE_C_TRIPLEVERBATIM 21
+ #define SCE_C_HASHQUOTEDSTRING 22
++#define SCE_C_KEYWORD6 23
++#define SCE_C_KEYWORD7 24
++#define SCE_C_KEYWORD8 25
++#define SCE_C_KEYWORD9 26
+ #define SCE_D_DEFAULT 0
+ #define SCE_D_COMMENT 1
+ #define SCE_D_COMMENTLINE 2
+@@ -476,6 +480,8 @@
+ #define SCE_ERR_TIDY 19
+ #define SCE_ERR_JAVA_STACK 20
+ #define SCE_ERR_VALUE 21
++#define SCE_ERR_MQL 22
++#define SCE_ERR_MQLWRN   23
+ #define SCE_BAT_DEFAULT 0
+ #define SCE_BAT_COMMENT 1
+ #define SCE_BAT_WORD 2
+diff -r be657e3ced19 scintilla/include/Scintilla.iface
+--- a/scintilla/include/Scintilla.iface	Mon Jul 23 00:20:07 2012 -0500
++++ b/scintilla/include/Scintilla.iface	Mon Jul 23 00:52:24 2012 -0500
 @@ -2540,6 +2540,10 @@
  val SCE_C_STRINGRAW=20
  val SCE_C_TRIPLEVERBATIM=21
@@ -21,9 +44,9 @@ diff -r 78c482660e9a scintilla/include/Scintilla.iface
  # Lexical states for SCLEX_BATCH
  lex Batch=SCLEX_BATCH SCE_BAT_
  val SCE_BAT_DEFAULT=0
-diff -r 78c482660e9a scintilla/lexers/LexCPP.cxx
---- a/scintilla/lexers/LexCPP.cxx	Fri Jun 15 14:31:34 2012 -0500
-+++ b/scintilla/lexers/LexCPP.cxx	Mon Jun 18 14:37:00 2012 -0500
+diff -r be657e3ced19 scintilla/lexers/LexCPP.cxx
+--- a/scintilla/lexers/LexCPP.cxx	Mon Jul 23 00:20:07 2012 -0500
++++ b/scintilla/lexers/LexCPP.cxx	Mon Jul 23 00:52:24 2012 -0500
 @@ -244,6 +244,10 @@
              "Documentation comment keywords",
              "Global classes and typedefs",
@@ -82,9 +105,9 @@ diff -r 78c482660e9a scintilla/lexers/LexCPP.cxx
  					}
  					const bool literalString = sc.ch == '\"';
  					if (literalString || sc.ch == '\'') {
-diff -r 78c482660e9a scintilla/lexers/LexOthers.cxx
---- a/scintilla/lexers/LexOthers.cxx	Fri Jun 15 14:31:34 2012 -0500
-+++ b/scintilla/lexers/LexOthers.cxx	Mon Jun 18 14:37:00 2012 -0500
+diff -r be657e3ced19 scintilla/lexers/LexOthers.cxx
+--- a/scintilla/lexers/LexOthers.cxx	Mon Jul 23 00:20:07 2012 -0500
++++ b/scintilla/lexers/LexOthers.cxx	Mon Jul 23 00:52:24 2012 -0500
 @@ -32,6 +32,13 @@
  	return strncmp(haystack, needle, strlen(needle)) == 0;
  }
@@ -110,9 +133,9 @@ diff -r 78c482660e9a scintilla/lexers/LexOthers.cxx
  	} else {
  		// Look for one of the following formats:
  		// GCC: <filename>:<line>:<message>
-diff -r 78c482660e9a scite/src/IFaceTable.cxx
---- a/scite/src/IFaceTable.cxx	Fri Jun 15 14:31:34 2012 -0500
-+++ b/scite/src/IFaceTable.cxx	Mon Jun 18 14:37:00 2012 -0500
+diff -r be657e3ced19 scite/src/IFaceTable.cxx
+--- a/scite/src/IFaceTable.cxx	Mon Jul 23 00:20:07 2012 -0500
++++ b/scite/src/IFaceTable.cxx	Mon Jul 23 00:52:24 2012 -0500
 @@ -671,6 +671,10 @@
  	{"SCE_C_GLOBALCLASS",19},
  	{"SCE_C_HASHQUOTEDSTRING",22},
@@ -124,9 +147,9 @@ diff -r 78c482660e9a scite/src/IFaceTable.cxx
  	{"SCE_C_NUMBER",4},
  	{"SCE_C_OPERATOR",10},
  	{"SCE_C_PREPROCESSOR",9},
-diff -r 78c482660e9a scite/src/SciTEBuffers.cxx
---- a/scite/src/SciTEBuffers.cxx	Fri Jun 15 14:31:34 2012 -0500
-+++ b/scite/src/SciTEBuffers.cxx	Mon Jun 18 14:37:00 2012 -0500
+diff -r be657e3ced19 scite/src/SciTEBuffers.cxx
+--- a/scite/src/SciTEBuffers.cxx	Mon Jul 23 00:20:07 2012 -0500
++++ b/scite/src/SciTEBuffers.cxx	Mon Jul 23 00:52:24 2012 -0500
 @@ -1999,6 +1999,17 @@
  			}
  			break;
@@ -145,3 +168,15 @@ diff -r 78c482660e9a scite/src/SciTEBuffers.cxx
  	}	// switch
  	return -1;
  }
+diff -r be657e3ced19 scite/win32/SciTEWin.cxx
+--- a/scite/win32/SciTEWin.cxx	Mon Jul 23 00:20:07 2012 -0500
++++ b/scite/win32/SciTEWin.cxx	Mon Jul 23 00:52:24 2012 -0500
+@@ -2145,7 +2145,7 @@
+ 
+ static const char *textFindPrompt = "Fi&nd:";
+ static const char *textReplacePrompt = "Rep&lace:";
+-static const char *textFindNext = "&Find Next";
++static const char *textFindNext = "F&ind Next";
+ static const char *textMarkAll = "&Mark All";
+ 
+ static const char *textReplace = "&Replace";
