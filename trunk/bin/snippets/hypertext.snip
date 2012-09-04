@@ -1,0 +1,21 @@
+#Snippets setting
+#abbrev=expression: %{1:xx} ... %{n:xxx}表示Tab移动顺序, %{0:xxx}表示结束,':'符号后的字符会被选定
+#PHP setting
+if=if(%{1:$condition})\n{\n    %{0:#code...}\n}
+fn=function %{1:name}(%{2:$arg}%{3:=''})\n{\n    %{0:#code...}\n}
+for=for ($%{1:i} = 0; $%{1:i} < %{2:10}; $%{1:i}++) \n{\n    %{0:#code...}\n}
+feach=foreach ($%{1:variable} as $%{2:value}) \n{\n    %{0:#code...}\n}
+feachk=foreach ($%{1:variable} as $%{2:key} => $%{3:value}) \n{\n    %{0:#code...}\n}
+def=define('%{1:CONST}',%{2:''});\n%{0:#code...}
+dowl=do \n{\n    %{0:#code...}\n}\nwhile (%{1:true});
+inc=include '%{1:file}';
+inc1=include_once '%{1:file}';
+req=require('%{1:file}');
+req1=require_once('%{1:file}');
+class=/**\n * %{2:Description...}\n * \n * @package %{1:ClassName}\n */\nclass %{1:ClassName} {\n\n\tpublic function __construct()\n\t{\n\t\t%{0:#code...}\n\t}\n\n}
+fun=%{1:public }%{2:static }function %{3:name}(%{4:$arg}%{5:=''})\n{\n\t%{0:#code...}\n}
+ctl=<?php\n!defined('PATH_ROOT') && exit('Request Error!');\n\n/**\n * %{2:Description...}\n * \n * @package ctl_%{1:name}\n * @version $Id$\n */\nclass ctl_%{1:name} {\n\n\tpublic function __construct()\n\t{\n\t\t%{0:#code...}\n\t}\n\n}
+mod=<?php\n!defined('PATH_ROOT') && exit('Request Error!');\n\n/**\n * %{2:Description...}\n * \n * @version $Id$\n */\nclass mod_%{1:name} {\n\n\tpublic static function %{3:method}()\n\t{\n\t\t%{0:#code...}\n\t}\n\n}
+
+#HTML setting
+html=<html>\n<head>\n<title>%{1:untitled}</title>\n</head>\n<body>\n%{0:<!--begin-->}\n</body>\n<html>
