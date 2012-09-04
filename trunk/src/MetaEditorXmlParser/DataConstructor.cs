@@ -177,7 +177,6 @@ Main=,""mql.hhc"",""mql.hhk"",,""index.html"",,,,,0x10063560,,0x70387E,,,,,,,,
                     keywordsDict[k].Add(n);
                 }
             }
-            else
             {
                 var name = n.Element.Name.ToString();
                 switch (name)
