@@ -1,0 +1,213 @@
+#HTML - XML Abbreviations
+#--------------------------------------------------------------
+1=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n<html>\n<head>\n\t<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n\t<meta name="description" content="">\n\t<meta name="keywords" content="">\n\t<meta name="generator" content="SciTE">\n<title>|</title>\n<style type="text/css">\n\tbody,tr,td {font-family:Verdana; font-size:x-small;}\n\ta {color:#000080; text-decoration:none;}\n\ta:hover {color:red;}\n</style>\n<script language="JavaScript" type="text/javascript">\n</script>\n</head>\n<body>\n</body>\n</html>\n
+#HTML Application
+hta=<html>\n<head>\n<meta http-equiv=content-type content="text-html; charset=utf-8">\n<meta http-equiv=MSThemeCompatible content=yes>\n<hta:application\n\tid=HTAApp\n\tapplicationName=My_Application\n\ticon=desk.cpl\n\tmaximizeButton=no\n\tborder=thin\n\tinnerBorder=no\n\tscroll=no\n\tselection=no\n\tcontextMenu=no\n\tsingleinstance=yes\n\tversion=1.0\n>\n<style type="text/css">\n\tbody, table {background-color:threedface; overflow:hidden; margin:2px;}\n\tbody, input, table, legend {font-family:MS Sans Serif; font-size:6pt;}\n\tlegend, label {color:highlight;}\n\tlegend {font-weight:bold;}\n</style>\n<script language="JavaScript">\n\twindow.resizeTo(240, 70);\n\tdocument.title = HTAApp.applicationName.replace(/_/g,' ') + ' v.' + HTAApp.version;\n</script>\n</head>\n<body>\n\t<fieldset><legend>&nbsp;Params:&nbsp;</legend>\n\t\t<input id="chk" type=checkbox onClick="ibox.disabled=btn.disabled=!this.checked;">\n\t\t<label for="chk" hidefocus>Set value&nbsp;</label>\n\t\t&nbsp;<input id=ibox type=text value=#FF23DA disabled>\n\t\t<input id="btn" type=button onClick="alert(ibox.value); self.close();" value=OK disabled hidefocus>\n\t</fieldset>\n</body>\n</html>
+
+#HTML 5
+htm5=<!DOCTYPE html>\n<html>\n<head>\n\t<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n\t<meta name="generator" content="SciTE">\n\t<link rel="stylesheet" href="style.css" type="text/css">\n\t<title>|</title>\n</head>\n<body>\n</body>\n</html>\n
+#HTML 4.01 Strict
+htms=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">\n<html>\n<head>\n\t<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n\t<meta name="generator" content="SciTE">\n\t<link rel="stylesheet" href="style.css" type="text/css">\n\t<title>|</title>\n</head>\n<body>\n</body>\n</html>\n
+#HTML 4.01 Transitional
+htmt=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">\n<html>\n<head>\n\t<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n\t<meta name="generator" content="SciTE">\n\t<link rel="stylesheet" href="style.css" type="text/css">\n\t<title>|</title>\n</head>\n<body>\n</body>\n</html>\n
+#HTML 4.01 Frameset
+htmf=<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">\n<html>\n<head>\n\t<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n\t<meta name="generator" content="SciTE">\n\t<link rel="stylesheet" href="style.css" type="text/css">\n\t<title>|</title>\n</head>\n<frameset rows="20,*" frameborder="no" border="0" framespacing="0">\n<frame src="top.html" scrolling="No" noresize="noresize" id="topFrame" title="topFrame" />\n<frame src="bottom.html" name="bottomFrame" scrolling="No" noresize="noresize" id="bottomFrame" title="bottomFrame">\n</frameset>\n</html>\n
+
+#XHTML 1.0 Strict
+xmls=<?xml version="1.0"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">\n<html xmlns="http://www.w3.org/1999/xhtml">\n<head>\n\t<meta http-equiv="content-type" content="text/xml;charset=utf-8" />\n\t<meta name="generator" content="SciTE" />\n\t<link rel="stylesheet" href="style.css" type="text/css" />\n\t<title>|</title>\n</head>\n<body>\n</body>\n</html>\n
+#XHTML 1.0 Transitional
+xmlt=<?xml version="1.0"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n<html xmlns="http://www.w3.org/1999/xhtml">\n<head>\n\t<meta http-equiv="content-type" content="text/xml;charset=utf-8" />\n\t<meta name="generator" content="SciTE" />\n\t<link rel="stylesheet" href="style.css" type="text/css" />\n\t<title>|</title>\n</head>\n<body>\n</body>\n</html>\n
+#XHTML 1.0 Frameset
+xmlf=<?xml version="1.0"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">\n<html xmlns="http://www.w3.org/1999/xhtml">\n<head>\n\t<meta http-equiv="content-type" content="text/xml;charset=utf-8" />\n\t<meta name="generator" content="SciTE" />\n\t<link rel="stylesheet" href="style.css" type="text/css" />\n\t<title>|</title>\n</head>\n<frameset rows="20,*">\n<frame src="top.xml" />\n<frame src="bottom.xml" />\n</frameset>\n</html>\n
+#XHTML 1.1 DTD
+xmld=<?xml version="1.0"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n<html xmlns="http://www.w3.org/1999/xhtml">\n<head>\n\t<meta http-equiv="content-type" content="text/xml;charset=utf-8" />\n\t<meta name="generator" content="SciTE" />\n\t<link rel="stylesheet" href="style.css" type="text/css" />\n\t<title>|</title>\n</head>\n<body>\n</body>\n</html>\n
+
+ajax=$.ajax({\n\ttype:"POST",\n\turl: "|",\n\tdata: "",\n\tasync:true,\n\tsuccess: function(data){\n\t\talert(data);\n\t}\n}); 
+getjson=$.getJSON("|callback=?",{name:"value"}, function(json){\n\talert(json);\n}); 
+
+# tags
+<a=<a href="|"></a>
+<ah=<a href="http://|"></a>
+<am=<a href="mailto:|"></a>
+<atb=<a target="_blank" href="">|</a>
+<ab=<abbr>|</abbr>
+<ac=<acronym>|</acronym>
+<ad=<address>|</address>
+<ar=<area>|</area>
+<arc=<area shape="circle" coords="" href="" alt="">|</area>
+<arp=<area shape="poly" coords="" href="" alt="">|</area>
+<arr=<area shape="rect" coords="" href="" alt="">|</area>
+<b=<b>|</b>
+<ba=<base href="|" />\n
+<bdl=<bdo dir="ltr">|</bdo>
+<bdr=<bdo dir="rtl">|</bdo>
+<bi=<big>|</big>
+<bl=<blockquote cite="">|</blockquote>\n
+<bo=<body>\n\t|\n</body>\n
+</=<br />
+<bu=<button name="" value="" type="">|</button>
+<ca=<caption>|</caption>\n
+<ce=<center>|</center>
+<ci=<cite>|</cite>
+<cod=<code>|</code>
+<col=<col>
+<colg=<colgroup>\n\t|\n</colgroup>
+<d=<div>\n\t|\n</div>\n
+<di=<div id="">\n\t|\n</div>\n
+<dc=<div class="">\n\t|\n</div>\n
+<diw=<div id="wrap">\n\t|\n</div>\n
+<dih=<div id="header">\n\t|\n</div>\n
+<dic=<div id="content">\n\t|\n</div>\n
+<dil=<div id="left">\n\t|\n</div>\n
+<dir=<div id="right">\n\t|\n</div>\n
+<dif=<div id="footer">\n\t|\n</div>\n
+<dd=<dd>|</dd>
+<de=<del>|</del>
+<df=<dfn>|</dfn>
+<dl=<dl>\n\t|\n</dl>\n
+<dt=<dt>|</dt>
+<e=<em>|</em>
+<em=<embed src="">\n\t|\n</embed>\n
+<fi=<fieldset>\n\t<legend>|</legend>\n</fieldset>\n
+<fs=<fieldset>\n\t|\n</fieldset>\n
+<f=<form method ="" action="" name="">\n\t|\n</form>\n
+<fg=<form method ="get" action="" name="">\n\t|\n</form>\n
+<fp=<form method ="post" action="" name="">\n\t|\n</form>\n
+<h1=<h1>|</h1>\n
+<h2=<h2>|</h2>\n
+<h3=<h3>|</h3>\n
+<h4=<h4>|</h4>\n
+<h5=<h5>|</h5>\n
+<h6=<h6>|</h6>\n
+<he=<head>\n\t|\n</head>\n
+<-=<hr />\n
+<ht=<html>\n\t|\n</html>
+<i=<i>|</i>
+<im=<img src="|" alt="" title=""/>
+<ins=<ins>|</ins>
+<it=<input type="text" name="|" value="|" />
+<ip=<input type="password" name="|" value="|" />
+<ic=<input type="checkbox" name="|" value="|" />
+<icc=<input type="checkbox" checked="checked" value="|" />
+<ir=<input type="radio" name="|" value="|" />
+<irc=<input type="radio" checked="checked" name="|" value="|" />
+<if=<input type="file" name="|"/>
+<ib=<input type="button" value="|" />
+<is=<input type="submit" value="|" />
+<irs=<input type="reset" value="|" />
+<ii=<input type="image" src="|" />
+<ih=<input type="hidden" name="|" value="" />
+<js=<script type="text/javascript">\n|\n</script>
+<jss=<script type="text/javascript" src="|.js"></script>
+<k=<kbd>|</kbd>
+<l=<li>|</li>
+<la=<li><a href="|"></a></li>
+<lb=<label>|</label>
+<lf=<label for="">|</label>
+<le=<legend>|</legend>\n
+<lfi=<link rel="shortcut icon" type="image/x-icon" href="|favicon.ico"/>\n
+<lcss=<link rel="stylesheet" type="text/css" href="|.css" />\n
+<lpr=<link rel="stylesheet" type="text/css" href="|print.css" media="print"/>\n
+<lrss=<link rel="alternate" type="application/rss+xml" title="RSS" href="|rss.xml"/>\n
+<latom=<link rel="alternate" type="application/atom+xml" title="Atom" href="|atom.xml"/>\n
+<map=<map>\n|\n</map>\n
+<met=<meta content="">|</meta>\n
+<mi=<meta http-equiv="imagetoolbar" content="no"/>\n
+<mu=<meta http-equiv="content-type" content="text/html; charset=utf-8"/>\n
+<mw=<meta http-equiv="content-type" content="text/html; charset=utf-8"/>\n
+<ma=<meta name="author" content="|"/>\n
+<mc=<meta name="copyright" content="|"/>\n
+<md=<meta name="description" content="|"/>\n
+<mk=<meta name="keywords" content="|"/>\n
+<mr=<meta name="robots" content="|"/>\n
+<mg=<meta name="generator" content="SciTE-RU"/>\n
+<mt=<meta name="title" content="|"/>\n
+<m7=<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>\n
+<nos=<noscript>|</noscript>\n
+<o=<ol>\n\t<li>|</li>\n\n</ol>\n
+<ob=<object>|</object>\n
+<op=<option value="">|</option>
+<opg=<optgroup label="|">\n\t<option value=""></option>\n\n</optgroup>\n
+<p=<p>|</p>\n
+<pa=<param name="|" value="" />
+<pr=<pre>\n|\n</pre>\n
+<q=<q>|</q>
+<s=<s>|</s>
+<sa=<samp>|</samp>
+<sc=<script language="JavaScript" src="|"></script>
+<se=<select name="|">\n\t<option value="">|</option>\n</select>
+<sm=<small>|</small>
+<sp=<span>|</span>
+<str=<strike>DEPRECATED|</strike>
+<st=<strong>|</strong>
+<sty=<style type="text/css">\n|\n<style>\n
+<sub=<sub>|</sub>
+<sup=<sup>|</sup>
+<t=<table width="100%" cellpadding="0" cellspacing="0" border="0">\n\t<tr>\n\t\t<td>|</td>\n\t</tr>\n</table>\n
+<td=<td>|</td>
+<tr=<tr>\n\t|\n</tr>
+<trd=<tr>\n\t<td>|</td>\n\n</tr>
+<th=<th>|</th>
+<trh=<tr>\n\t<th>|</th>\n\n</tr>
+<ti=<title>|</title>\n
+<ta=<textarea rows="" cols="">|</textarea>\n
+<tb=<tbody>|</tbody>\n
+<the=<thead>|</thead>\n
+<tf=<tfoot>|</tfoot>\n
+<tt=<tt>|</tt>
+<u=<ul>\n\t<li>|</li>\n\n</ul>\n
+<ua=<ul>\n\t<li><a href="|"></a></li>\n\n</ul>\n
+<ui=<ul id="">\n\t<li>|</li>\n\n</ul>\n
+<v=<var>|</var>
+
+# symbols
+a-= alt="|"
+ak-= accesskey="|"
+ñ-= class="|"
+ch-= checked="checked"
+cs-= colspan="|"
+d-= disabled="disabled"
+i-= id="|"
+h-= height="|"
+ml-= maxlength="|"
+l-= label="|"
+n-= name="|"
+pp-= pluginspage="http://|"
+ro-= readonly
+rs-= rowspan="|"
+s-= style="|"
+sp-= span="|"
+sr-= src="|"
+sz-= size="|"
+t-= title="|"
+ti-= tabindex="|"
+tp-= type="|"
+v-= value="|"
+w-= width="|"
+
+# signs
+& =&nbsp;
+&¦=&brvbar;
+&s=&sect;
+&<<=&laquo;
+&>>=&raquo;
+&0=&deg;
+&d=&divide;
+&t=&times;
+&+-=&plusmn;
+&.=&middot;
+&"=&quot;
+&&=&amp;
+&<=&lt;
+&>=&gt;
+&-=&ndash;
+&--=&mdash;
+&c=&copy;
+(c)=&copy;
+&r=&reg;
+(r)=&reg;
+&tm=&trade;
+
+# hacks
+<cie=<!--[if IE]>|<![endif]-->
+<cnie=<!--[if !IE]><!-->|<!--<![endif]-->
