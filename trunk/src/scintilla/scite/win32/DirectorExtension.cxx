@@ -16,22 +16,13 @@
 
 #undef _WIN32_WINNT
 #define _WIN32_WINNT  0x0500
-#ifdef _MSC_VER
-// windows.h, et al, use a lot of nameless struct/unions - can't fix it, so allow it
-#pragma warning(disable: 4201)
-#endif
 #include <windows.h>
-#ifdef _MSC_VER
-// okay, that's done, don't allow it in our code
-#pragma warning(default: 4201)
-#endif
 #include <commctrl.h>
 
 #include "Scintilla.h"
 #include "ILexer.h"
 
 #include "GUI.h"
-#include "SString.h"
 #include "StringList.h"
 #include "StringHelpers.h"
 #include "FilePath.h"
@@ -44,9 +35,9 @@
 #include "JobQueue.h"
 #include "Cookie.h"
 #include "Worker.h"
+#include "MatchMarker.h"
 #include "SciTEBase.h"
 
-static ExtensionAPI *host = 0;
 static HWND wDirector = 0;
 static HWND wCorrespondent = 0;
 static HWND wReceiver = 0;
@@ -54,13 +45,17 @@ static bool startedByDirector = false;
 static bool shuttingDown = false;
 unsigned int SDI = 0;
 
+static bool HasConnection() {
+	return (wDirector != 0) || (wCorrespondent != 0);
+}
+
 static void SendDirector(const char *verb, const char *arg = 0) {
-	if ((wDirector != 0) || (wCorrespondent != 0)) {
+	if (HasConnection()) {
 		HWND wDestination = wCorrespondent;
-		SString addressedMessage;
+		std::string addressedMessage;
 		if (wDestination) {
 			addressedMessage += ":";
-			SString address(reinterpret_cast<size_t>(wDestination));
+			std::string address = StdStringFromSizeT(reinterpret_cast<size_t>(wDestination));
 			addressedMessage += address;
 			addressedMessage += ":";
 		} else {
@@ -86,23 +81,22 @@ static void SendDirector(const char *verb, const char *arg = 0) {
 }
 
 static void SendDirector(const char *verb, sptr_t arg) {
-	SString s(static_cast<size_t>(arg));
+	std::string s = StdStringFromSizeT(static_cast<size_t>(arg));
 	::SendDirector(verb, s.c_str());
 }
 
 static void CheckEnvironment(ExtensionAPI *phost) {
 	if (phost && !shuttingDown) {
 		if (!wDirector) {
-			char *director = phost->Property("director.hwnd");
-			if (director && *director) {
+			std::string director = phost->Property("director.hwnd");
+			if (director.length() > 0) {
 				startedByDirector = true;
-				wDirector = reinterpret_cast<HWND>(atoi(director));
+				wDirector = reinterpret_cast<HWND>(atoi(director.c_str()));
 				// Director is just seen so identify this to it
 				::SendDirector("identity", reinterpret_cast<sptr_t>(wReceiver));
 			}
-			delete []director;
 		}
-		SString sReceiver(reinterpret_cast<size_t>(wReceiver));
+		std::string sReceiver = StdStringFromSizeT(reinterpret_cast<size_t>(wReceiver));
 		phost->SetProperty("WindowID", sReceiver.c_str());
 	}
 }
@@ -225,6 +219,11 @@ bool DirectorExtension::OnClose(const char *path) {
 	return false;
 }
 
+bool DirectorExtension::NeedsOnClose() {
+	CheckEnvironment(host);
+	return HasConnection();
+}
+
 bool DirectorExtension::OnChar(char) {
 	return false;
 }
@@ -280,7 +279,7 @@ void DirectorExtension::HandleStringMessage(const char *message) {
 	// be set to zero before time.
 	StringList wlMessage(true);
 	wlMessage.Set(message);
-	for (int i = 0; i < wlMessage.len; i++) {
+	for (size_t i = 0; i < wlMessage.Length(); i++) {
 		// Message format is [:return address:]command:argument
 		char *cmd = wlMessage[i];
 		if (*cmd == ':') {
@@ -300,7 +299,9 @@ void DirectorExtension::HandleStringMessage(const char *message) {
 			wDirector = 0;
 			if (startedByDirector) {
 				shuttingDown = true;
-				host->ShutDown();
+				if (host) {
+					host->ShutDown();
+				}
 				shuttingDown = false;
 			}
 		} else if (host) {
@@ -309,8 +310,3 @@ void DirectorExtension::HandleStringMessage(const char *message) {
 		wCorrespondent = 0;
 	}
 }
-
-#ifdef _MSC_VER
-// Unreferenced inline functions are OK
-#pragma warning(disable: 4514)
-#endif

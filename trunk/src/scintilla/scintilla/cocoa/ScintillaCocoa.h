@@ -14,11 +14,12 @@
  */
 
 #include <stdlib.h>
-#include <string>
 #include <stdio.h>
-#include <ctype.h>
 #include <time.h>
+#include <ctype.h>
 
+#include <stdexcept>
+#include <string>
 #include <vector>
 #include <map>
 
@@ -40,18 +41,21 @@
 #include "XPM.h"
 #include "LineMarker.h"
 #include "Style.h"
-#include "AutoComplete.h"
 #include "ViewStyle.h"
 #include "CharClassify.h"
 #include "Decoration.h"
 #include "CaseFolder.h"
 #include "Document.h"
+#include "CaseConvert.h"
 #include "Selection.h"
 #include "PositionCache.h"
+#include "EditModel.h"
+#include "MarginView.h"
+#include "EditView.h"
 #include "Editor.h"
 
+#include "AutoComplete.h"
 #include "ScintillaBase.h"
-#include "CaseConvert.h"
 
 extern "C" NSString* ScintillaRecPboardType;
 
@@ -85,7 +89,7 @@ class ScintillaCocoa : public ScintillaBase
 private:
   TimerTarget* timerTarget;
   NSEvent* lastMouseEvent;
-  
+
   id<ScintillaNotificationProtocol> delegate;
 
   SciNotifyFunc	notifyProc;
@@ -101,20 +105,26 @@ private:
 
   bool GetPasteboardData(NSPasteboard* board, SelectionText* selectedText);
   void SetPasteboardData(NSPasteboard* board, const SelectionText& selectedText);
-  
+  int TargetAsUTF8(char *text);
+  int EncodedFromUTF8(char *utf8, char *encoded) const;
+
   int scrollSpeed;
   int scrollTicks;
   NSTimer* tickTimer;
   NSTimer* idleTimer;
   CFRunLoopObserverRef observer;
-	
+
   FindHighlightLayer *layerFindIndicator;
 
 protected:
-  Point GetVisibleOriginInMain();
-  PRectangle GetClientRectangle();
+  Point GetVisibleOriginInMain() const;
+  PRectangle GetClientRectangle() const;
+  virtual PRectangle GetClientDrawingRectangle();
   Point ConvertPoint(NSPoint point);
-  
+  virtual void RedrawRect(PRectangle rc);
+  virtual void DiscardOverdraw();
+  virtual void Redraw();
+
   virtual void Initialise();
   virtual void Finalise();
   virtual CaseFolder *CaseFolderForEncoding();
@@ -129,8 +139,7 @@ public:
   void RegisterNotifyCallback(intptr_t windowid, SciNotifyFunc callback);
   sptr_t WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
 
-  ScintillaView* TopContainer();
-  NSScrollView* ScrollContainer();
+  NSScrollView* ScrollContainer() const;
   SCIContentView* ContentView();
 
   bool SyncPaint(void* gc, PRectangle rc);
@@ -138,10 +147,15 @@ public:
   void PaintMargin(NSRect aRect);
 
   virtual sptr_t DefWndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
-  void SetTicking(bool on);
+  void TickFor(TickReason reason);
+  bool FineTickerAvailable();
+  bool FineTickerRunning(TickReason reason);
+  void FineTickerStart(TickReason reason, int millis, int tolerance);
+  void FineTickerCancel(TickReason reason);
   bool SetIdle(bool on);
   void SetMouseCapture(bool on);
   bool HaveMouseCapture();
+  void WillDraw(NSRect rect);
   void ScrollText(int linesToMove);
   void SetVerticalScrollPos();
   void SetHorizontalScrollPos();
@@ -171,9 +185,10 @@ public:
   virtual void ClaimSelection();
 
   NSPoint GetCaretPosition();
-  
-  static sptr_t DirectFunction(ScintillaCocoa *sciThis, unsigned int iMessage, uptr_t wParam, sptr_t lParam);
 
+  static sptr_t DirectFunction(sptr_t ptr, unsigned int iMessage, uptr_t wParam, sptr_t lParam);
+
+  NSTimer *timers[tickPlatform+1];
   void TimerFired(NSTimer* timer);
   void IdleTimerFired();
   static void UpdateObserver(CFRunLoopObserverRef observer, CFRunLoopActivity activity, void *sci);
@@ -182,7 +197,14 @@ public:
   virtual void IdleWork();
   virtual void QueueIdleWork(WorkNeeded::workItems items, int upTo);
   int InsertText(NSString* input);
+  NSRange PositionsFromCharacters(NSRange range) const;
+  NSRange CharactersFromPositions(NSRange range) const;
   void SelectOnlyMainSelection();
+  void ConvertSelectionVirtualSpace();
+  bool ClearAllSelections();
+  void CompositionStart();
+  void CompositionCommit();
+  void CompositionUndo();
   virtual void SetDocPointer(Document *document);
 
   bool KeyboardInput(NSEvent* event);
@@ -201,14 +223,14 @@ public:
   void DraggingExited(id <NSDraggingInfo> info);
   bool PerformDragOperation(id <NSDraggingInfo> info);
   void DragScroll();
-  
+
   // Promote some methods needed for NSResponder actions.
   virtual void SelectAll();
   void DeleteBackward();
   virtual void Cut();
   virtual void Undo();
   virtual void Redo();
-  
+
   virtual NSMenu* CreateContextMenu(NSEvent* event);
   void HandleCommand(NSInteger command);
 

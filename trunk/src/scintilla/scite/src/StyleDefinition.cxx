@@ -10,11 +10,11 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "Scintilla.h"
 
 #include "GUI.h"
-#include "SString.h"
 #include "StringHelpers.h"
 #include "StyleDefinition.h"
 
@@ -31,7 +31,8 @@ bool StyleDefinition::ParseStyleDefinition(const char *definition) {
 	if (definition == NULL || *definition == '\0') {
 		return false;
 	}
-	char *val = StringDup(definition);
+	std::vector<char> valHolder(definition, definition + strlen(definition)+1);
+	char *val = &valHolder[0];
 	char *opt = val;
 	while (opt) {
 		// Find attribute separator
@@ -66,16 +67,16 @@ bool StyleDefinition::ParseStyleDefinition(const char *definition) {
 			specified = static_cast<flags>(specified | sdWeight);
 			weight = atoi(colon);
 		}
-		if (0 == strcmp(opt, "font")) {
+		if ((0 == strcmp(opt, "font")) && colon) {
 			specified = static_cast<flags>(specified | sdFont);
 			font = colon;
-			font.substitute('|', ',');
+			std::replace(font.begin(), font.end(), '|', ',');
 		}
-		if (0 == strcmp(opt, "fore")) {
+		if ((0 == strcmp(opt, "fore")) && colon) {
 			specified = static_cast<flags>(specified | sdFore);
 			fore = colon;
 		}
-		if (0 == strcmp(opt, "back")) {
+		if ((0 == strcmp(opt, "back")) && colon) {
 			specified = static_cast<flags>(specified | sdBack);
 			back = colon;
 		}
@@ -131,7 +132,6 @@ bool StyleDefinition::ParseStyleDefinition(const char *definition) {
 		else
 			opt = 0;
 	}
-	delete []val;
 	return true;
 }
 
@@ -167,7 +167,7 @@ int IntFromHexByte(const char *hexByte) {
 	return IntFromHexDigit(hexByte[0]) * 16 + IntFromHexDigit(hexByte[1]);
 }
 
-Colour ColourFromString(const SString &s) {
+Colour ColourFromString(const std::string &s) {
 	if (s.length()) {
 		int r = IntFromHexByte(s.c_str() + 1);
 		int g = IntFromHexByte(s.c_str() + 3);
@@ -206,11 +206,13 @@ bool IndicatorDefinition::ParseIndicatorDefinition(const char *definition) {
 		{ "dotbox", INDIC_DOTBOX },
 		{ "squigglepixmap", INDIC_SQUIGGLEPIXMAP },
 		{ "compositionthick", INDIC_COMPOSITIONTHICK },
+		{ "compositionthin", INDIC_COMPOSITIONTHIN },
+		{ "fullbox", INDIC_FULLBOX },
 	};
 
 	std::string val(definition);
+	LowerCaseAZ(val);
 	char *opt = &val[0];
-	LowerCaseAZ(opt);
 	while (opt) {
 		// Find attribute separator
 		char *cpComma = strchr(opt, ',');
@@ -235,8 +237,8 @@ bool IndicatorDefinition::ParseIndicatorDefinition(const char *definition) {
 			if (!found)
 				style = atoi(colon);
 		}
-		if ((0 == strcmp(opt, "colour")) || (0 == strcmp(opt, "color"))) {
-			colour = ColourFromString(SString(colon));
+		if (colon && ((0 == strcmp(opt, "colour")) || (0 == strcmp(opt, "color")))) {
+			colour = ColourFromString(std::string(colon));
 		}
 		if (colon && (0 == strcmp(opt, "fillalpha"))) {
 			fillAlpha = atoi(colon);

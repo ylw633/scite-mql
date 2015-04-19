@@ -9,6 +9,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -17,43 +18,13 @@
 #include <vector>
 #include <set>
 #include <map>
-
-#if defined(__unix__)
-
-#include <unistd.h>
-
-#if defined(GTK)
-#include <gtk/gtk.h>
-#endif
-
-#else
-
-#undef _WIN32_WINNT
-#define _WIN32_WINNT  0x0500
-#ifdef _MSC_VER
-// windows.h, et al, use a lot of nameless struct/unions - can't fix it, so allow it
-#pragma warning(disable: 4201)
-#endif
-#include <windows.h>
-#ifdef _MSC_VER
-// okay, that's done, don't allow it in our code
-#pragma warning(default: 4201)
-#endif
-#include <commctrl.h>
-
-// For chdir
-#ifdef _MSC_VER
-#include <direct.h>
-#endif
-
-#endif
+#include <sstream>
 
 #include "Scintilla.h"
 #include "ILexer.h"
 
 #include "GUI.h"
 
-#include "SString.h"
 #include "StringList.h"
 #include "StringHelpers.h"
 #include "FilePath.h"
@@ -66,6 +37,7 @@
 #include "JobQueue.h"
 #include "Cookie.h"
 #include "Worker.h"
+#include "MatchMarker.h"
 #include "SciTEBase.h"
 
 
@@ -73,10 +45,8 @@
 
 #define RTF_HEADEROPEN "{\\rtf1\\ansi\\deff0\\deftab720"
 #define RTF_FONTDEFOPEN "{\\fonttbl"
-#define RTF_FONTDEF "{\\f%d\\fnil\\fcharset%u %s;}"
 #define RTF_FONTDEFCLOSE "}"
 #define RTF_COLORDEFOPEN "{\\colortbl"
-#define RTF_COLORDEF "\\red%d\\green%d\\blue%d;"
 #define RTF_COLORDEFCLOSE "}"
 #define RTF_HEADERCLOSE "\n"
 #define RTF_BODYOPEN ""
@@ -136,7 +106,7 @@ void GetRTFStyleChange(char *delta, char *last, char *current) { // \f0\fs20\cf0
 	strcpy(last, current);
 }
 
-void SciTEBase::SaveToRTF(FilePath saveName, int start, int end) {
+void SciTEBase::SaveToStreamRTF(std::ostream &os, int start, int end) {
 	int lengthDoc = LengthDocument();
 	if (end < 0)
 		end = lengthDoc;
@@ -146,19 +116,16 @@ void SciTEBase::SaveToRTF(FilePath saveName, int start, int end) {
 	// Read the default settings
 	char key[200];
 	sprintf(key, "style.*.%0d", STYLE_DEFAULT);
-	char *valdefDefault = StringDup(props.GetExpanded(key).c_str());
+	const std::string valdefDefault = props.GetExpandedString(key);
 	sprintf(key, "style.%s.%0d", language.c_str(), STYLE_DEFAULT);
-	char *valDefault = StringDup(props.GetExpanded(key).c_str());
+	const std::string valDefault = props.GetExpandedString(key);
 
-	StyleDefinition defaultStyle(valdefDefault);
-	defaultStyle.ParseStyleDefinition(valDefault);
-
-	delete []valDefault;
-	delete []valdefDefault;
+	StyleDefinition defaultStyle(valdefDefault.c_str());
+	defaultStyle.ParseStyleDefinition(valDefault.c_str());
 
 	int tabSize = props.GetInt("export.rtf.tabsize", props.GetInt("tabsize"));
 	int wysiwyg = props.GetInt("export.rtf.wysiwyg", 1);
-	SString fontFace = props.GetExpanded("export.rtf.font.face");
+	std::string fontFace = props.GetExpandedString("export.rtf.font.face");
 	if (fontFace.length()) {
 		defaultStyle.font = fontFace;
 	} else if (defaultStyle.font.length() == 0) {
@@ -177,148 +144,153 @@ void SciTEBase::SaveToRTF(FilePath saveName, int start, int end) {
 	if (tabSize == 0)
 		tabSize = 4;
 
-	FILE *fp = saveName.Open(GUI_TEXT("wt"));
-	if (fp) {
-		char styles[STYLE_MAX + 1][MAX_STYLEDEF];
-		char fonts[STYLE_MAX + 1][MAX_FONTDEF];
-		char colors[STYLE_MAX + 1][MAX_COLORDEF];
-		char lastStyle[MAX_STYLEDEF], deltaStyle[MAX_STYLEDEF];
-		int fontCount = 1, colorCount = 2, i;
-		fputs(RTF_HEADEROPEN RTF_FONTDEFOPEN, fp);
-		StringCopy(fonts[0], defaultStyle.font.c_str());
-		fprintf(fp, RTF_FONTDEF, 0, characterset, defaultStyle.font.c_str());
-		StringCopy(colors[0], defaultStyle.fore.c_str());
-		StringCopy(colors[1], defaultStyle.back.c_str());
+	char styles[STYLE_MAX + 1][MAX_STYLEDEF];
+	char fonts[STYLE_MAX + 1][MAX_FONTDEF];
+	char colors[STYLE_MAX + 1][MAX_COLORDEF];
+	char lastStyle[MAX_STYLEDEF], deltaStyle[MAX_STYLEDEF];
+	int fontCount = 1, colorCount = 2, i;
+	os << RTF_HEADEROPEN << RTF_FONTDEFOPEN;
+	StringCopy(fonts[0], defaultStyle.font.c_str());
+	os << "{\\f" << 0 << "\\fnil\\fcharset" << characterset << " " << defaultStyle.font.c_str() << ";}";
+	StringCopy(colors[0], defaultStyle.fore.c_str());
+	StringCopy(colors[1], defaultStyle.back.c_str());
 
-		for (int istyle = 0; istyle <= STYLE_MAX; istyle++) {
-			sprintf(key, "style.*.%0d", istyle);
-			char *valdef = StringDup(props.GetExpanded(key).c_str());
-			sprintf(key, "style.%s.%0d", language.c_str(), istyle);
-			char *val = StringDup(props.GetExpanded(key).c_str());
+	for (int istyle = 0; istyle <= STYLE_MAX; istyle++) {
+		sprintf(key, "style.*.%0d", istyle);
+		const std::string valdef = props.GetExpandedString(key);
+		sprintf(key, "style.%s.%0d", language.c_str(), istyle);
+		const std::string val = props.GetExpandedString(key);
 
-			StyleDefinition sd(valdef);
-			sd.ParseStyleDefinition(val);
+		StyleDefinition sd(valdef.c_str());
+		sd.ParseStyleDefinition(val.c_str());
 
-			if (sd.specified != StyleDefinition::sdNone) {
-				if (wysiwyg && sd.font.length()) {
-					for (i = 0; i < fontCount; i++)
-						if (EqualCaseInsensitive(sd.font.c_str(), fonts[i]))
-							break;
-					if (i >= fontCount) {
-						StringCopy(fonts[fontCount++], sd.font.c_str());
-						fprintf(fp, RTF_FONTDEF, i, characterset, sd.font.c_str());
-					}
-					sprintf(lastStyle, RTF_SETFONTFACE "%d", i);
-				} else {
-					strcpy(lastStyle, RTF_SETFONTFACE "0");
+		if (sd.specified != StyleDefinition::sdNone) {
+			if (wysiwyg && sd.font.length()) {
+				for (i = 0; i < fontCount; i++)
+					if (EqualCaseInsensitive(sd.font.c_str(), fonts[i]))
+						break;
+				if (i >= fontCount) {
+					StringCopy(fonts[fontCount++], sd.font.c_str());
+					os << "{\\f" << i << "\\fnil\\fcharset" << characterset << " " << sd.font.c_str() << ";}";
 				}
+				sprintf(lastStyle, RTF_SETFONTFACE "%d", i);
+			} else {
+				strcpy(lastStyle, RTF_SETFONTFACE "0");
+			}
 
-				sprintf(lastStyle + strlen(lastStyle), RTF_SETFONTSIZE "%d",
-				        wysiwyg && sd.size ? sd.size << 1 : defaultStyle.size);
+			sprintf(lastStyle + strlen(lastStyle), RTF_SETFONTSIZE "%d",
+				wysiwyg && sd.size ? sd.size << 1 : defaultStyle.size);
 
-				if (sd.specified & StyleDefinition::sdFore) {
-					for (i = 0; i < colorCount; i++)
-						if (EqualCaseInsensitive(sd.fore.c_str(), colors[i]))
-							break;
-					if (i >= colorCount)
-						StringCopy(colors[colorCount++], sd.fore.c_str());
-					sprintf(lastStyle + strlen(lastStyle), RTF_SETCOLOR "%d", i);
-				} else {
-					strcat(lastStyle, RTF_SETCOLOR "0");	// Default fore
-				}
+			if (sd.specified & StyleDefinition::sdFore) {
+				for (i = 0; i < colorCount; i++)
+					if (EqualCaseInsensitive(sd.fore.c_str(), colors[i]))
+						break;
+				if (i >= colorCount)
+					StringCopy(colors[colorCount++], sd.fore.c_str());
+				sprintf(lastStyle + strlen(lastStyle), RTF_SETCOLOR "%d", i);
+			} else {
+				strcat(lastStyle, RTF_SETCOLOR "0");	// Default fore
+			}
 
-				// PL: highlights doesn't seems to follow a distinct table, at least with WordPad and Word 97
-				// Perhaps it is different for Word 6?
+			// PL: highlights doesn't seems to follow a distinct table, at least with WordPad and Word 97
+			// Perhaps it is different for Word 6?
 //				sprintf(lastStyle + strlen(lastStyle), RTF_SETBACKGROUND "%d",
 //				        sd.back.length() ? GetRTFHighlight(sd.back.c_str()) : 0);
-				if (sd.specified & StyleDefinition::sdBack) {
-					for (i = 0; i < colorCount; i++)
-						if (EqualCaseInsensitive(sd.back.c_str(), colors[i]))
-							break;
-					if (i >= colorCount)
-						StringCopy(colors[colorCount++], sd.back.c_str());
-					sprintf(lastStyle + strlen(lastStyle), RTF_SETBACKGROUND "%d", i);
-				} else {
-					strcat(lastStyle, RTF_SETBACKGROUND "1");	// Default back
-				}
-				if (sd.specified & StyleDefinition::sdWeight) {
-					strcat(lastStyle, sd.IsBold() ? RTF_BOLD_ON : RTF_BOLD_OFF);
-				} else {
-					strcat(lastStyle, defaultStyle.IsBold() ? RTF_BOLD_ON : RTF_BOLD_OFF);
-				}
-				if (sd.specified & StyleDefinition::sdItalics) {
-					strcat(lastStyle, sd.italics ? RTF_ITALIC_ON : RTF_ITALIC_OFF);
-				} else {
-					strcat(lastStyle, defaultStyle.italics ? RTF_ITALIC_ON : RTF_ITALIC_OFF);
-				}
-				StringCopy(styles[istyle], lastStyle);
+			if (sd.specified & StyleDefinition::sdBack) {
+				for (i = 0; i < colorCount; i++)
+					if (EqualCaseInsensitive(sd.back.c_str(), colors[i]))
+						break;
+				if (i >= colorCount)
+					StringCopy(colors[colorCount++], sd.back.c_str());
+				sprintf(lastStyle + strlen(lastStyle), RTF_SETBACKGROUND "%d", i);
 			} else {
-				sprintf(styles[istyle], RTF_SETFONTFACE "0" RTF_SETFONTSIZE "%d"
-				        RTF_SETCOLOR "0" RTF_SETBACKGROUND "1"
-				        RTF_BOLD_OFF RTF_ITALIC_OFF, defaultStyle.size);
+				strcat(lastStyle, RTF_SETBACKGROUND "1");	// Default back
 			}
-			delete []val;
-			delete []valdef;
-		}
-		fputs(RTF_FONTDEFCLOSE RTF_COLORDEFOPEN, fp);
-		for (i = 0; i < colorCount; i++) {
-			fprintf(fp, RTF_COLORDEF, IntFromHexByte(colors[i] + 1),
-			        IntFromHexByte(colors[i] + 3), IntFromHexByte(colors[i] + 5));
-		}
-		fprintf(fp, RTF_COLORDEFCLOSE RTF_HEADERCLOSE RTF_BODYOPEN RTF_SETFONTFACE "0"
-		        RTF_SETFONTSIZE "%d" RTF_SETCOLOR "0 ", defaultStyle.size);
-		sprintf(lastStyle, RTF_SETFONTFACE "0" RTF_SETFONTSIZE "%d"
-		        RTF_SETCOLOR "0" RTF_SETBACKGROUND "1"
-		        RTF_BOLD_OFF RTF_ITALIC_OFF, defaultStyle.size);
-		bool prevCR = false;
-		int styleCurrent = -1;
-		TextReader acc(wEditor);
-		int column = 0;
-		for (i = start; i < end; i++) {
-			char ch = acc[i];
-			int style = acc.StyleAt(i);
-			if (style > STYLE_MAX)
-				style = 0;
-			if (style != styleCurrent) {
-				GetRTFStyleChange(deltaStyle, lastStyle, styles[style]);
-				if (*deltaStyle)
-					fputs(deltaStyle, fp);
-				styleCurrent = style;
+			if (sd.specified & StyleDefinition::sdWeight) {
+				strcat(lastStyle, sd.IsBold() ? RTF_BOLD_ON : RTF_BOLD_OFF);
+			} else {
+				strcat(lastStyle, defaultStyle.IsBold() ? RTF_BOLD_ON : RTF_BOLD_OFF);
 			}
-			if (ch == '{')
-				fputs("\\{", fp);
-			else if (ch == '}')
-				fputs("\\}", fp);
-			else if (ch == '\\')
-				fputs("\\\\", fp);
-			else if (ch == '\t') {
-				if (tabs) {
-					fputs(RTF_TAB, fp);
-				} else {
-					int ts = tabSize - (column % tabSize);
-					for (int itab = 0; itab < ts; itab++) {
-						fputc(' ', fp);
-					}
-					column += ts - 1;
+			if (sd.specified & StyleDefinition::sdItalics) {
+				strcat(lastStyle, sd.italics ? RTF_ITALIC_ON : RTF_ITALIC_OFF);
+			} else {
+				strcat(lastStyle, defaultStyle.italics ? RTF_ITALIC_ON : RTF_ITALIC_OFF);
+			}
+			StringCopy(styles[istyle], lastStyle);
+		} else {
+			sprintf(styles[istyle], RTF_SETFONTFACE "0" RTF_SETFONTSIZE "%d"
+				RTF_SETCOLOR "0" RTF_SETBACKGROUND "1"
+				RTF_BOLD_OFF RTF_ITALIC_OFF, defaultStyle.size);
+		}
+	}
+	os << RTF_FONTDEFCLOSE RTF_COLORDEFOPEN;
+	for (i = 0; i < colorCount; i++) {
+		os << "\\red" << IntFromHexByte(colors[i] + 1) << "\\green" << IntFromHexByte(colors[i] + 3) <<
+			"\\blue" << IntFromHexByte(colors[i] + 5) << ";";
+	}
+	os << RTF_COLORDEFCLOSE RTF_HEADERCLOSE RTF_BODYOPEN RTF_SETFONTFACE "0"
+		RTF_SETFONTSIZE << defaultStyle.size << RTF_SETCOLOR "0 ";
+	sprintf(lastStyle, RTF_SETFONTFACE "0" RTF_SETFONTSIZE "%d"
+		RTF_SETCOLOR "0" RTF_SETBACKGROUND "1"
+		RTF_BOLD_OFF RTF_ITALIC_OFF, defaultStyle.size);
+	bool prevCR = false;
+	int styleCurrent = -1;
+	TextReader acc(wEditor);
+	int column = 0;
+	for (i = start; i < end; i++) {
+		char ch = acc[i];
+		int style = acc.StyleAt(i);
+		if (style > STYLE_MAX)
+			style = 0;
+		if (style != styleCurrent) {
+			GetRTFStyleChange(deltaStyle, lastStyle, styles[style]);
+			if (*deltaStyle)
+				os << deltaStyle;
+			styleCurrent = style;
+		}
+		if (ch == '{')
+			os << "\\{";
+		else if (ch == '}')
+			os << "\\}";
+		else if (ch == '\\')
+			os << "\\\\";
+		else if (ch == '\t') {
+			if (tabs) {
+				os << RTF_TAB;
+			} else {
+				int ts = tabSize - (column % tabSize);
+				for (int itab = 0; itab < ts; itab++) {
+					os << ' ';
 				}
-			} else if (ch == '\n') {
-				if (!prevCR) {
-					fputs(RTF_EOLN, fp);
-					column = -1;
-				}
-			} else if (ch == '\r') {
-				fputs(RTF_EOLN, fp);
+				column += ts - 1;
+			}
+		} else if (ch == '\n') {
+			if (!prevCR) {
+				os << RTF_EOLN;
 				column = -1;
-			} else
-				fputc(ch, fp);
-			column++;
-			prevCR = ch == '\r';
-		}
-		fputs(RTF_BODYCLOSE, fp);
+			}
+		} else if (ch == '\r') {
+			os << RTF_EOLN;
+			column = -1;
+		} else
+			os << ch;
+		column++;
+		prevCR = ch == '\r';
+	}
+	os << RTF_BODYCLOSE;
+}
+
+void SciTEBase::SaveToRTF(FilePath saveName, int start, int end) {
+	FILE *fp = saveName.Open(GUI_TEXT("wt"));
+	if (fp) {
+		std::ostringstream oss;
+		SaveToStreamRTF(oss, start, end);
+		std::string rtf = oss.str();
+		fwrite(rtf.c_str(), 1, rtf.length(), fp);
 		fclose(fp);
 	} else {
 		GUI::gui_string msg = LocaliseMessage("Could not save file '^0'.", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		WindowMessageBox(wSciTE, msg);
 	}
 }
 
@@ -403,22 +375,20 @@ void SciTEBase::SaveToHTML(FilePath saveName) {
 
 		fputs("<style type=\"text/css\">\n", fp);
 
-		SString bgColour;
+		std::string bgColour;
 		char key[200];
 		sprintf(key, "style.*.%0d", STYLE_DEFAULT);
-		char *valdef = StringDup(props.GetExpanded(key).c_str());
+		std::string valdef = props.GetExpandedString(key);
 		sprintf(key, "style.%s.%0d", language.c_str(), STYLE_DEFAULT);
-		char *val = StringDup(props.GetExpanded(key).c_str());
+		std::string val = props.GetExpandedString(key);
 
-		StyleDefinition sddef(valdef);
-		sddef.ParseStyleDefinition(val);
+		StyleDefinition sddef(valdef.c_str());
+		sddef.ParseStyleDefinition(val.c_str());
 		if (sddef.back.length()) {
 			bgColour = sddef.back;
 		}
-		delete []val;
-		delete []valdef;
 
-		SString sval = props.GetExpanded("font.monospace");
+		std::string sval = props.GetExpandedString("font.monospace");
 		StyleDefinition sdmono(sval.c_str());
 
 		for (int istyle = 0; istyle <= STYLE_MAX; istyle++) {
@@ -426,12 +396,12 @@ void SciTEBase::SaveToHTML(FilePath saveName) {
 				continue;
 			if (styleIsUsed[istyle]) {
 				sprintf(key, "style.*.%0d", istyle);
-				valdef = StringDup(props.GetExpanded(key).c_str());
+				valdef = props.GetExpandedString(key);
 				sprintf(key, "style.%s.%0d", language.c_str(), istyle);
-				val = StringDup(props.GetExpanded(key).c_str());
+				val = props.GetExpandedString(key);
 
-				StyleDefinition sd(valdef);
-				sd.ParseStyleDefinition(val);
+				StyleDefinition sd(valdef.c_str());
+				sd.ParseStyleDefinition(val.c_str());
 
 				if (CurrentBuffer()->useMonoFont && sd.font.length() && sdmono.font.length()) {
 					sd.font = sdmono.font;
@@ -473,9 +443,6 @@ void SciTEBase::SaveToHTML(FilePath saveName) {
 				} else {
 					styleIsUsed[istyle] = false;	// No definition, it uses default style (32)
 				}
-
-				delete []val;
-				delete []valdef;
 			}
 		}
 		fputs("</style>\n", fp);
@@ -666,7 +633,7 @@ void SciTEBase::SaveToHTML(FilePath saveName) {
 	} else {
 		GUI::gui_string msg = LocaliseMessage(
 		            "Could not save file \"^0\".", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		WindowMessageBox(wSciTE, msg);
 	}
 }
 
@@ -807,8 +774,8 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 		int pageCount;
 		int pageContentStart;
 		double xPos, yPos;	// position tracking for line wrapping
-		SString pageData;	// holds PDF stream contents
-		SString segment;	// character data
+		std::string pageData;	// holds PDF stream contents
+		std::string segment;	// character data
 		char *segStyle;		// style of segment
 		bool justWhiteSpace;
 		int styleCurrent, stylePrev;
@@ -1056,7 +1023,7 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 	// read magnification value to add to default screen font size
 	pr.fontSize = props.GetInt("export.pdf.magnification");
 	// set font family according to face name
-	SString propItem = props.GetExpanded("export.pdf.font");
+	std::string propItem = props.GetExpandedString("export.pdf.font");
 	pr.fontSet = PDF_FONT_DEFAULT;
 	if (propItem.length()) {
 		if (propItem == "Courier")
@@ -1067,9 +1034,9 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 			pr.fontSet = 2;
 	}
 	// page size: width, height
-	propItem = props.GetExpanded("export.pdf.pagesize");
-	char *buffer = new char[200];
-	char *ps = StringDup(propItem.c_str());
+	propItem = props.GetExpandedString("export.pdf.pagesize");
+	char buffer[200];
+	const char *ps = propItem.c_str();
 	const char *next = GetNextPropItem(ps, buffer, 32);
 	if (0 >= (pr.pageWidth = atol(buffer))) {
 		pr.pageWidth = PDF_WIDTH_DEFAULT;
@@ -1078,10 +1045,9 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 	if (0 >= (pr.pageHeight = atol(buffer))) {
 		pr.pageHeight = PDF_HEIGHT_DEFAULT;
 	}
-	delete []ps;
 	// page margins: left, right, top, bottom
-	propItem = props.GetExpanded("export.pdf.margins");
-	ps = StringDup(propItem.c_str());
+	propItem = props.GetExpandedString("export.pdf.margins");
+	ps = propItem.c_str();
 	next = GetNextPropItem(ps, buffer, 32);
 	if (0 >= (pr.pageMargin.left = static_cast<int>(atol(buffer)))) {
 		pr.pageMargin.left = PDF_MARGIN_DEFAULT;
@@ -1098,7 +1064,6 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 	if (0 >= (pr.pageMargin.bottom = static_cast<int>(atol(buffer)))) {
 		pr.pageMargin.bottom = PDF_MARGIN_DEFAULT;
 	}
-	delete []ps;
 
 	// collect all styles available for that 'language'
 	// or the default style if no language is available...
@@ -1108,12 +1073,12 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 		pr.style[i].fore[0] = '\0';
 
 		sprintf(buffer, "style.*.%0d", i);
-		char *valdef = StringDup(props.GetExpanded(buffer).c_str());
+		const std::string valdef = props.GetExpandedString(buffer);
 		sprintf(buffer, "style.%s.%0d", language.c_str(), i);
-		char *val = StringDup(props.GetExpanded(buffer).c_str());
+		const std::string val = props.GetExpandedString(buffer);
 
-		StyleDefinition sd(valdef);
-		sd.ParseStyleDefinition(val);
+		StyleDefinition sd(valdef.c_str());
+		sd.ParseStyleDefinition(val.c_str());
 
 		if (sd.specified != StyleDefinition::sdNone) {
 			if (sd.italics) { pr.style[i].font |= 2; }
@@ -1131,8 +1096,6 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 					pr.fontSize = PDF_FONTSIZE_DEFAULT;
 			}
 		}
-		delete []val;
-		delete []valdef;
 	}
 	// patch in default foregrounds
 	for (int j = 0; j <= STYLE_MAX; j++) {
@@ -1140,13 +1103,12 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 			strcpy(pr.style[j].fore, pr.style[STYLE_DEFAULT].fore);
 		}
 	}
-	delete []buffer;
 
 	FILE *fp = saveName.Open(GUI_TEXT("wb"));
 	if (!fp) {
 		// couldn't open the file for saving, issue an error message
 		GUI::gui_string msg = LocaliseMessage("Could not save file '^0'.", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		WindowMessageBox(wSciTE, msg);
 		return;
 	}
 	// initialise PDF rendering
@@ -1283,16 +1245,14 @@ void SciTEBase::SaveToTEX(FilePath saveName) {
 			if (styleIsUsed[i]) {
 				char key[200];
 				sprintf(key, "style.*.%0d", i);
-				char *valdef = StringDup(props.GetExpanded(key).c_str());
+				const std::string valdef = props.GetExpandedString(key);
 				sprintf(key, "style.%s.%0d", language.c_str(), i);
-				char *val = StringDup(props.GetExpanded(key).c_str());
+				const std::string val = props.GetExpandedString(key);
 
-				StyleDefinition sd(valdef); //check default properties
-				sd.ParseStyleDefinition(val); //check language properties
+				StyleDefinition sd(valdef.c_str()); //check default properties
+				sd.ParseStyleDefinition(val.c_str()); //check language properties
 
 				defineTexStyle(sd, fp, i); // writeout style macroses
-				delete []val;
-				delete []valdef;
 			}
 		}
 
@@ -1366,7 +1326,7 @@ void SciTEBase::SaveToTEX(FilePath saveName) {
 	} else {
 		GUI::gui_string msg = LocaliseMessage(
 		            "Could not save file \"^0\".", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		WindowMessageBox(wSciTE, msg);
 	}
 }
 
@@ -1545,6 +1505,6 @@ void SciTEBase::SaveToXML(FilePath saveName) {
 		fclose(fp);
 	} else {
 		GUI::gui_string msg = LocaliseMessage("Could not save file \"^0\".", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		WindowMessageBox(wSciTE, msg);
 	}
 }

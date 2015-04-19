@@ -40,6 +40,7 @@ class Strip : public BaseWin {
 protected:
 	HFONT fontText;
 	HTHEME hTheme;
+	int scale;
 	bool capturedMouse;
 	SIZE closeSize;
 	enum stripCloseState { csNone, csOver, csClicked, csClickedOver } closeState;
@@ -71,7 +72,7 @@ protected:
 	virtual void ShowPopup();
 public:
 	bool visible;
-	Strip() : fontText(0), hTheme(0), capturedMouse(false), closeState(csNone), entered(0), lineHeight(20), visible(false) {
+	Strip() : fontText(0), hTheme(0), scale(96), capturedMouse(false), closeState(csNone), entered(0), lineHeight(20), visible(false) {
 		closeSize.cx = 11;
 		closeSize.cy = 11;
 	}
@@ -101,21 +102,23 @@ public:
 class SearchStripBase : public Strip {
 protected:
 	Searcher *pSearcher;
+	HBRUSH hbrNoMatch;
 public:
-	SearchStripBase() : pSearcher(0) {
+	SearchStripBase() : pSearcher(0), hbrNoMatch(0) {
 	}
 	void SetSearcher(Searcher *pSearcher_) {
 		pSearcher = pSearcher_;
 	}
+	virtual void Creation();
+	virtual void Destruction();
 };
 
 class SearchStrip : public SearchStripBase {
 	GUI::Window wStaticFind;
 	GUI::Window wText;
 	GUI::Window wButton;
-	HBRUSH hbrNoMatch;
 public:
-	SearchStrip() : hbrNoMatch(0) {
+	SearchStrip() {
 	}
 	virtual void Creation();
 	virtual void Destruction();
@@ -130,23 +133,37 @@ public:
 	virtual LRESULT WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam);
 };
 
-class FindStrip : public SearchStripBase {
+class FindReplaceStrip : public SearchStripBase {
+protected:
 	GUI::Window wStaticFind;
 	GUI::Window wText;
-	GUI::Window wButton;
-	GUI::Window wButtonMarkAll;
 	GUI::Window wCheckWord;
 	GUI::Window wCheckCase;
 	GUI::Window wCheckRE;
 	GUI::Window wCheckBE;
 	GUI::Window wCheckWrap;
+	enum IncrementalBehaviour { simple, incremental, showAllMatches };
+	IncrementalBehaviour incrementalBehaviour; 
+	FindReplaceStrip() : incrementalBehaviour(simple) {
+	}
+	virtual LRESULT EditColour(HWND hwnd, HDC hdc);
+	enum ChangingSource { changingEdit, changingCombo };
+	void NextIncremental(ChangingSource source);
+public:
+	virtual void Close();
+	void SetIncrementalBehaviour(int behaviour);
+	void MarkIncremental();
+};
+
+class FindStrip : public FindReplaceStrip {
+	GUI::Window wButton;
+	GUI::Window wButtonMarkAll;
 	GUI::Window wCheckUp;
 public:
 	FindStrip() {
 	}
 	virtual void Creation();
 	virtual void Destruction();
-	virtual void Close();
 	void Focus();
 	virtual bool KeyDown(WPARAM key);
 	void Next(bool markAll, bool invertDirection);
@@ -155,21 +172,13 @@ public:
 	virtual bool Command(WPARAM wParam);
 	virtual void Size();
 	virtual void Paint(HDC hDC);
-	virtual LRESULT WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam);
 	void CheckButtons();
 	void Show();
 };
 
-class ReplaceStrip : public SearchStripBase {
-	GUI::Window wStaticFind;
-	GUI::Window wText;
-	GUI::Window wCheckWord;
-	GUI::Window wCheckCase;
+class ReplaceStrip : public FindReplaceStrip {
 	GUI::Window wButtonFind;
 	GUI::Window wButtonReplaceAll;
-	GUI::Window wCheckRE;
-	GUI::Window wCheckWrap;
-	GUI::Window wCheckBE;
 	GUI::Window wStaticReplace;
 	GUI::Window wReplace;
 	GUI::Window wButtonReplace;
@@ -180,7 +189,6 @@ public:
 	virtual void Creation();
 	virtual void Destruction();
 	virtual int Lines() const;
-	virtual void Close();
 	void Focus();
 	virtual bool KeyDown(WPARAM key);
 	void AddToPopUp(GUI::Menu &popup, const char *label, int cmd, bool checked);
@@ -189,7 +197,6 @@ public:
 	virtual bool Command(WPARAM wParam);
 	virtual void Size();
 	virtual void Paint(HDC hDC);
-	virtual LRESULT WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam);
 	void CheckButtons();
 	void Show();
 };

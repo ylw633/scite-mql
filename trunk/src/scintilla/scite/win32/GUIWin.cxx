@@ -18,16 +18,7 @@
 
 #undef _WIN32_WINNT
 #define _WIN32_WINNT  0x0500
-#ifdef _MSC_VER
-// windows.h, et al, use a lot of nameless struct/unions - can't fix it, so allow it
-#pragma warning(disable: 4201)
-#endif
 #include <windows.h>
-#ifdef _MSC_VER
-// okay, that's done, don't allow it in our code
-#pragma warning(default: 4201)
-#pragma warning(disable: 4244)
-#endif
 
 #include "Scintilla.h"
 #include "GUI.h"
@@ -155,6 +146,15 @@ gui_string StringFromUTF8(const char *s) {
 	return gui_string(&vgc[0], outLen);
 }
 
+gui_string StringFromUTF8(const std::string &s) {
+	size_t sLen = s.length();
+	size_t wideLen = UTF16Length(s.c_str(), static_cast<int>(sLen));
+	std::vector<gui_char> vgc(wideLen + 1);
+	size_t outLen = UTF16FromUTF8(s.c_str(), sLen, &vgc[0], wideLen);
+	vgc[outLen] = 0;
+	return gui_string(&vgc[0], outLen);
+}
+
 std::string UTF8FromString(const gui_string &s) {
 	size_t sLen = s.size();
 	size_t narrowLen = UTF8Length(s.c_str(), sLen);
@@ -163,11 +163,24 @@ std::string UTF8FromString(const gui_string &s) {
 	return std::string(&vc[0], narrowLen);
 }
 
-gui_string StringFromInteger(int i) {
+gui_string StringFromInteger(long i) {
 	char number[32];
-	sprintf(number, "%0d", i);
+	sprintf(number, "%0ld", i);
 	gui_char gnumber[32];
 	size_t n=0;
+	while (number[n]) {
+		gnumber[n] = static_cast<gui_char>(number[n]);
+		n++;
+	}
+	gnumber[n] = 0;
+	return gui_string(gnumber);
+}
+
+gui_string HexStringFromInteger(long i) {
+	char number[32];
+	sprintf(number, "%0lx", i);
+	gui_char gnumber[32];
+	size_t n = 0;
 	while (number[n]) {
 		gnumber[n] = static_cast<gui_char>(number[n]);
 		n++;
@@ -232,7 +245,7 @@ void Menu::Destroy() {
 
 void Menu::Show(Point pt, Window &w) {
 	::TrackPopupMenu(reinterpret_cast<HMENU>(mid),
-		0, pt.x - 4, pt.y, 0,
+		TPM_RIGHTBUTTON, pt.x - 4, pt.y, 0,
 		reinterpret_cast<HWND>(w.GetID()), NULL);
 	Destroy();
 }
@@ -270,7 +283,7 @@ double ElapsedTime::Duration(bool reset) {
 		LARGE_INTEGER lBegin;
 		lBegin.HighPart = bigBit;
 		lBegin.LowPart = littleBit;
-		double elapsed = lEnd.QuadPart - lBegin.QuadPart;
+		double elapsed = static_cast<double>(lEnd.QuadPart - lBegin.QuadPart);
 		result = elapsed / static_cast<double>(frequency.QuadPart);
 	} else {
 		endBigBit = clock();

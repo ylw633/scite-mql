@@ -5,15 +5,36 @@
 // Copyright 2010 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
-bool StartsWith(GUI::gui_string const &s, GUI::gui_string const &end);
+bool StartsWith(GUI::gui_string const &s, GUI::gui_string const &start);
+bool StartsWith(std::string const &s, const char *start);
 bool EndsWith(GUI::gui_string const &s, GUI::gui_string const &end);
-int Substitute(GUI::gui_string &s, const GUI::gui_string &sFind, const GUI::gui_string &sReplace);
+bool Contains(std::string const &s, char ch);
+
+// Substitute is duplicated instead of templated as it was ambiguous when implemented as a template.
+int Substitute(std::wstring &s, const std::wstring &sFind, const std::wstring &sReplace);
+int Substitute(std::string &s, const std::string &sFind, const std::string &sReplace);
+
+template <typename T>
+int Remove(T &s, const T &sFind) {
+	return Substitute(s, sFind, T());
+}
+
+bool RemoveStringOnce(std::string &s, const char *marker);
 
 std::string StdStringFromInteger(int i);
+std::string StdStringFromSizeT(size_t i);
+std::string StdStringFromDouble(double d, int precision);
 
 // Basic case lowering that converts A-Z to a-z.
 // Does not handle non-ASCII characters.
-void LowerCaseAZ(char *s);
+void LowerCaseAZ(std::string &s);
+
+inline char MakeUpperCase(char ch) {
+	if (ch < 'a' || ch > 'z')
+		return ch;
+	else
+		return static_cast<char>(ch - 'a' + 'A');
+}
 
 // StringSplit can be expanded over std::string or GUI::gui_string
 template <typename T>
@@ -33,9 +54,28 @@ inline std::vector<GUI::gui_string> ListFromString(const GUI::gui_string &args) 
 	return StringSplit(args, '\n');
 }
 
+// Safer version of string copy functions like strcpy, wcsncpy, etc.
+// Instantiate over fixed length strings of both char and wchar_t.
+// May truncate if source doesn't fit into dest with room for NUL.
+
+template <typename T, size_t count>
+void StringCopy(T (&dest)[count], const T* source) {
+	for (size_t i=0; i<count; i++) {
+		dest[i] = source[i];
+		if (!source[i])
+			break;
+	}
+	dest[count-1] = 0;
+}
+
+int CompareNoCase(const char *a, const char *b);
+bool EqualCaseInsensitive(const char *a, const char *b);
+bool isprefix(const char *target, const char *prefix);
+
 char *Slash(const char *s, bool quoteQuotes);
 unsigned int UnSlash(char *s);
-unsigned int UnSlashLowOctal(char *s);
+std::string UnSlashString(const char *s);
+std::string UnSlashLowOctalString(const char *s);
 
 class ILocalize {
 public:

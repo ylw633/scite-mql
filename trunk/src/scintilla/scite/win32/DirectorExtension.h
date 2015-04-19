@@ -7,7 +7,8 @@
 
 class DirectorExtension : public Extension {
 private:
-	DirectorExtension() {} // Singleton
+	ExtensionAPI *host;
+	DirectorExtension() : host(0) {} // Singleton
 	DirectorExtension(const DirectorExtension &); // Disable copy ctor
 	void operator=(const DirectorExtension &);    // Disable operator=
 
@@ -35,6 +36,7 @@ public:
 
 	virtual bool SendProperty(const char *prop);
 	virtual bool OnClose(const char *path);
+	virtual bool NeedsOnClose();
 
 	// Allow messages through to extension
 	void HandleStringMessage(const char *message);

@@ -15,7 +15,7 @@
 #include "Scintilla.h"
 
 #include "GUI.h"
-#include "SString.h"
+#include "StringHelpers.h"
 #include "FilePath.h"
 #include "StyleWriter.h"
 #include "Extender.h"
@@ -30,25 +30,11 @@ extern "C" {
 #include "lauxlib.h"
 }
 
-#if !defined(__unix__)
+#if defined(_WIN32) && defined(_MSC_VER)
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
-#ifdef _MSC_VER
 // MSVC looks deeper into the code than other compilers, sees that
 // lua_error calls longjmp, and complains about unreachable code.
 #pragma warning(disable: 4702)
-#endif
-
-#else
-
-#include <limits.h>
-#ifdef PATH_MAX
-#define MAX_PATH PATH_MAX
-#else
-#define MAX_PATH 260
-#endif
 
 #endif
 
@@ -71,8 +57,8 @@ static ExtensionAPI *host = 0;
 static lua_State *luaState = 0;
 static bool luaDisabled = false;
 
-static char *startupScript = NULL;
-static SString extensionScript;
+static std::string startupScript;
+static std::string extensionScript;
 
 static bool tracebackEnabled = true;
 
@@ -82,10 +68,9 @@ static int curBufferIndex = -1;
 static int GetPropertyInt(const char *propName) {
 	int propVal = 0;
 	if (host) {
-		char *pszPropVal = host->Property(propName);
-		if (pszPropVal) {
-			propVal = atoi(pszPropVal);
-			delete [] pszPropVal;
+		std::string sPropVal = host->Property(propName);
+		if (sPropVal.length()) {
+			propVal = atoi(sPropVal.c_str());
 		}
 	}
 	return propVal;
@@ -269,9 +254,9 @@ static int cf_scite_constname(lua_State *L) {
 static int cf_scite_open(lua_State *L) {
 	const char *s = luaL_checkstring(L, 1);
 	if (s) {
-		SString cmd = "open:";
+		std::string cmd = "open:";
 		cmd += s;
-		cmd.substitute("\\", "\\\\");
+		Substitute(cmd, "\\", "\\\\");
 		host->Perform(cmd.c_str());
 	}
 	return 0;
@@ -659,15 +644,9 @@ static int cf_props_metatable_index(lua_State *L) {
 	int selfArg = lua_isuserdata(L, 1) ? 1 : 0;
 
 	if (lua_isstring(L, selfArg + 1)) {
-		char *value = host->Property(lua_tostring(L, selfArg + 1));
-		if (value) {
-			lua_pushstring(L, value);
-			delete []value;
-			return 1;
-		} else {
-			lua_pushliteral(L, "");
-			return 1;
-		}
+		std::string value = host->Property(lua_tostring(L, selfArg + 1));
+		lua_pushstring(L, value.c_str());
+		return 1;
 	} else {
 		raise_error(L, "String argument required for property access");
 	}
@@ -805,6 +784,16 @@ static bool call_function(lua_State *L, int nargs, bool ignoreFunctionReturnValu
 		}
 	}
 	return handled;
+}
+
+static bool HasNamedFunction(const char *name) {
+	bool hasFunction = false;
+	if (luaState) {
+		lua_getglobal(luaState, name);
+		hasFunction = lua_isfunction(luaState, -1);
+		lua_pop(luaState, 1);
+	}
+	return hasFunction;
 }
 
 static bool CallNamedFunction(const char *name) {
@@ -1228,17 +1217,9 @@ static int LuaPanicFunction(lua_State *L) {
 // since it means a user who is having trouble with Lua can just refrain from
 // using it.
 
-static char *CheckStartupScript() {
-	delete[] startupScript;
-
+static bool CheckStartupScript() {
 	startupScript = host->Property("ext.lua.startup.script");
-
-	if (startupScript && startupScript[0] == '\0') {
-		delete[] startupScript;
-		startupScript = NULL;
-	}
-
-	return startupScript;
+	return startupScript.length() > 0;
 }
 
 void PublishGlobalBufferData() {
@@ -1311,7 +1292,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 			}
 		}
 
-		// reload mode is enabled, or else the inital state has been broken.
+		// reload mode is enabled, or else the initial state has been broken.
 		// either way, we're going to need a "new" initial state.
 
 		lua_pushnil(luaState);
@@ -1336,7 +1317,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 		luaState = lua_open();
 		if (!luaState) {
 			luaDisabled = true;
-			host->Trace("> Lua: scripting engine failed to initalise\n");
+			host->Trace("> Lua: scripting engine failed to initialise\n");
 			return false;
 		}
 		lua_atpanic(luaState, LuaPanicFunction);
@@ -1426,7 +1407,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 		CheckStartupScript();
 	}
 
-	if (startupScript) {
+	if (startupScript.length()) {
 		// TODO: Should buffer be deactivated temporarily, so editor iface
 		// functions won't be available during a reset, just as they are not
 		// available during a normal startup?  Are there any other functions
@@ -1435,7 +1416,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 		FilePath fpTest(GUI::StringFromUTF8(startupScript));
 		if (fpTest.Exists()) {
-			luaL_loadfile(luaState, startupScript);
+			luaL_loadfile(luaState, startupScript.c_str());
 			if (!call_function(luaState, 0, true)) {
 				host->Trace(">Lua: error occurred while loading startup script\n");
 			}
@@ -1480,8 +1461,7 @@ bool LuaExtension::Finalise() {
 	// The rest don't strictly need to be cleared since they
 	// are never accessed except when luaState and host are set
 
-	delete [] startupScript;
-	startupScript = NULL;
+	startupScript = "";
 
 	return false;
 }
@@ -1659,7 +1639,7 @@ bool LuaExtension::OnSave(const char *filename) {
 	bool result = CallNamedFunction("OnSave", filename);
 
 	FilePath fpSaving = FilePath(GUI::StringFromUTF8(filename)).NormalizePath();
-	if (startupScript && fpSaving == FilePath(GUI::StringFromUTF8(startupScript)).NormalizePath()) {
+	if (startupScript.length() && fpSaving == FilePath(GUI::StringFromUTF8(startupScript)).NormalizePath()) {
 		if (GetPropertyInt("ext.lua.auto.reload") > 0) {
 			InitGlobalScope(false, true);
 			if (extensionScript.length()) {
@@ -2009,9 +1989,8 @@ bool LuaExtension::OnStyle(unsigned int startPos, int lengthDoc, int initStyle, 
 			lua_settable(luaState, -3);
 
 			lua_pushstring(luaState, "language");
-			char *lang = host->Property("Language");
-			lua_pushstring(luaState, lang);
-			delete []lang;
+			std::string lang = host->Property("Language");
+			lua_pushstring(luaState, lang.c_str());
 			lua_settable(luaState, -3);
 
 			sc.PushMethod(luaState, StylingContext::Line, "Line");
@@ -2092,7 +2071,6 @@ bool LuaExtension::OnUserStrip(int control, int change) {
 	return CallNamedFunction("OnStrip", control, change);
 }
 
-#ifdef _MSC_VER
-// Unreferenced inline functions are OK
-#pragma warning(disable: 4514)
-#endif
+bool LuaExtension::NeedsOnClose() {
+	return HasNamedFunction("OnClose");
+}

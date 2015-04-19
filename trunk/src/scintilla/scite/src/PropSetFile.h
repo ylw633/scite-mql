@@ -5,6 +5,9 @@
 // Copyright 1998-2009 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
+#ifndef PROPSETFILE_H
+#define PROPSETFILE_H
+
 /**
  */
 
@@ -20,7 +23,7 @@ public:
 
 class PropSetFile {
 	bool lowerKeys;
-	SString GetWildUsingStart(const PropSetFile &psStart, const char *keybase, const char *filename);
+	std::string GetWildUsingStart(const PropSetFile &psStart, const char *keybase, const char *filename);
 	static bool caseSensitiveFilenames;
 	mapss props;
 public:
@@ -33,20 +36,20 @@ public:
 	void Set(const char *keyVal);
 	void Unset(const char *key, int lenKey=-1);
 	bool Exists(const char *key) const;
-	SString Get(const char *key) const;
-	SString Evaluate(const char *key) const;
-	SString GetExpanded(const char *key) const;
-	SString Expand(const char *withVars, int maxExpands=100) const;
+	std::string GetString(const char *key) const;
+	std::string Evaluate(const char *key) const;
+	std::string GetExpandedString(const char *key) const;
+	std::string Expand(const std::string &withVars, int maxExpands=100) const;
 	int GetInt(const char *key, int defaultValue=0) const;
 	void Clear();
 
-	bool ReadLine(const char *data, bool ifIsTrue, FilePath directoryForImports, const ImportFilter &filter, std::vector<FilePath> *imports=0);
-	void ReadFromMemory(const char *data, size_t len, FilePath directoryForImports, const ImportFilter &filter, std::vector<FilePath> *imports=0);
-	void Import(FilePath filename, FilePath directoryForImports, const ImportFilter &filter, std::vector<FilePath> *imports);
-	bool Read(FilePath filename, FilePath directoryForImports, const ImportFilter &filter, std::vector<FilePath> *imports=0);
+	bool ReadLine(const char *data, bool ifIsTrue, FilePath directoryForImports, const ImportFilter &filter, std::vector<FilePath> *imports, size_t depth);
+	void ReadFromMemory(const char *data, size_t len, FilePath directoryForImports, const ImportFilter &filter, std::vector<FilePath> *imports, size_t depth);
+	void Import(FilePath filename, FilePath directoryForImports, const ImportFilter &filter, std::vector<FilePath> *imports, size_t depth);
+	bool Read(FilePath filename, FilePath directoryForImports, const ImportFilter &filter, std::vector<FilePath> *imports, size_t depth);
 	void SetInteger(const char *key, int i);
-	SString GetWild(const char *keybase, const char *filename);
-	SString GetNewExpand(const char *keybase, const char *filename="");
+	std::string GetWild(const char *keybase, const char *filename);
+	std::string GetNewExpandString(const char *keybase, const char *filename = "");
 	bool GetFirst(const char *&key, const char *&val);
 	bool GetNext(const char *&key, const char *&val);
 	static void SetCaseSensitiveFilenames(bool caseSensitiveFilenames_) {
@@ -56,3 +59,5 @@ public:
 
 #define PROPERTIES_EXTENSION	".properties"
 bool IsPropertiesFile(const FilePath &filename);
+
+#endif

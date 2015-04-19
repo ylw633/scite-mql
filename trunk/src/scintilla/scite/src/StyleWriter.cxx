@@ -11,6 +11,15 @@
 #include "GUI.h"
 #include "StyleWriter.h"
 
+TextReader::TextReader(GUI::ScintillaWindow &sw_) :
+	startPos(extremePosition),
+	endPos(0),
+	codePage(0),
+	sw(sw_),
+	lenDoc(-1) {
+	buf[0] = 0;
+}
+
 bool TextReader::InternalIsLeadByte(char ch) const {
 	return GUI::IsDBCSLeadByte(codePage, ch);
 }
@@ -26,9 +35,8 @@ void TextReader::Fill(int position) {
 	endPos = startPos + bufferSize;
 	if (endPos > lenDoc)
 		endPos = lenDoc;
-
-	Sci_TextRange tr = {{startPos, endPos}, buf};
-	sw.Call(SCI_GETTEXTRANGE, 0, reinterpret_cast<sptr_t>(&tr));
+	sw.Call(SCI_SETTARGETRANGE, startPos, endPos);
+	sw.Call(SCI_GETTARGETTEXT, 0, reinterpret_cast<sptr_t>(buf));
 }
 
 bool TextReader::Match(int pos, const char *s) {
@@ -65,6 +73,13 @@ int TextReader::Length() {
 
 int TextReader::GetLineState(int line) {
 	return sw.Call(SCI_GETLINESTATE, line);
+}
+
+StyleWriter::StyleWriter(GUI::ScintillaWindow &sw_) :
+	TextReader(sw_),
+	validLen(0),
+	startSeg(0) {
+	styleBuf[0] = 0;
 }
 
 int StyleWriter::SetLineState(int line, int state) {

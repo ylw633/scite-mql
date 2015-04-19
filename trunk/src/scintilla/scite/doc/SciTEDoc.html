@@ -309,7 +309,7 @@ NameError: mistake
     </p>
 	<p>
 	For <span class="windowsonly">Windows</span>:<br />
-	If any simple file name on the command line matches a directory name, the file open dialog appears - this is dependant upon the property
+	If any simple file name on the command line matches a directory name, the file open dialog appears - this is dependent upon the property
 	"open.dialog.in.file.directory"<br /><br />
 	If the property "buffers" is greater than one and the file name matches either a existing file or by means of a wildcard search, one or more files, the
 	matching files are loaded up to the property "buffers" count.  Directories are not considered a match in this case<br /><br />
@@ -417,6 +417,7 @@ NameError: mistake
         <li>IDL - both MSIDL and XPIDL*</li>
         <li>INI, properties* and similar</li>
         <li>InnoSetup*</li>
+        <li>Intel HEX*</li>
         <li>Java*</li>
         <li>JavaScript*</li>
         <li>LISP*</li>
@@ -452,6 +453,7 @@ NameError: mistake
         <li>Spice</li>
         <li>Smalltalk</li>
         <li>SQL and PLSQL</li>
+        <li>S-Record</li>
         <li>TADS3*</li>
         <li>TeX and LaTeX</li>
         <li>Tcl/Tk*</li>
@@ -845,16 +847,25 @@ NameError: mistake
       <a name="property-import"></a>
        The 'import' statement includes a properties file as if the text were
        inline at that point. The imported properties file
-       must be in the same directory as the current file and a properties
-       extension is assumed. Therefore a "import Lua" statement in
+       is either relative to the base file or absolute and a '.properties'
+       extension is assumed. Therefore an "import Lua" statement in
        c:\os\scite\bin\SciTEGlobal.properties will import
        c:\os\scite\bin\Lua.properties.
+       Any import statements in imported files are relative to directory of the original file,
+       rather than the current file.
     </p>
     <p>
        All of the properties files in a directory can be imported with "import *".
        This does not import generic properties files like user properties or abbreviations.
        The set of files that are imported can be controlled with the imports.include and imports.exclude
        properties.
+    </p>
+    <p>
+       Imported files are not scope walls: properties may be redefined in another file.
+       Thus, if a file contains both "import cplusplus", "import java", and "style.cpp.1=fore:$(comment.colour)" then
+       cplusplus.properties contains "comment.colour=#800000" and java.properties contains
+       "comment.colour=#008000" then the last definition wins and is active for the definitions in the base
+       file as well as any definitions in cplusplus.properties and java.properties.
     </p>
     <p>
       <a name="property-if"></a>
@@ -1152,6 +1163,14 @@ NameError: mistake
           Setting this to 1 makes the tool bar visible at start up.
         </td>
       </tr>
+      <tr class="windowsonly" id='property-toolbar.large'>
+        <td>
+          toolbar.large
+        </td>
+        <td>
+          Setting this to 1 makes the tool bar larger and use larger icons.
+        </td>
+      </tr>
       <tr class="gtkonly" id='property-toolbar.usestockicons'>
         <td>
           toolbar.usestockicons
@@ -1217,24 +1236,43 @@ NameError: mistake
         <td>
           Setting this to 0 rather than the default 1 makes SciTE draw output directly to the
           screen rather than into a buffer bitmap first and then to the screen. Buffered drawing
-          flickers less but is slower.
+          flickers less but is slower.<br />
+          This is setting is now only effective on Windows with GDI drawing.
+          OS X and GTK+ are always buffered as is Windows with Direct2D drawing.
         </td>
       </tr>
       <tr id='property-two.phase.draw'>
         <td>
+          phases.draw<br />
           two.phase.draw
         </td>
         <td>
-        Two phase drawing is a better but slower way of drawing text.
-        In single phase drawing each run of characters in one style is drawn along with
-        its background.
+        There are several orders in which the text area may be drawn offering a trade-off
+        between speed and allowing all pixels of text to be seen even when they overlap
+        other elements. There may also be some flickering on some platforms with higher
+        numbers of phases unless buffered drawing is turned on.<br/>
+        In single phase drawing (phases.draw=0) each
+        run of characters in one style is drawn along with its background.
         If a character overhangs the end of a run, such as in "<i>V</i>_" where the
         "<i>V</i>" is in a different style from the "_", then this can cause the right hand
         side of the "<i>V</i>" to be overdrawn by the background of the "_" which
-        cuts it off. Two phase drawing
-        fixes this by drawing all the backgrounds first and then drawing the text in
-        transparent mode. Two phase drawing may flicker more than single phase
-        unless buffered drawing is on. The default is for drawing to be two phase.
+        cuts it off.<br/>
+        Two phase drawing (phases.draw=1)
+        fixes this by drawing all the backgrounds of a line first and then drawing the text
+        in transparent mode. Lines are drawn separately and no line will overlap another
+        so any pixels that overlap into another line such as extreme ascenders and
+        descenders on characters will be cut off.<br/>
+        Multiple phase drawing (phases.draw=2)
+        draws the whole area multiple times, once for each feature, building up the
+        the appearance in layers or phases. The coloured backgrounds for all lines are
+        drawn before any text and then all the text is drawn in transparent mode over this
+        combined background without clipping text to the line boundaries. This allows
+        extreme ascenders and decenders to overflow into the adjacent lines.
+        This mode is incompatible with buffered.draw so will be treated as phases.draw=1
+        when bufferd.draw=1.<br/>
+        The default is for drawing to be two phase.<br/>
+        The two.phase.draw property was used before multiple phase drawing was added
+        and should be replaced with phases.draw.
         </td>
       </tr>
       <tr class="windowsonly" id='property-technology'>
@@ -1242,8 +1280,11 @@ NameError: mistake
           technology
         </td>
         <td>
-        On Windows Vista or newer, this can be set to 1 to use the Direct2D and DirectWrite APIs
-        for higher quality antialiased drawing. The default is 0.
+        On Windows Vista or newer, this can be set to 1, 2 or 3 to use the Direct2D and DirectWrite APIs
+        for higher quality antialiased drawing or 0 to use the older GDI. The default is 1.
+        The value 2 causes the frame to be retained after presentation which
+        may prevent drawing failures on some cards and drivers.
+        3 may also prevent drawing failures on some cards and drivers but with lower speed.
         </td>
       </tr>
       <tr id='property-load.on.activate'>
@@ -1574,7 +1615,7 @@ NameError: mistake
 
           <p>If even is not set, instead of having symmetrical UZs,
           the left and bottom UZs are extended up to right and top UZs respectively.<br />
-          This way, we favour the displaying of useful information: the begining of lines,
+          This way, we favour the displaying of useful information: the beginning of lines,
           where most code reside, and the lines after the caret, e.g., the body of a function.</p>
           <p>See the table below to see how these settings interact.<br />
           Default: xslop, yslop, xeven, yeven=1, width=50, all others = 0.</p>
@@ -1655,7 +1696,7 @@ NameError: mistake
           bookmark.alpha
         </td>
         <td>
-          The colours used to display bookmarks in the margin. If bookmark.fore is not set then
+          The colours used to display bookmarks in the margin. If bookmark.fore is empty then
           a blue sphere is used. When the margin is turned off, bookmarks are shown by a
           change in the background colour of the line with the translucency set with bookmark.alpha.
         </td>
@@ -2135,6 +2176,10 @@ NameError: mistake
 	<td>fold.sql.at.else</td>
 	<td>This option enables SQL folding on a "ELSE" and "ELSIF" line of an IF statement.</td>
 	</tr>
+	<tr id='property-fold.verilog.flags'>
+	<td>fold.verilog.flags</td>
+	<td>This option enables folding module definitions. Typically source files contain only one module definition so this option is somewhat useless.</td>
+	</tr>
 	<tr id='property-html.tags.case.sensitive'>
 	<td>html.tags.case.sensitive</td>
 	<td>For XML and HTML, setting this property to 1 will make tags match in a case sensitive way which is the expected behaviour for XML and XHTML.</td>
@@ -2146,6 +2191,14 @@ NameError: mistake
 	<tr id='property-lexer.cpp.allow.dollars'>
 	<td>lexer.cpp.allow.dollars</td>
 	<td>Set to 0 to disallow the '$' character in identifiers with the cpp lexer.</td>
+	</tr>
+	<tr id='property-lexer.cpp.backquoted.strings'>
+	<td>lexer.cpp.backquoted.strings</td>
+	<td>Set to 1 to enable highlighting of back-quoted raw strings .</td>
+	</tr>
+	<tr id='property-lexer.cpp.escape.sequence'>
+	<td>lexer.cpp.escape.sequence</td>
+	<td>Set to 1 to enable highlighting of escape sequences in strings</td>
 	</tr>
 	<tr id='property-lexer.cpp.hashquoted.strings'>
 	<td>lexer.cpp.hashquoted.strings</td>
@@ -2162,6 +2215,10 @@ NameError: mistake
 	<tr id='property-lexer.cpp.update.preprocessor'>
 	<td>lexer.cpp.update.preprocessor</td>
 	<td>Set to 1 to update preprocessor definitions when #define found.</td>
+	</tr>
+	<tr id='property-lexer.cpp.verbatim.strings.allow.escapes'>
+	<td>lexer.cpp.verbatim.strings.allow.escapes</td>
+	<td>Set to 1 to allow verbatim strings to contain escape sequences.</td>
 	</tr>
 	<tr id='property-lexer.css.hss.language'>
 	<td>lexer.css.hss.language</td>
@@ -2251,6 +2308,26 @@ NameError: mistake
 	<td>lexer.sql.numbersign.comment</td>
 	<td>If "lexer.sql.numbersign.comment" property is set to 0 a line beginning with '#' will not be a comment.</td>
 	</tr>
+	<tr id='property-lexer.verilog.allupperkeywords'>
+	<td>lexer.verilog.allupperkeywords</td>
+	<td>Set to 1 to style identifiers that are all uppercase as documentation keyword.</td>
+	</tr>
+	<tr id='property-lexer.verilog.fold.preprocessor.else'>
+	<td>lexer.verilog.fold.preprocessor.else</td>
+	<td>This option enables folding on `else and `elsif preprocessor directives.</td>
+	</tr>
+	<tr id='property-lexer.verilog.portstyling'>
+	<td>lexer.verilog.portstyling</td>
+	<td>Set to 1 to style input, output, and inout ports differently from regular keywords.</td>
+	</tr>
+	<tr id='property-lexer.verilog.track.preprocessor'>
+	<td>lexer.verilog.track.preprocessor</td>
+	<td>Set to 1 to interpret `if/`else/`endif to grey out code that is not active.</td>
+	</tr>
+	<tr id='property-lexer.verilog.update.preprocessor'>
+	<td>lexer.verilog.update.preprocessor</td>
+	<td>Set to 1 to update preprocessor definitions when `define, `undef, or `undefineall found.</td>
+	</tr>
 	<tr id='property-lexer.xml.allow.scripts'>
 	<td>lexer.xml.allow.scripts</td>
 	<td>Set to 0 to disable scripts in XML.</td>
@@ -2283,6 +2360,9 @@ NameError: mistake
         Right, Up, Down, Insert, End, Home, Enter, Space, Tab, KeypadPlus, KeypadMinus,
         KeypadMultiply, KeypadDivide, Escape, Delete, PageUp, PageDown, Slash,
         Question, Equal, Win.
+        <br/>
+        On OS X the command key uses the modifier Ctrl+ as this eases using one setting between platforms and
+        the control key uses the modifier Control+.
         <br/>
         <div class="example">
 user.shortcuts=\<br/>
@@ -2636,6 +2716,32 @@ Prev File|IDM_PREVFILE|<br/>
           Use in-window strips rather than dialogs for performing Find or Replace commands.
         </td>
       </tr>
+      <tr id='property-find.strip.incremental'>
+        <td>
+          <a name='property-replace.strip.incremental'></a>
+         find.strip.incremental<br />
+	 replace.strip.incremental
+        </td>
+        <td>
+          Perform incremental search when typing in the find and replace strips.
+	  Set to 1 to enable incremental searching and 2 to enable both incremental searching
+	  and highlighting all matches. Highlighting all matches (2) can be slow on large files so
+	  should only be enabled when performance is reasonable.
+        </td>
+      </tr>
+      <tr id='property-find.indicator.incremental'>
+        <td>
+          find.indicator.incremental
+        </td>
+        <td>
+          Sets the indicator to use for find.strip.incremental=2 or replace.strip.incremental=2.
+	  This is a
+            <a href="#IndicatorProperty">structured property</a> with multiple attributes similar to:
+         <div class="example">
+              find.indicator.incremental=style:compositionthick,colour:#FFB700,under
+         </div>
+        </td>
+       </tr>
       <tr class="gtkonly" id='property-strip.button.height'>
         <td>
          strip.button.height
@@ -2807,6 +2913,17 @@ c:\cygwin\bin\xargs -0 fgrep -G -n "$(find.what)"
 	  </table>
         All of these values except for 1251 and 1000 should work on OS X or Windows.
         On GTK+ Baltic, Turkish, Thai and Vietnamese will probably not work.
+        </td>
+      </tr>
+      <tr id='property-ime.interaction'>
+        <td>
+          ime.interaction
+        </td>
+        <td>
+          Allows a choice between windowed and inline Input Method Editors with
+          0 choosing windowed mode and 1 the in-line mode.
+          If there is no setting then a mode is chosen that may differ
+          between platforms and locales.
         </td>
       </tr>
       <tr id='property-imports.include'>
@@ -3014,9 +3131,7 @@ imports.include=fortran lisp
           and the bold, italics and eolfilled fields have no subvalue. The value
           "fore:#FF0000,font:Courier,size:14" represents 14 point, red Courier text.<br />
            A global style can be set up using style.*.<i>stylenumber</i>. Any style options set in
-          the global style will be inherited by each lexer style unless overridden.<br />
-	On GTK+, the font name should be prefixed with "!" such as "font:!Sans" to ensure Pango
-	anti-aliased fonts are used. If this is not done, an older font system will be used which may not work well.
+          the global style will be inherited by each lexer style unless overridden.
         </td>
       </tr>
       <tr>
@@ -3102,11 +3217,13 @@ imports.include=fortran lisp
           command.build.<i>filepattern</i><br />
           command.build.subsystem.<i>filepattern</i><br />
           command.build.directory.<i>filepattern</i><br />
+          command.clean.<i>filepattern</i><br />
+          command.clean.subsystem.<i>filepattern</i><br />
           command.go.<i>filepattern</i><br />
         command.go.subsystem.<i>filepattern</i>
         </td>
         <td>
-          These settings choose which commands to execute when the Compile, Build or Go menu items
+          These settings choose which commands to execute when the Compile, Build, Clean or Go menu items
           are selected. The subsystem options are explained in the subsystem section.<br />
         When source files are in a different directory to that they should be built in, the
         command.build.directory property can be set to change to a particular directory before performing
@@ -4007,8 +4124,8 @@ groupundo - yes or no
      </tr>
      <tr>
       <td>style</td>
-      <td>one of plain, squiggle, tt, diagonal, strike, hidden, box, roundbox, straightbox, dash,
-      dots, squigglelow, dotbox, squigglepixmap, or compositionthick.<br />
+      <td>one of plain, squiggle, tt, diagonal, strike, hidden, box, roundbox, straightbox, fullbox, dash,
+      dots, squigglelow, dotbox, squigglepixmap, compositionthick, or compositionthin.<br />
       </td>
       <td>plain</td>
      </tr>

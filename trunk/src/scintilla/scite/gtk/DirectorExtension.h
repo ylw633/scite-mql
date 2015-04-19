@@ -7,7 +7,7 @@
 
 class DirectorExtension : public Extension {
 private:
-	DirectorExtension() : inputWatcher(-1), inputChannel(0) {} // Singleton
+	DirectorExtension() : inputWatcher(-1), inputChannel(0), host(0) {} // Singleton
 	DirectorExtension(const DirectorExtension &); // Disable copy ctor
 	void operator=(const DirectorExtension &);    // Disable operator=
 
@@ -35,6 +35,7 @@ public:
 
 	virtual bool SendProperty(const char *prop);
 	virtual bool OnClose(const char *path);
+	virtual bool NeedsOnClose();
 
 	// Allow messages through to extension
 	void HandleStringMessage(const char *message);
@@ -43,5 +44,6 @@ public:
 private:
 	int inputWatcher;
 	GIOChannel *inputChannel;
+	ExtensionAPI *host;
 };
 

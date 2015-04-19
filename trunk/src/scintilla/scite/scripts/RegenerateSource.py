@@ -22,6 +22,8 @@ sys.path.append(srcRoot + "/scintilla/scripts")
 from FileGenerator import Generate, Regenerate, UpdateLineInFile, ReplaceREInFile
 import ScintillaData
 import LexGen
+import IFaceTableGen
+import commandsdoc
 
 def UpdateVersionNumbers(sci, root):
     UpdateLineInFile(root + "scite/src/SciTE.h", "#define VERSION_SCITE",
@@ -48,6 +50,43 @@ def UpdateVersionNumbers(sci, root):
         '    <meta name="Date.Modified"',
         '    <meta name="Date.Modified" content="' + sci.dateModified + '" />')
 
+def OctalEscape(s):
+    result = []
+    for char in s:
+        try:
+            ordChar = ord(char)
+            # Python 2.x, s is a string so bytes
+            if ordChar < 128:
+                result.append(char)
+            else:
+                result.append("\%o" % ordChar)
+        except TypeError:
+            # Python 3.x, s is a byte string
+            if char < 128:
+                result.append(chr(char))
+            else:
+                result.append("\%o" % char)
+    return ''.join(result)
+
+def UpdateEmbedded(root, propFiles):
+    propFilesAll = ["SciTEGlobal.properties", "abbrev.properties"] + propFiles
+    linesEmbedded = []
+    for pf in propFilesAll:
+        with open(os.path.join(root, "scite", "src", pf)) as fi:
+            for line in fi:
+                if not line.startswith("#"):
+                    linesEmbedded.append(line)
+            if not linesEmbedded[-1].endswith("\n"):
+                linesEmbedded[-1] += "\n"
+    textEmbedded = "".join(linesEmbedded)
+    pathEmbedded = os.path.join(root, "scite", "src", "Embedded.properties")
+    with open(pathEmbedded) as fileEmbedded:
+        original = fileEmbedded.read()
+    if textEmbedded != original:
+        with open(pathEmbedded, "w") as fileOutEmbedded:
+            fileOutEmbedded.write(textEmbedded)
+            print("Changed %s" % pathEmbedded)
+
 def RegenerateAll():
     root="../../"
 
@@ -73,14 +112,17 @@ def RegenerateAll():
     propFiles = [os.path.basename(f) for f in propFilePaths if os.path.basename(f) not in otherProps]
     ScintillaData.SortListInsensitive(propFiles)
 
+    UpdateEmbedded(root, propFiles)
     Regenerate(root + "scite/win32/makefile", "#", propFiles)
     Regenerate(root + "scite/win32/scite.mak", "#", propFiles)
     Regenerate(root + "scite/src/SciTEProps.cxx", "//", sci.lexerProperties)
     Regenerate(root + "scite/doc/SciTEDoc.html", "<!--", propertiesHTML)
-    Generate(root + "scite/boundscheck/vcproj.gen",
-     root + "scite/boundscheck/SciTE.vcproj", "#", sci.lexFiles)
+    credits = [OctalEscape(c.encode("utf-8")) for c in sci.credits]
+    Regenerate(root + "scite/src/Credits.cxx", "//", credits)
 
     UpdateVersionNumbers(sci, root)
 
 LexGen.RegenerateAll("../../scintilla/")
 RegenerateAll()
+IFaceTableGen.RegenerateAll()
+commandsdoc.RegenerateAll()

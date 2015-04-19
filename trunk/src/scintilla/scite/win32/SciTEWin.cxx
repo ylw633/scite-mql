@@ -54,38 +54,32 @@ long SciTEKeys::ParseKeyCode(const char *mnemonic) {
 	int keyval = -1;
 
 	if (mnemonic && *mnemonic) {
-		SString sKey = mnemonic;
+		std::string sKey = mnemonic;
 
-		if (sKey.contains("Ctrl+")) {
+		if (RemoveStringOnce(sKey, "Ctrl+"))
 			modsInKey |= SCMOD_CTRL;
-			sKey.remove("Ctrl+");
-		}
-		if (sKey.contains("Shift+")) {
+		if (RemoveStringOnce(sKey, "Shift+"))
 			modsInKey |= SCMOD_SHIFT;
-			sKey.remove("Shift+");
-		}
-		if (sKey.contains("Alt+")) {
+		if (RemoveStringOnce(sKey, "Alt+"))
 			modsInKey |= SCMOD_ALT;
-			sKey.remove("Alt+");
-		}
 
 		if (sKey.length() == 1) {
 			keyval = VkKeyScan(sKey[0]) & 0xFF;
 		} else if (sKey.length() > 1) {
 			if ((sKey[0] == 'F') && (isdigit(sKey[1]))) {
-				sKey.remove("F");
-				int fkeyNum = sKey.value();
+				sKey.erase(0, 1);
+				int fkeyNum = atoi(sKey.c_str());
 				if (fkeyNum >= 1 && fkeyNum <= 12)
 					keyval = fkeyNum - 1 + VK_F1;
 			} else if ((sKey[0] == 'V') && (isdigit(sKey[1]))) {
-				sKey.remove("V");
-				int vkey = sKey.value();
+				sKey.erase(0, 1);
+				int vkey = atoi(sKey.c_str());
 				if (vkey > 0 && vkey <= 0x7FFF)
 					keyval = vkey;
-			} else if (sKey.search("Keypad") == 0) {
-				sKey.remove("Keypad");
+			} else if (sKey.find("Keypad") == 0) {
+				sKey.erase(0, strlen("Keypad"));
 				if (isdigit(sKey[0])) {
-					int keyNum = sKey.value();
+					int keyNum = atoi(sKey.c_str());
 					if (keyNum >= 0 && keyNum <= 9)
 						keyval = keyNum + VK_NUMPAD0;
 				} else if (sKey == "Plus") {
@@ -171,6 +165,7 @@ SciTEWin::SciTEWin(Extension *ext) : SciTEBase(ext) {
 
 	openWhat[0] = '\0';
 	tooltipText[0] = '\0';
+	tbLarge = false;
 	modalParameters = false;
 	filterDefault = 1;
 	staticBuild = false;
@@ -196,7 +191,7 @@ SciTEWin::SciTEWin(Extension *ext) : SciTEBase(ext) {
 			const void *pv = ::LockResource(hmem);
 			if (pv) {
 				propsEmbed.ReadFromMemory(
-				    reinterpret_cast<const char *>(pv), size, FilePath(), filter);
+				    reinterpret_cast<const char *>(pv), size, FilePath(), filter, NULL, 0);
 			}
 		}
 		::FreeResource(handProps);
@@ -205,6 +200,7 @@ SciTEWin::SciTEWin(Extension *ext) : SciTEBase(ext) {
 	pathAbbreviations = GetAbbrevPropertiesFileName();
 
 	ReadGlobalPropFile();
+	tbLarge = props.GetInt("toolbar.large");
 	/// Need to copy properties to variables before setting up window
 	SetPropertiesInitial();
 	ReadAbbrevPropFile();
@@ -233,6 +229,8 @@ SciTEWin::~SciTEWin() {
 		::FreeLibrary(hMM);
 	if (fontTabs)
 		::DeleteObject(fontTabs);
+	if (hAccTable)
+		::DestroyAcceleratorTable(hAccTable);
 }
 
 uptr_t SciTEWin::GetInstance() {
@@ -270,7 +268,7 @@ void SciTEWin::Register(HINSTANCE hInstance_) {
 		exit(FALSE);
 }
 
-static int CodePageFromName(const SString &encodingName) {
+static int CodePageFromName(const std::string &encodingName) {
 	struct Encoding {
 		const char *name;
 		int codePage;
@@ -298,33 +296,50 @@ static int CodePageFromName(const SString &encodingName) {
 	return CP_UTF8;
 }
 
+static std::string StringEncode(std::wstring s, int codePage) {
+	if (s.length()) {
+		int cchMulti = ::WideCharToMultiByte(codePage, 0, s.c_str(), static_cast<int>(s.length()), NULL, 0, NULL, NULL);
+		std::string sMulti(cchMulti, 0);
+		::WideCharToMultiByte(codePage, 0, s.c_str(), static_cast<int>(s.size()), &sMulti[0], cchMulti, NULL, NULL);
+		return sMulti;
+	} else {
+		return std::string();
+	}
+}
+
+static std::wstring StringDecode(std::string s, int codePage) {
+	if (s.length()) {
+		int cchWide = ::MultiByteToWideChar(codePage, 0, s.c_str(), static_cast<int>(s.length()), NULL, 0);
+		std::wstring sWide(cchWide, 0);
+		::MultiByteToWideChar(codePage, 0, s.c_str(), static_cast<int>(s.length()), &sWide[0], cchWide);
+		return sWide;
+	} else {
+		return std::wstring();
+	}
+}
+
 // Convert to UTF-8
 static std::string ConvertEncoding(const char *original, int codePage) {
 	if (codePage == CP_UTF8) {
 		return original;
 	} else {
-		int cchWide = ::MultiByteToWideChar(codePage, 0, original, -1, NULL, 0);
-		wchar_t *pszWide = new wchar_t[cchWide + 1];
-		::MultiByteToWideChar(codePage, 0, original, -1, pszWide, cchWide + 1);
-		GUI::gui_string sWide(pszWide);
-		std::string ret = GUI::UTF8FromString(sWide);
-		delete []pszWide;
-		return ret;
+		GUI::gui_string sWide = StringDecode(std::string(original), codePage);
+		return GUI::UTF8FromString(sWide);
 	}
 }
 
 void SciTEWin::ReadLocalization() {
 	SciTEBase::ReadLocalization();
-	SString encoding = localiser.Get("translation.encoding");
-	encoding.lowercase();
+	std::string encoding = localiser.GetString("translation.encoding");
+	LowerCaseAZ(encoding);
 	if (encoding.length()) {
-		int codePage = CodePageFromName(encoding);
+		int codePageNamed = CodePageFromName(encoding);
 		const char *key = NULL;
 		const char *val = NULL;
 		// Get encoding
 		bool more = localiser.GetFirst(key, val);
 		while (more) {
-			std::string converted = ConvertEncoding(val, codePage);
+			std::string converted = ConvertEncoding(val, codePageNamed);
 			if (converted != "") {
 				localiser.Set(key, converted.c_str());
 			}
@@ -369,6 +384,14 @@ FILE *scite_lua_popen(const char *filename, const char *mode) {
 	return f;
 }
 
+}
+
+void SciTEWin::ReadPropertiesInitial() {
+	SciTEBase::ReadPropertiesInitial();
+	if (tabMultiLine) {	// Windows specific!
+		long wl = ::GetWindowLong(reinterpret_cast<HWND>(wTabBar.GetID()), GWL_STYLE);
+		::SetWindowLong(reinterpret_cast<HWND>(wTabBar.GetID()), GWL_STYLE, wl | TCS_MULTILINE);
+	}
 }
 
 void SciTEWin::ReadProperties() {
@@ -468,31 +491,22 @@ void SciTEWin::ExecuteHelp(const char *cmd) {
 
 void SciTEWin::CopyAsRTF() {
 	Sci_CharacterRange cr = GetSelection();
-	char *fileNameTemp = _tempnam(NULL, "scite-tmp-");
-	if (fileNameTemp) {
-		SaveToRTF(GUI::StringFromUTF8(fileNameTemp), cr.cpMin, cr.cpMax);
-		FILE *fp = fopen(fileNameTemp, "rb");
-		if (fp) {
-			fseek(fp, 0, SEEK_END);
-			int len = ftell(fp);
-			fseek(fp, 0, SEEK_SET);
-			HGLOBAL hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len + 1);
-			if (hand) {
-				::OpenClipboard(MainHWND());
-				::EmptyClipboard();
-				char *ptr = static_cast<char *>(::GlobalLock(hand));
-				if (ptr) {
-					fread(ptr, 1, len, fp);
-					ptr[len] = '\0';
-				}
-				::GlobalUnlock(hand);
-				::SetClipboardData(::RegisterClipboardFormat(CF_RTF), hand);
-				::CloseClipboard();
-			}
-			fclose(fp);
+	std::ostringstream oss;
+	SaveToStreamRTF(oss, cr.cpMin, cr.cpMax);
+	std::string rtf = oss.str();
+	size_t len = rtf.length();
+	HGLOBAL hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len + 1);
+	if (hand) {
+		::OpenClipboard(MainHWND());
+		::EmptyClipboard();
+		char *ptr = static_cast<char *>(::GlobalLock(hand));
+		if (ptr) {
+			memcpy(ptr, rtf.c_str(), len);
+			ptr[len] = '\0';
 		}
-		unlink(fileNameTemp);
-		free(fileNameTemp);
+		::GlobalUnlock(hand);
+		::SetClipboardData(::RegisterClipboardFormat(CF_RTF), hand);
+		::CloseClipboard();
 	}
 }
 
@@ -502,14 +516,16 @@ void SciTEWin::CopyPath() {
 
 	GUI::gui_string clipText(filePath.AsInternal());
 	size_t blobSize = sizeof(GUI::gui_char)*(clipText.length()+1);
-	HGLOBAL hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, blobSize);
-	if (hand && ::OpenClipboard(MainHWND())) {
-		::EmptyClipboard();
-		GUI::gui_char *ptr = static_cast<GUI::gui_char*>(::GlobalLock(hand));
-		if (ptr)
-			memcpy(ptr, clipText.c_str(), blobSize);
-		::GlobalUnlock(hand);
-		::SetClipboardData(CF_UNICODETEXT, hand);
+	if (::OpenClipboard(MainHWND())) {
+		HGLOBAL hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, blobSize);
+		if (hand) {
+			::EmptyClipboard();
+			GUI::gui_char *ptr = static_cast<GUI::gui_char*>(::GlobalLock(hand));
+			if (ptr)
+				memcpy(ptr, clipText.c_str(), blobSize);
+			::GlobalUnlock(hand);
+			::SetClipboardData(CF_UNICODETEXT, hand);
+		}
 		::CloseClipboard();
 	}
 }
@@ -576,9 +592,9 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 		if (!wEditor.HasFocus() && !wOutput.HasFocus()) {
 			HWND wWithFocus = ::GetFocus();
 			enum { capSize = 2000 };
-			GUI::gui_char className[capSize];
-			::GetClassName(wWithFocus, className, capSize);
-			if (wcscmp(className, TEXT("Edit")) == 0) {
+			GUI::gui_char classNameFocus[capSize];
+			::GetClassName(wWithFocus, classNameFocus, capSize);
+			if (wcscmp(classNameFocus, TEXT("Edit")) == 0) {
 				switch (cmdID) {
 				case IDM_UNDO:
 					::SendMessage(wWithFocus, EM_UNDO, 0, 0);
@@ -656,13 +672,9 @@ static UINT CodePageFromCharSet(DWORD characterSet, UINT documentCodePage) {
 	return cp;
 }
 
-void SciTEWin::OutputAppendEncodedStringSynchronised(GUI::gui_string s, int codePage) {
-	int cchMulti = ::WideCharToMultiByte(codePage, 0, s.c_str(), static_cast<int>(s.size()), NULL, 0, NULL, NULL);
-	char *pszMulti = new char[cchMulti + 1];
-	::WideCharToMultiByte(codePage, 0, s.c_str(), static_cast<int>(s.size()), pszMulti, cchMulti + 1, NULL, NULL);
-	pszMulti[cchMulti] = 0;
-	OutputAppendStringSynchronised(pszMulti);
-	delete []pszMulti;
+void SciTEWin::OutputAppendEncodedStringSynchronised(GUI::gui_string s, int codePageDocument) {
+	std::string sMulti = StringEncode(s, codePageDocument);
+	OutputAppendStringSynchronised(sMulti.c_str());
 }
 
 CommandWorker::CommandWorker() : pSciTE(NULL) {
@@ -672,9 +684,9 @@ CommandWorker::CommandWorker() : pSciTE(NULL) {
 void CommandWorker::Initialise(bool resetToStart) {
 	if (resetToStart)
 		icmd = 0;
-    originalEnd = 0;
-    exitStatus = 0;
-    flags = 0;
+	originalEnd = 0;
+	exitStatus = 0;
+	flags = 0;
 	seenOutput = false;
 	outputScroll = 1;
 }
@@ -745,36 +757,26 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 			if (*grepCmd == 'b')
 				gf = static_cast<GrepFlags>(gf | grepBinary);
 			const char *findFiles = grepCmd + 2;
-			const char *findWhat = findFiles + strlen(findFiles) + 1;
+			const char *findText = findFiles + strlen(findFiles) + 1;
 			if (cmdWorker.outputScroll == 1)
 				gf = static_cast<GrepFlags>(gf | grepScroll);
 			sptr_t positionEnd = wOutput.Send(SCI_GETCURRENTPOS);
-			InternalGrep(gf, jobToRun.directory.AsInternal(), GUI::StringFromUTF8(findFiles).c_str(), findWhat, positionEnd);
+			InternalGrep(gf, jobToRun.directory.AsInternal(), GUI::StringFromUTF8(findFiles).c_str(), findText, positionEnd);
 			if ((gf & grepScroll) && returnOutputToCommand)
 				wOutput.Send(SCI_GOTOPOS, positionEnd, 0);
 		}
 		return exitcode;
 	}
 
-	UINT codePage = static_cast<UINT>(wOutput.Send(SCI_GETCODEPAGE));
-	if (codePage != SC_CP_UTF8) {
-		codePage = CodePageFromCharSet(characterSet, codePage);
+	UINT codePageOutput = static_cast<UINT>(wOutput.Send(SCI_GETCODEPAGE));
+	if (codePageOutput != SC_CP_UTF8) {
+		codePageOutput = CodePageFromCharSet(characterSet, codePageOutput);
 	}
 
-	SECURITY_ATTRIBUTES sa = {sizeof(SECURITY_ATTRIBUTES), 0, 0};
+	SECURITY_ATTRIBUTES sa = {sizeof(SECURITY_ATTRIBUTES), NULL, TRUE};
 	OutputAppendStringSynchronised(">");
-	OutputAppendEncodedStringSynchronised(GUI::StringFromUTF8(jobToRun.command.c_str()), codePage);
+	OutputAppendEncodedStringSynchronised(GUI::StringFromUTF8(jobToRun.command), codePageOutput);
 	OutputAppendStringSynchronised("\n");
-
-	sa.bInheritHandle = TRUE;
-	sa.lpSecurityDescriptor = NULL;
-
-	SECURITY_DESCRIPTOR sd;
-	// Make a real security thing to allow inheriting handles
-	::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
-	::SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE);
-	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-	sa.lpSecurityDescriptor = &sd;
 
 	HANDLE hPipeWrite = NULL;
 	HANDLE hPipeRead = NULL;
@@ -816,7 +818,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 
 	bool running = ::CreateProcessW(
 			  NULL,
-			  const_cast<wchar_t *>(GUI::StringFromUTF8(jobToRun.command.c_str()).c_str()),
+			  const_cast<wchar_t *>(GUI::StringFromUTF8(jobToRun.command).c_str()),
 			  NULL, NULL,
 			  TRUE, CREATE_NEW_PROCESS_GROUP,
 			  NULL,
@@ -824,15 +826,15 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 			  startDirectory.AsInternal() : NULL,
 			  &si, &pi);
 
-	// if jobCLI "System cant find" - try calling with command processor
+	// if jobCLI "System can't find" - try calling with command processor
 	if ((!running) && (jobToRun.jobType == jobCLI) && (::GetLastError() == ERROR_FILE_NOT_FOUND)) {
 
-		SString runComLine = "cmd.exe /c ";
-		runComLine = runComLine.append(jobToRun.command.c_str());
+		std::string runComLine = "cmd.exe /c ";
+		runComLine = runComLine.append(jobToRun.command);
 
 		running = ::CreateProcessW(
 			  NULL,
-			  const_cast<wchar_t*>(GUI::StringFromUTF8(runComLine.c_str()).c_str()),
+			  const_cast<wchar_t*>(GUI::StringFromUTF8(runComLine).c_str()),
 			  NULL, NULL,
 			  TRUE, CREATE_NEW_PROCESS_GROUP,
 			  NULL,
@@ -846,7 +848,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 
 		bool cancelled = false;
 
-		SString repSelBuf;
+		std::string repSelBuf;
 
 		size_t totalBytesToWrite = 0;
 		if (jobToRun.flags & jobHasInput) {
@@ -854,8 +856,8 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 		}
 
 		if (totalBytesToWrite > 0 && !(jobToRun.flags & jobQuiet)) {
-			SString input = jobToRun.input;
-			input.substitute("\n", "\n>> ");
+			std::string input = jobToRun.input;
+			Substitute(input, "\n", "\n>> ");
 
 			OutputAppendStringSynchronised(">> ");
 			OutputAppendStringSynchronised(input.c_str());
@@ -876,10 +878,10 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 
 			DWORD bytesRead = 0;
 			DWORD bytesAvail = 0;
-			char buffer[16384];
+			std::vector<char> buffer(16*1024);
 
-			if (!::PeekNamedPipe(hPipeRead, buffer,
-					     sizeof(buffer), &bytesRead, &bytesAvail, NULL)) {
+			if (!::PeekNamedPipe(hPipeRead, &buffer[0],
+					     static_cast<DWORD>(buffer.size()), &bytesRead, &bytesAvail, NULL)) {
 				bytesAvail = 0;
 			}
 
@@ -888,8 +890,8 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 				// with reads, so that our hRead buffer will not be overrun with results.
 
 				size_t bytesToWrite;
-				int eol_pos = jobToRun.input.search("\n", writingPosition);
-				if (eol_pos == -1) {
+				const size_t eol_pos = jobToRun.input.find("\n", writingPosition);
+				if (eol_pos == std::string::npos) {
 					bytesToWrite = totalBytesToWrite - writingPosition;
 				} else {
 					bytesToWrite = eol_pos + 1 - writingPosition;
@@ -925,13 +927,13 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 				}
 
 			} else if (bytesAvail > 0) {
-				int bTest = ::ReadFile(hPipeRead, buffer,
-						       sizeof(buffer), &bytesRead, NULL);
+				int bTest = ::ReadFile(hPipeRead, &buffer[0],
+						       static_cast<DWORD>(buffer.size()), &bytesRead, NULL);
 
 				if (bTest && bytesRead) {
 
 					if (jobToRun.flags & jobRepSelMask) {
-						repSelBuf.append(buffer, bytesRead);
+						repSelBuf.append(&buffer[0], bytesRead);
 					}
 
 					if (!(jobToRun.flags & jobQuiet)) {
@@ -940,7 +942,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 							cmdWorker.seenOutput = true;
 						}
 						// Display the data
-						OutputAppendStringSynchronised(buffer, bytesRead);
+						OutputAppendStringSynchronised(&buffer[0], bytesRead);
 					}
 
 					::UpdateWindow(MainHWND());
@@ -960,7 +962,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 				if (WAIT_OBJECT_0 != ::WaitForSingleObject(pi.hProcess, 500)) {
 					// We should use it only if the GUI process is stuck and
 					// don't answer to a normal termination command.
-					// This function is dangerous: dependant DLLs don't know the process
+					// This function is dangerous: dependent DLLs don't know the process
 					// is terminated, and memory isn't released.
 					OutputAppendStringSynchronised("\n>Process failed to respond; forcing abrupt termination...\n");
 					::TerminateProcess(pi.hProcess, 1);
@@ -975,14 +977,14 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 			::TerminateProcess(pi.hProcess, 2);
 		}
 		::GetExitCodeProcess(pi.hProcess, &exitcode);
-		SString sExitMessage(static_cast<int>(exitcode));
-		sExitMessage.insert(0, ">Exit code: ");
+		std::ostringstream stExitMessage;
+		stExitMessage << ">Exit code: " << exitcode;
 		if (jobQueue.TimeCommands()) {
-			sExitMessage += "    Time: ";
-			sExitMessage += SString(cmdWorker.commandTime.Duration(), 3);
+			stExitMessage << "    Time: ";
+			stExitMessage << std::setprecision(4) << cmdWorker.commandTime.Duration();
 		}
-		sExitMessage += "\n";
-		OutputAppendStringSynchronised(sExitMessage.c_str());
+		stExitMessage << "\n";
+		OutputAppendStringSynchronised(stExitMessage.str().c_str());
 
 		::CloseHandle(pi.hProcess);
 		::CloseHandle(pi.hThread);
@@ -1006,7 +1008,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun) {
 	} else {
 		DWORD nRet = ::GetLastError();
 		OutputAppendStringSynchronised(">");
-		OutputAppendEncodedStringSynchronised(GetErrorMessage(nRet), codePage);
+		OutputAppendEncodedStringSynchronised(GetErrorMessage(nRet), codePageOutput);
 		WarnUser(warnExecuteKO);
 	}
 	::CloseHandle(hPipeRead);
@@ -1046,38 +1048,33 @@ void SciTEWin::ProcessExecute() {
 	PostOnMainThread(WORK_EXECUTE, &cmdWorker);
 }
 
-void SciTEWin::ShellExec(const SString &cmd, const char *dir) {
-	char *mycmd;
-
+void SciTEWin::ShellExec(const std::string &cmd, const char *dir) {
 	// guess if cmd is an executable, if this succeeds it can
 	// contain spaces without enclosing it with "
-	SString cmdLower = cmd;
-	cmdLower.lowercase();
-	char *mycmdcopy = StringDup(cmdLower.c_str());
+	std::string cmdLower = cmd;
+	LowerCaseAZ(cmdLower);
+	const char *mycmdlowered = cmdLower.c_str();
 
+	const char *s = strstr(mycmdlowered, ".exe");
+	if (s == NULL)
+		s = strstr(mycmdlowered, ".cmd");
+	if (s == NULL)
+		s = strstr(mycmdlowered, ".bat");
+	if (s == NULL)
+		s = strstr(mycmdlowered, ".com");
+	std::vector<char> cmdcopy(cmd.c_str(), cmd.c_str() + cmd.length() + 1);
+	char *mycmdcopy = &cmdcopy[0];
+	char *mycmd;
 	char *mycmd_end = NULL;
-	char *myparams = NULL;
-
-	char *s = strstr(mycmdcopy, ".exe");
-	if (s == NULL)
-		s = strstr(mycmdcopy, ".cmd");
-	if (s == NULL)
-		s = strstr(mycmdcopy, ".bat");
-	if (s == NULL)
-		s = strstr(mycmdcopy, ".com");
 	if ((s != NULL) && ((*(s + 4) == '\0') || (*(s + 4) == ' '))) {
-		ptrdiff_t len_mycmd = s - mycmdcopy + 4;
-		delete []mycmdcopy;
-		mycmdcopy = StringDup(cmd.c_str());
+		ptrdiff_t len_mycmd = s - mycmdlowered + 4;
 		mycmd = mycmdcopy;
 		mycmd_end = mycmdcopy + len_mycmd;
 	} else {
-		delete []mycmdcopy;
-		mycmdcopy = StringDup(cmd.c_str());
 		if (*mycmdcopy != '"') {
 			// get next space to separate cmd and parameters
-			mycmd_end = strchr(mycmdcopy, ' ');
 			mycmd = mycmdcopy;
+			mycmd_end = strchr(mycmdcopy, ' ');
 		} else {
 			// the cmd is surrounded by ", so it can contain spaces, but we must
 			// strip the " for ShellExec
@@ -1090,6 +1087,7 @@ void SciTEWin::ShellExec(const SString &cmd, const char *dir) {
 		}
 	}
 
+	std::string myparams;
 	if ((mycmd_end != NULL) && (*mycmd_end != '\0')) {
 		*mycmd_end = '\0';
 		// test for remaining params after cmd, they may be surrounded by " but
@@ -1117,22 +1115,19 @@ void SciTEWin::ShellExec(const SString &cmd, const char *dir) {
 
 	if (::ShellExecuteEx(&exec)) {
 		// it worked!
-		delete []mycmdcopy;
 		return;
 	}
 	DWORD rc = GetLastError();
 
-	SString errormsg("Error while launching:\n\"");
+	std::string errormsg("Error while launching:\n\"");
 	errormsg += mycmdcopy;
-	if (myparams != NULL) {
+	if (myparams.length()) {
 		errormsg += "\" with Params:\n\"";
 		errormsg += myparams;
 	}
 	errormsg += "\"\n";
-	GUI::gui_string sErrorMsg = GUI::StringFromUTF8(errormsg.c_str()) + GetErrorMessage(rc);
-	WindowMessageBox(wSciTE, sErrorMsg, MB_OK);
-
-	delete []mycmdcopy;
+	GUI::gui_string sErrorMsg = GUI::StringFromUTF8(errormsg) + GetErrorMessage(rc);
+	WindowMessageBox(wSciTE, sErrorMsg, mbsOK);
 }
 
 void SciTEWin::Execute() {
@@ -1164,11 +1159,6 @@ void SciTEWin::Execute() {
 		if (jobQueue.jobQueue[cmdWorker.icmd].flags & jobGroupUndo)
 			wEditor.Send(SCI_ENDUNDOACTION);
 
-		Redraw();
-		// A Redraw "might" be needed, since Lua and Director
-		// provide enough low-level capabilities to corrupt the
-		// display.
-
 		ExecuteNext();
 	} else {
 		// Execute other jobs asynchronously on a new thread
@@ -1192,7 +1182,8 @@ void SciTEWin::StopExecute() {
 		if (!GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, subProcessGroupId)) {
 			LONG errCode = GetLastError();
 			OutputAppendStringSynchronised("\n>BREAK Failed ");
-			OutputAppendStringSynchronised(SString(errCode).c_str());
+			std::string sError = StdStringFromInteger(errCode);
+			OutputAppendStringSynchronised(sError.c_str());
 			OutputAppendStringSynchronised("\n");
 		}
 		Sleep(100L);
@@ -1202,13 +1193,13 @@ void SciTEWin::StopExecute() {
 	jobQueue.SetCancelFlag(1);
 }
 
-void SciTEWin::AddCommand(const SString &cmd, const SString &dir, JobSubsystem jobType, const SString &input, int flags) {
+void SciTEWin::AddCommand(const std::string &cmd, const std::string &dir, JobSubsystem jobType, const std::string &input, int flags) {
 	if (cmd.length()) {
 		if ((jobType == jobShell) && ((flags & jobForceQueue) == 0)) {
-			SString pCmd = cmd;
+			std::string pCmd = cmd;
 			parameterisedCommand = "";
 			if (pCmd[0] == '*') {
-				pCmd.remove(0, 1);
+				pCmd.erase(0, 1);
 				parameterisedCommand = pCmd;
 				if (!ParametersDialog(true)) {
 					return;
@@ -1216,7 +1207,7 @@ void SciTEWin::AddCommand(const SString &cmd, const SString &dir, JobSubsystem j
 			} else {
 				ParamGrab();
 			}
-			pCmd = props.Expand(pCmd.c_str());
+			pCmd = props.Expand(pCmd);
 			ShellExec(pCmd, dir.c_str());
 		} else {
 			SciTEBase::AddCommand(cmd, dir, jobType, input, flags);
@@ -1251,7 +1242,7 @@ void SciTEWin::WorkerCommand(int cmd, Worker *pWorker) {
 
 void SciTEWin::QuitProgram() {
 	quitting = false;
-	if (SaveIfUnsureAll() != IDCANCEL) {
+	if (SaveIfUnsureAll() != saveCancelled) {
 		if (fullScreen)	// Ensure tray visible on exit
 			FullScreenToggle();
 		quitting = true;
@@ -1321,9 +1312,9 @@ void SciTEWin::CreateUI() {
 		RestorePosition();
 
 	LocaliseMenus();
-	SString pageSetup = props.Get("print.margins");
+	std::string pageSetup = props.GetString("print.margins");
 	char val[32];
-	char *ps = StringDup(pageSetup.c_str());
+	const char *ps = pageSetup.c_str();
 	const char *next = GetNextPropItem(ps, val, 32);
 	pagesetupMargin.left = atol(val);
 	next = GetNextPropItem(next, val, 32);
@@ -1332,7 +1323,6 @@ void SciTEWin::CreateUI() {
 	pagesetupMargin.top = atol(val);
 	GetNextPropItem(next, val, 32);
 	pagesetupMargin.bottom = atol(val);
-	delete []ps;
 
 	UIAvailable();
 }
@@ -1370,7 +1360,11 @@ GUI::gui_string SciTEWin::ProcessArgs(const GUI::gui_char *cmdLine) {
 			args += GUI_TEXT("\n");
 		args += arg;
 		startArg = endArg;	// On a space or a double-quote, or on the end of the command line
-		if (*startArg) {
+		if (*startArg == '"') {	// Closing double-quote
+			startArg++;	// Consume the double-quote
+		}
+		while (IsASpace(*startArg)) {
+			// Consume spaces between arguments
 			startArg++;
 		}
 	}
@@ -1544,69 +1538,55 @@ bool SciTEWin::PreOpenCheck(const GUI::gui_char *arg) {
 	HANDLE hFFile;
 	WIN32_FIND_DATA ffile;
 	DWORD fileattributes = ::GetFileAttributes(arg);
-	GUI::gui_char filename[MAX_PATH] = L"";
 	int nbuffers = props.GetInt("buffers");
+	FilePath fpArg(arg);
 
 	if (fileattributes != (DWORD) -1) {	// arg is an existing directory or filename
 		// if the command line argument is a directory, use OpenDialog()
 		if (fileattributes & FILE_ATTRIBUTE_DIRECTORY) {
-			OpenDialog(FilePath(arg), GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
+			OpenDialog(fpArg, GUI::StringFromUTF8(props.GetExpandedString("open.filter")).c_str());
 			isHandled = true;
 		}
 	} else if (nbuffers > 1 && (hFFile = ::FindFirstFile(arg, &ffile)) != INVALID_HANDLE_VALUE) {
 		// If several buffers is accepted and the arg is a filename pattern matching at least an existing file
 		isHandled = true;
-		wcscpy(filename, arg);
-		GUI::gui_char *lastslash;
-		if (NULL == (lastslash = wcsrchr(filename, GUI_TEXT('\\'))))
-			lastslash = filename;	// No path
-		else
-			lastslash++;
-		// Open files matching the given pattern until no more files or all available buffers are exhausted
+		FilePath fpDir = fpArg.Directory();
+
 		do {
 			if (!(ffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {	// Skip directories
-				wcscpy(lastslash, ffile.cFileName);
-				Open(filename);
+				Open(FilePath(fpDir, ffile.cFileName));
 				--nbuffers;
 			}
 		} while (nbuffers > 0 && ::FindNextFile(hFFile, &ffile));
 		::FindClose(hFFile);
 	} else {
-		const GUI::gui_char *lastslash = wcsrchr(arg, '\\');
-		const GUI::gui_char *lastdot = wcsrchr(arg, '.');
 
 		// if the filename is only an extension, open the dialog box with it as the extension filter
-		if ((lastslash && lastdot && lastslash == lastdot - 1) || (!lastslash && lastdot == arg)) {
+		if (!fpArg.BaseName().IsSet()) {
 			isHandled = true;
+			FilePath fpDir = fpArg.Directory();
+			if (!fpDir.IsSet())
+				fpDir = FilePath(GUI_TEXT("."));
+			FilePath fpName = fpArg.Name();
+			GUI::gui_string wildcard(GUI_TEXT("*"));
+			wildcard += fpName.AsInternal();
+			wildcard += GUI_TEXT("|*");
+			wildcard += fpName.AsInternal();
 
-			GUI::gui_char dir[MAX_PATH] = L"";
-			if (lastslash) { // the arg contains a path, so copy that part to dirName
-				wcsncpy(dir, arg, lastslash - arg + 1);
-				dir[lastslash - arg + 1] = '\0';
-			} else {
-				wcscpy(dir, GUI_TEXT(".\\"));
-			}
-
-			wcscpy(filename, GUI_TEXT("*"));
-			wcscat(filename, lastdot);
-			wcscat(filename, GUI_TEXT("|"));
-			wcscat(filename, GUI_TEXT("*"));
-			wcscat(filename, lastdot);
-			OpenDialog(FilePath(dir), filename);
-		} else if (!lastdot || (lastslash && lastdot < lastslash)) {
+			OpenDialog(fpArg.Directory(), wildcard.c_str());
+		} else if (!fpArg.Extension().IsSet()) {
 			// if the filename has no extension, try to match a file with list of standard extensions
-			SString extensions = props.GetExpanded("source.default.extensions");
+			std::string extensions = props.GetExpandedString("source.default.extensions");
 			if (extensions.length()) {
-				wcscpy(filename, arg);
-				GUI::gui_char *endfilename = filename + wcslen(filename);
-				extensions.substitute('|', '\0');
+				std::replace(extensions.begin(), extensions.end(), '|', '\0');
 				size_t start = 0;
 				while (start < extensions.length()) {
 					GUI::gui_string filterName = GUI::StringFromUTF8(extensions.c_str() + start);
-					wcscpy(endfilename, filterName.c_str());
-					if (::GetFileAttributes(filename) != (DWORD) -1) {
+					GUI::gui_string nameWithExtension = fpArg.AsInternal();
+					nameWithExtension += filterName;
+					if (::GetFileAttributes(nameWithExtension.c_str()) != (DWORD)-1) {
 						isHandled = true;
-						Open(filename);
+						Open(nameWithExtension.c_str());
 						break;	// Found!
 					} else {
 						// Next extension
@@ -1633,15 +1613,15 @@ bool SciTEWin::IsStdinBlocked() {
 	char bytebuffer;
 	HANDLE hStdIn = ::GetStdHandle(STD_INPUT_HANDLE);
 	if (hStdIn == INVALID_HANDLE_VALUE) {
-		/* an invalid handle, assume that stdin is blocked by falling to bottomn */;
+		/* an invalid handle, assume that stdin is blocked by falling to bottom */;
 	} else if (::PeekConsoleInput(hStdIn, irec, 1, &unread_messages) != 0) {
-		/* it is the console, assume that stdin is blocked by falling to bottomn */;
+		/* it is the console, assume that stdin is blocked by falling to bottom */;
 	} else if (::GetLastError() == ERROR_INVALID_HANDLE) {
 		for (int n = 0; n < 4; n++) {
 			/*	if this fails, it is either
 				- a busy pipe "scite \*.,cxx /s /b | s -@",
 				- another type of pipe "scite - <file", or
-				- a blocked pipe "findstrin nothing | scite -"
+				- a blocked pipe "findstring nothing | scite -"
 				in any case case, retry in a short bit
 			*/
 			if (::PeekNamedPipe(hStdIn, &bytebuffer, sizeof(bytebuffer), NULL,NULL, &unread_messages) != 0) {
@@ -1695,7 +1675,7 @@ static const int VK_OEM_6=0xdd;
 static const int VK_OEM_PLUS=0xbb;
 #endif
 
-inline bool KeyMatch(const SString &sKey, int keyval, int modifiers) {
+inline bool KeyMatch(const std::string &sKey, int keyval, int modifiers) {
 	return SciTEKeys::MatchKeyCode(
 		SciTEKeys::ParseKeyCode(sKey.c_str()), keyval, modifiers);
 }
@@ -1710,7 +1690,7 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 	if (extender && extender->OnKey(static_cast<int>(wParam), modifiers))
 		return 1l;
 
-	for (int j = 0; j < languageItems; j++) {
+	for (unsigned int j = 0; j < languageMenu.size(); j++) {
 		if (KeyMatch(languageMenu[j].menuKey, static_cast<int>(wParam), modifiers)) {
 			SciTEBase::MenuCommand(IDM_LANGUAGE + j);
 			return 1l;
@@ -1736,7 +1716,7 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 	// exec it the command defined
 	for (size_t cut_i = 0; cut_i < shortCutItemList.size(); cut_i++) {
 		if (KeyMatch(shortCutItemList[cut_i].menuKey, static_cast<int>(wParam), modifiers)) {
-			int commandNum = SciTEBase::GetMenuCommandAsInt(shortCutItemList[cut_i].menuCommand);
+			int commandNum = SciTEBase::GetMenuCommandAsInt(shortCutItemList[cut_i].menuCommand.c_str());
 			if (commandNum != -1) {
 				// its possible that the command is for scintilla directly
 				// all scintilla commands are larger then 2000
@@ -1800,9 +1780,24 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 	return 0;
 }
 
-LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
-	int statusFailure = 0;
+void SciTEWin::CheckForScintillaFailure(int statusFailure) {
 	static int boxesVisible = 0;
+	if ((statusFailure > 0) && (boxesVisible == 0)) {
+		boxesVisible++;
+		char buff[200];
+		if (statusFailure == SC_STATUS_BADALLOC) {
+			strcpy(buff, "Memory exhausted.");
+		} else {
+			sprintf(buff, "Scintilla failed with status %d.", statusFailure);
+		}
+		strcat(buff, " SciTE will now close.");
+		GUI::gui_string sMessage = GUI::StringFromUTF8(buff);
+		::MessageBox(MainHWND(), sMessage.c_str(), TEXT("Failure in Scintilla"), MB_OK | MB_ICONERROR | MB_APPLMODAL);
+		exit(FALSE);
+	}
+}
+
+LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	try {
 		LRESULT uim = uniqueInstance.CheckMessage(iMessage, wParam, lParam);
 		if (uim != 0) {
@@ -1851,7 +1846,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 					Open(file.AsInternal());
 				} else {
 					GUI::gui_string msg = LocaliseMessage("Could not open file '^0'.", file.AsInternal());
-					WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+					WindowMessageBox(wSciTE, msg);
 				}
 			}
 			break;
@@ -1871,7 +1866,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return KeyUp(wParam);
 
 		case WM_SIZE:
-			if (wParam != 1)
+			if (wParam != SIZE_MINIMIZED)
 				SizeSubWindows();
 			break;
 
@@ -1957,20 +1952,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		}
 	} catch (GUI::ScintillaFailure &sf) {
-		statusFailure = static_cast<int>(sf.status);
-	}
-	if ((statusFailure > 0) && (boxesVisible == 0)) {
-		boxesVisible++;
-		char buff[200];
-		if (statusFailure == SC_STATUS_BADALLOC) {
-			strcpy(buff, "Memory exhausted.");
-		} else {
-			sprintf(buff, "Scintilla failed with status %d.", statusFailure);
-		}
-		strcat(buff, " SciTE will now close.");
-		GUI::gui_string sMessage = GUI::StringFromUTF8(buff);
-		::MessageBox(MainHWND(), sMessage.c_str(), TEXT("Failure in Scintilla"), MB_OK | MB_ICONERROR | MB_APPLMODAL);
-		exit(FALSE);
+		CheckForScintillaFailure(static_cast<int>(sf.status));
 	}
 	return 0l;
 }
@@ -2073,58 +2055,28 @@ LRESULT ContentWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 }
 
 // Convert String from UTF-8 to doc encoding
-SString SciTEWin::EncodeString(const SString &s) {
-	//::MessageBox(GetFocus(),SString(s).c_str(),"EncodeString:in",0);
+std::string SciTEWin::EncodeString(const std::string &s) {
+	UINT codePageDocument = wEditor.Call(SCI_GETCODEPAGE);
 
-	UINT codePage = wEditor.Call(SCI_GETCODEPAGE);
-
-	if (codePage != SC_CP_UTF8) {
-		codePage = CodePageFromCharSet(characterSet, codePage);
-
-		int cchWide = ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), static_cast<int>(s.length()), NULL, 0);
-		wchar_t *pszWide = new wchar_t[cchWide + 1];
-		::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), static_cast<int>(s.length()), pszWide, cchWide + 1);
-
-		int cchMulti = ::WideCharToMultiByte(codePage, 0, pszWide, cchWide, NULL, 0, NULL, NULL);
-		char *pszMulti = new char[cchMulti + 1];
-		::WideCharToMultiByte(codePage, 0, pszWide, cchWide, pszMulti, cchMulti + 1, NULL, NULL);
-		pszMulti[cchMulti] = 0;
-
-		SString result(pszMulti);
-
-		delete []pszWide;
-		delete []pszMulti;
-
-		//::MessageBox(GetFocus(),result.c_str(),"EncodeString:out",0);
-		return result;
+	if (codePageDocument != SC_CP_UTF8) {
+		codePageDocument = CodePageFromCharSet(characterSet, codePageDocument);
+		std::wstring sWide = StringDecode(std::string(s.c_str(), s.length()), CP_UTF8);
+		return StringEncode(sWide, codePageDocument);
 	}
 	return SciTEBase::EncodeString(s);
 }
 
 // Convert String from doc encoding to UTF-8
-SString SciTEWin::GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, int selEnd) {
-	SString s = SciTEBase::GetRangeInUIEncoding(win, selStart, selEnd);
+std::string SciTEWin::GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, int selEnd) {
+	std::string s = SciTEBase::GetRangeInUIEncoding(win, selStart, selEnd);
 
-	UINT codePage = wEditor.Call(SCI_GETCODEPAGE);
+	UINT codePageDocument = wEditor.Call(SCI_GETCODEPAGE);
 
-	if (codePage != SC_CP_UTF8) {
-		codePage = CodePageFromCharSet(characterSet, codePage);
-
-		int cchWide = ::MultiByteToWideChar(codePage, 0, s.c_str(), static_cast<int>(s.length()), NULL, 0);
-		wchar_t *pszWide = new wchar_t[cchWide + 1];
-		::MultiByteToWideChar(codePage, 0, s.c_str(), static_cast<int>(s.length()), pszWide, cchWide + 1);
-
-		int cchMulti = ::WideCharToMultiByte(CP_UTF8, 0, pszWide, cchWide, NULL, 0, NULL, NULL);
-		char *pszMulti = new char[cchMulti + 1];
-		::WideCharToMultiByte(CP_UTF8, 0, pszWide, cchWide, pszMulti, cchMulti + 1, NULL, NULL);
-		pszMulti[cchMulti] = 0;
-
-		SString result(pszMulti);
-
-		delete []pszWide;
-		delete []pszMulti;
-
-		return result;
+	if (codePageDocument != SC_CP_UTF8) {
+		codePageDocument = CodePageFromCharSet(characterSet, codePageDocument);
+		std::wstring sWide = StringDecode(std::string(s.c_str(), s.length()), codePageDocument);
+		std::string sMulti = StringEncode(sWide, CP_UTF8);
+		return std::string(sMulti.c_str(), 0, sMulti.length());
 	}
 	return s;
 }
@@ -2134,6 +2086,13 @@ uptr_t SciTEWin::EventLoop() {
 	msg.wParam = 0;
 	bool going = true;
 	while (going) {
+		if (needIdle) {
+			bool haveMessage = PeekMessageW(&msg, NULL, 0, 0, PM_NOREMOVE);
+			if (!haveMessage) {
+				OnIdle();
+				continue;
+			}
+		}
 		going = ::GetMessageW(&msg, NULL, 0, 0);
 		if (going) {
 			if (!ModelessHandler(&msg)) {
@@ -2147,6 +2106,10 @@ uptr_t SciTEWin::EventLoop() {
 	}
 	return msg.wParam;
 }
+
+#if defined(_MSC_VER) && defined(_PREFAST_)
+#pragma warning(disable: 28251)
+#endif
 
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
@@ -2186,7 +2149,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 			TEXT("Error loading Scintilla"), MB_OK | MB_ICONERROR);
 #endif
 
-	uptr_t result;
+	uptr_t result = 0;
 	{
 #ifdef NO_EXTENSIONS
 		Extension *extender = 0;
@@ -2207,8 +2170,12 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 		}
 		while (*lptszCmdLine == ' ')
 			lptszCmdLine++;
-		MainWind.Run(lptszCmdLine);
-		result = MainWind.EventLoop();
+		try {
+			MainWind.Run(lptszCmdLine);
+			result = MainWind.EventLoop();
+		} catch (GUI::ScintillaFailure &sf) {
+			MainWind.CheckForScintillaFailure(static_cast<int>(sf.status));
+		}
 	}
 
 #ifdef STATIC_BUILD

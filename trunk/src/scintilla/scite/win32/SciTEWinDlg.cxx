@@ -83,38 +83,36 @@ static SciTEWin *Caller(HWND hDlg, UINT message, LPARAM lParam) {
 }
 
 void SciTEWin::WarnUser(int warnID) {
-	SString warning;
-	char *warn;
+	std::string warning;
 	char flashDuration[10], sound[_MAX_PATH], soundDuration[10];
 
 	switch (warnID) {
 	case warnFindWrapped:
-		warning = props.Get("warning.findwrapped");
+		warning = props.GetString("warning.findwrapped");
 		break;
 	case warnNotFound:
-		warning = props.Get("warning.notfound");
+		warning = props.GetString("warning.notfound");
 		break;
 	case warnWrongFile:
-		warning = props.Get("warning.wrongfile");
+		warning = props.GetString("warning.wrongfile");
 		break;
 	case warnExecuteOK:
-		warning = props.Get("warning.executeok");
+		warning = props.GetString("warning.executeok");
 		break;
 	case warnExecuteKO:
-		warning = props.Get("warning.executeko");
+		warning = props.GetString("warning.executeko");
 		break;
 	case warnNoOtherBookmark:
-		warning = props.Get("warning.nootherbookmark");
+		warning = props.GetString("warning.nootherbookmark");
 		break;
 	default:
 		warning = "";
 		break;
 	}
-	warn = StringDup(warning.c_str());
+	const char *warn = warning.c_str();
 	const char *next = GetNextPropItem(warn, flashDuration, 10);
 	next = GetNextPropItem(next, sound, _MAX_PATH);
 	GetNextPropItem(next, soundDuration, 10);
-	delete []warn;
 
 	int flashLen = atoi(flashDuration);
 	if (flashLen) {
@@ -187,34 +185,43 @@ int SciTEWin::DoDialog(HINSTANCE hInst, const TCHAR *resName, HWND hWnd, DLGPROC
 
 
 GUI::gui_string SciTEWin::DialogFilterFromProperty(const GUI::gui_char *filterProperty) {
-	GUI::gui_string filter = filterProperty;
-	if (filter.length()) {
-		std::replace(filter.begin(), filter.end(), '|', '\0');
+	GUI::gui_string filterText = filterProperty;
+	if (filterText.length()) {
+		std::replace(filterText.begin(), filterText.end(), '|', '\0');
 		size_t start = 0;
-		while (start < filter.length()) {
-			const GUI::gui_char *filterName = filter.c_str() + start;
+		while (start < filterText.length()) {
+			const GUI::gui_char *filterName = filterText.c_str() + start;
 			if (*filterName == '#') {
-				size_t next = start + wcslen(filter.c_str() + start) + 1;
-				next += wcslen(filter.c_str() + next) + 1;
-				filter.erase(start, next - start);
+				size_t next = start + wcslen(filterText.c_str() + start) + 1;
+				next += wcslen(filterText.c_str() + next) + 1;
+				filterText.erase(start, next - start);
 			} else {
 				GUI::gui_string localised = localiser.Text(GUI::UTF8FromString(filterName).c_str(), false);
 				if (localised.size()) {
-					filter.erase(start, wcslen(filterName));
-					filter.insert(start, localised.c_str());
+					filterText.erase(start, wcslen(filterName));
+					filterText.insert(start, localised.c_str());
 				}
-				start += wcslen(filter.c_str() + start) + 1;
-				start += wcslen(filter.c_str() + start) + 1;
+				start += wcslen(filterText.c_str() + start) + 1;
+				start += wcslen(filterText.c_str() + start) + 1;
 			}
 		}
 	}
-	return filter;
+	return filterText;
 }
 
-bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
+void SciTEWin::CheckCommonDialogError() {
+	DWORD errorNumber = ::CommDlgExtendedError();
+	if (errorNumber) {
+		GUI::gui_string sError = GUI::HexStringFromInteger(errorNumber);
+		GUI::gui_string msg = LocaliseMessage("Common dialog error 0x^0.", sError.c_str());
+		WindowMessageBox(wSciTE, msg);
+	}
+}
+
+bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filesFilter) {
 	enum {maxBufferSize=2048};
 
-	GUI::gui_string openFilter = DialogFilterFromProperty(filter);
+	GUI::gui_string openFilter = DialogFilterFromProperty(filesFilter);
 
 	if (!openWhat[0]) {
 		StringCopy(openWhat, localiser.Text("Custom Filter").c_str());
@@ -268,11 +275,13 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 				p += wcslen(p) + 1;
 			}
 		}
+	} else {
+		CheckCommonDialogError();
 	}
 	return succeeded;
 }
 
-FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const GUI::gui_char *filter, const char *ext) {
+FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const GUI::gui_char *filesFilter, const char *ext) {
 	FilePath path;
 	if (0 == dialogsOnScreen) {
 		GUI::gui_char saveName[MAX_PATH] = GUI_TEXT("");
@@ -290,12 +299,14 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 		GUI::gui_string translatedTitle = localiser.Text(title);
 		ofn.lpstrTitle = translatedTitle.c_str();
 		ofn.Flags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
-		ofn.lpstrFilter = filter;
+		ofn.lpstrFilter = filesFilter;
 		ofn.lpstrInitialDir = directory.AsInternal();
 
 		dialogsOnScreen++;
 		if (::GetSaveFileNameW(&ofn)) {
 			path = saveName;
+		} else {
+			CheckCommonDialogError();
 		}
 		dialogsOnScreen--;
 	}
@@ -304,7 +315,7 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 
 bool SciTEWin::SaveAsDialog() {
 	GUI::gui_string saveFilter = DialogFilterFromProperty(
-		GUI::StringFromUTF8(props.GetExpanded("save.filter").c_str()).c_str());
+		GUI::StringFromUTF8(props.GetExpandedString("save.filter")).c_str());
 	FilePath path = ChooseSaveName(filePath.Directory(), "Save File", saveFilter.c_str());
 	if (path.IsSet()) {
 		return SaveIfNotOpen(path, false);
@@ -375,6 +386,8 @@ void SciTEWin::LoadSessionDialog() {
 	if (::GetOpenFileNameW(&ofn)) {
 		LoadSessionFile(openName);
 		RestoreSession();
+	} else {
+		CheckCommonDialogError();
 	}
 }
 
@@ -395,6 +408,8 @@ void SciTEWin::SaveSessionDialog() {
 	ofn.lpstrFilter = GUI_TEXT("Session (.session)\0*.session\0");
 	if (::GetSaveFileNameW(&ofn)) {
 		SaveSessionFile(saveName);
+	} else {
+		CheckCommonDialogError();
 	}
 }
 
@@ -445,6 +460,7 @@ void SciTEWin::Print(
 		pdlg.Flags |= PD_RETURNDEFAULT;
 	}
 	if (!::PrintDlg(&pdlg)) {
+		CheckCommonDialogError();
 		return;
 	}
 
@@ -531,13 +547,12 @@ void SciTEWin::Print(
 	// Convert page size to logical units and we're done!
 	DPtoLP(hdc, (LPPOINT) &ptPage, 1);
 
-	SString headerFormat = props.Get("print.header.format");
-	SString footerFormat = props.Get("print.footer.format");
+	std::string headerFormat = props.GetString("print.header.format");
+	std::string footerFormat = props.GetString("print.footer.format");
 
 	TEXTMETRIC tm;
-	SString headerOrFooter;	// Usually the path, date and page number
 
-	SString headerStyle = props.Get("print.header.style");
+	std::string headerStyle = props.GetString("print.header.style");
 	StyleDefinition sdHeader(headerStyle.c_str());
 
 	int headerLineHeight = ::MulDiv(
@@ -555,7 +570,7 @@ void SciTEWin::Print(
 	::GetTextMetrics(hdc, &tm);
 	headerLineHeight = tm.tmHeight + tm.tmExternalLeading;
 
-	SString footerStyle = props.Get("print.footer.style");
+	std::string footerStyle = props.GetString("print.footer.style");
 	StyleDefinition sdFooter(footerStyle.c_str());
 
 	int footerLineHeight = ::MulDiv(
@@ -583,7 +598,7 @@ void SciTEWin::Print(
 		DeleteFontObject(fontHeader);
 		DeleteFontObject(fontFooter);
 		GUI::gui_string msg = LocaliseMessage("Can not start printer document.");
-		WindowMessageBox(wSciTE, msg, MB_OK);
+		WindowMessageBox(wSciTE, msg, mbsOK);
 		return;
 	}
 
@@ -607,7 +622,7 @@ void SciTEWin::Print(
 			lengthDoc = lengthDocMax;
 	}
 
-	// We must substract the physical margins from the printable area
+	// We must subtract the physical margins from the printable area
 	Sci_RangeToFormat frPrint;
 	frPrint.hdc = hdc;
 	frPrint.hdcTarget = hdc;
@@ -643,7 +658,7 @@ void SciTEWin::Print(
 			::StartPage(hdc);
 
 			if (headerFormat.size()) {
-				GUI::gui_string sHeader = GUI::StringFromUTF8(propsPrint.GetExpanded("print.header.format").c_str());
+				GUI::gui_string sHeader = GUI::StringFromUTF8(propsPrint.GetExpandedString("print.header.format"));
 				::SetTextColor(hdc, sdHeader.ForeAsLong());
 				::SetBkColor(hdc, sdHeader.BackAsLong());
 				::SelectObject(hdc, fontHeader);
@@ -673,7 +688,7 @@ void SciTEWin::Print(
 
 		if (printPage) {
 			if (footerFormat.size()) {
-				GUI::gui_string sFooter = GUI::StringFromUTF8(propsPrint.GetExpanded("print.footer.format").c_str());
+				GUI::gui_string sFooter = GUI::StringFromUTF8(propsPrint.GetExpandedString("print.footer.format"));
 				::SetTextColor(hdc, sdFooter.ForeAsLong());
 				::SetBkColor(hdc, sdFooter.BackAsLong());
 				::SelectObject(hdc, fontFooter);
@@ -730,8 +745,10 @@ void SciTEWin::PrintSetup() {
 	pdlg.hDevMode = hDevMode;
 	pdlg.hDevNames = hDevNames;
 
-	if (!PageSetupDlg(&pdlg))
+	if (!PageSetupDlg(&pdlg)) {
+		CheckCommonDialogError();
 		return;
+	}
 
 	pagesetupMargin.left = pdlg.rtMargin.left;
 	pagesetupMargin.top = pdlg.rtMargin.top;
@@ -774,13 +791,12 @@ public:
 
 	// Handle Unicode controls (assume strings to be UTF-8 on Windows NT)
 
-	SString ItemTextU(int id) {
-		SString s = GUI::UTF8FromString(ItemTextG(id).c_str()).c_str();
-		return s;
+	std::string ItemTextU(int id) {
+		return GUI::UTF8FromString(ItemTextG(id));
 	}
 
-	void SetItemTextU(int id, const SString &s) {
-		SetItemText(id, GUI::StringFromUTF8(s.c_str()).c_str());
+	void SetItemTextU(int id, const std::string &s) {
+		SetItemText(id, GUI::StringFromUTF8(s).c_str());
 	}
 
 	void SetCheck(int id, bool value) {
@@ -796,7 +812,7 @@ public:
 		HWND combo = Item(id);
 		::SendMessage(combo, CB_RESETCONTENT, 0, 0);
 		for (int i = 0; i < mem.Length(); i++) {
-			GUI::gui_string gs = GUI::StringFromUTF8(mem.At(i).c_str());
+			GUI::gui_string gs = GUI::StringFromUTF8(mem.At(i));
 			::SendMessageW(combo, CB_ADDSTRING, 0,
 				       reinterpret_cast<LPARAM>(gs.c_str()));
 		}
@@ -944,7 +960,7 @@ BOOL SciTEWin::FindMessage(HWND hDlg, UINT message, WPARAM wParam) {
 				wFindReplace.Destroy();
 			}
 			if (ControlIDOfWParam(wParam) == IDMARKALL){
-				MarkAll();
+				MarkAll(markWithBookMarks);
 			}
 			FindNext(reverseFind ^ IsKeyDown(VK_SHIFT));
 			return TRUE;
@@ -964,7 +980,7 @@ BOOL CALLBACK SciTEWin::FindDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 	return Caller(hDlg, message, lParam)->FindMessage(hDlg, message, wParam);
 }
 
-BOOL SciTEWin::HandleReplaceCommand(int cmd, bool reverseFind) {
+BOOL SciTEWin::HandleReplaceCommand(int cmd, bool reverseDirection) {
 	if (!wFindReplace.GetID())
 		return TRUE;
 	HWND hwndFR = reinterpret_cast<HWND>(wFindReplace.GetID());
@@ -977,7 +993,7 @@ BOOL SciTEWin::HandleReplaceCommand(int cmd, bool reverseFind) {
 
 	int replacements = 0;
 	if (cmd == IDOK) {
-		FindNext(reverseFind);
+		FindNext(reverseDirection);
 	} else if (cmd == IDREPLACE) {
 		ReplaceOnce();
 	} else if ((cmd == IDREPLACEALL) || (cmd == IDREPLACEINSEL)) {
@@ -1062,6 +1078,7 @@ void SciTEWin::FindIncrement() {
 	if (replaceStrip.visible)
 		replaceStrip.Close();
 	searchStrip.visible = !searchStrip.visible;
+	failedfind = false;
 	SizeSubWindows();
 	if (searchStrip.visible) {
 		SetCaretAsStart();
@@ -1070,10 +1087,6 @@ void SciTEWin::FindIncrement() {
 	} else {
 		WindowSetFocus(wEditor);
 	}
-}
-
-bool SciTEWin::FindReplaceAdvanced() {
-	return props.GetInt("find.replace.advanced");
 }
 
 void SciTEWin::Find() {
@@ -1096,6 +1109,7 @@ void SciTEWin::Find() {
 			replaceStrip.Close();
 		findStrip.visible = true;
 		SizeSubWindows();
+		findStrip.SetIncrementalBehaviour(props.GetInt("find.strip.incremental"));
 		findStrip.Show();
 	} else {
 		if (searchStrip.visible || replaceStrip.visible)
@@ -1127,31 +1141,31 @@ static int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM, LPARAM pDa
 void SciTEWin::PerformGrep() {
 	SelectionIntoProperties();
 
-	SString findInput;
+	std::string findInput;
 	long flags = 0;
-	if (props.Get("find.input").length()) {
-		findInput = props.GetNewExpand("find.input");
+	if (props.GetString("find.input").length()) {
+		findInput = props.GetNewExpandString("find.input");
 		flags += jobHasInput;
 	}
 
-	SString findCommand = props.GetNewExpand("find.command");
+	std::string findCommand = props.GetNewExpandString("find.command");
 	if (findCommand == "") {
 		// Call InternalGrep in a new thread
 		// searchParams is "(w|~)(c|~)(d|~)(b|~)\0files\0text"
 		// A "w" indicates whole word, "c" case sensitive, "d" dot directories, "b" binary files
-		SString searchParams;
+		std::string searchParams;
 		searchParams.append(wholeWord ? "w" : "~");
 		searchParams.append(matchCase ? "c" : "~");
 		searchParams.append(props.GetInt("find.in.dot") ? "d" : "~");
 		searchParams.append(props.GetInt("find.in.binary") ? "b" : "~");
 		searchParams.append("\0", 1);
-		searchParams.append(props.Get("find.files").c_str());
+		searchParams.append(props.GetString("find.files"));
 		searchParams.append("\0", 1);
-		searchParams.append(props.Get("find.what").c_str());
-		AddCommand(searchParams, props.Get("find.directory"), jobGrep, findInput, flags);
+		searchParams.append(props.GetString("find.what"));
+		AddCommand(searchParams, props.GetString("find.directory"), jobGrep, findInput, flags);
 	} else {
 		AddCommand(findCommand,
-			   props.Get("find.directory"),
+			   props.GetString("find.directory"),
 			   jobCLI, findInput, flags);
 	}
 	if (jobQueue.HasCommandToRun()) {
@@ -1175,9 +1189,9 @@ BOOL SciTEWin::GrepMessage(HWND hDlg, UINT message, WPARAM wParam) {
 	case WM_INITDIALOG:
 		LocaliseDialog(hDlg);
 		FillCombos(dlg);
-		dlg.SetItemTextU(IDFINDWHAT, props.Get("find.what"));
-		dlg.SetItemTextU(IDDIRECTORY, props.Get("find.directory"));
-		if (props.GetNewExpand("find.command") == "") {
+		dlg.SetItemTextU(IDFINDWHAT, props.GetString("find.what"));
+		dlg.SetItemTextU(IDDIRECTORY, props.GetString("find.directory"));
+		if (props.GetNewExpandString("find.command") == "") {
 			// Empty means use internal that can respond to flags
 			dlg.SetCheck(IDWHOLEWORD, wholeWord);
 			dlg.SetCheck(IDMATCHCASE, matchCase);
@@ -1200,20 +1214,20 @@ BOOL SciTEWin::GrepMessage(HWND hDlg, UINT message, WPARAM wParam) {
 		} else if (ControlIDOfWParam(wParam) == IDOK) {
 			if (jobQueue.IsExecuting()) {
 				GUI::gui_string msgBuf = LocaliseMessage("Job is currently executing. Wait until it finishes.");
-				WindowMessageBox(wFindInFiles, msgBuf, MB_OK | MB_ICONWARNING);
+				WindowMessageBox(wFindInFiles, msgBuf);
 				return FALSE;
 			}
 			findWhat = dlg.ItemTextU(IDFINDWHAT);
 			props.Set("find.what", findWhat.c_str());
-			memFinds.Insert(findWhat.c_str());
+			InsertFindInMemory();
 
-			SString files = dlg.ItemTextU(IDFILES);
+			std::string files = dlg.ItemTextU(IDFILES);
 			props.Set("find.files", files.c_str());
-			memFiles.Insert(files.c_str());
+			memFiles.Insert(files);
 
-			SString directory = dlg.ItemTextU(IDDIRECTORY);
+			std::string directory = dlg.ItemTextU(IDDIRECTORY);
 			props.Set("find.directory", directory.c_str());
-			memDirectory.Insert(directory.c_str());
+			memDirectory.Insert(directory);
 
 			wholeWord = dlg.Checked(IDWHOLEWORD);
 			matchCase = dlg.Checked(IDMATCHCASE);
@@ -1300,7 +1314,7 @@ void SciTEWin::FindInFiles() {
 	}
 	props.Set("find.what", findWhat.c_str());
 
-	SString directory = props.Get("find.in.directory");
+	std::string directory = props.GetString("find.in.directory");
 	if (directory.length()) {
 		props.Set("find.directory", directory.c_str());
 	} else {
@@ -1333,6 +1347,7 @@ void SciTEWin::Replace() {
 			findStrip.Close();
 		replaceStrip.visible = true;
 		SizeSubWindows();
+		replaceStrip.SetIncrementalBehaviour(props.GetInt("replace.strip.incremental"));
 		replaceStrip.Show();
 		havefound = false;
 	} else {
@@ -1548,7 +1563,7 @@ void SciTEWin::ParamGrab() {
 		Dialog dlg(hDlg);
 		for (int param = 0; param < maxParam; param++) {
 			std::string paramVal = GUI::UTF8FromString(dlg.ItemTextG(IDPARAMSTART + param));
-			SString paramText(param + 1);
+			std::string paramText = StdStringFromInteger(param + 1);
 			props.Set(paramText.c_str(), paramVal.c_str());
 		}
 		UpdateStatusBar(true);
@@ -1563,13 +1578,13 @@ BOOL SciTEWin::ParametersMessage(HWND hDlg, UINT message, WPARAM wParam) {
 			wParameters = hDlg;
 			Dialog dlg(hDlg);
 			if (modalParameters) {
-				GUI::gui_string sCommand = GUI::StringFromUTF8(parameterisedCommand.c_str());
+				GUI::gui_string sCommand = GUI::StringFromUTF8(parameterisedCommand);
 				dlg.SetItemText(IDCMD, sCommand.c_str());
 			}
 			for (int param = 0; param < maxParam; param++) {
-				SString paramText(param + 1);
-				SString paramTextVal = props.Get(paramText.c_str());
-				GUI::gui_string sVal = GUI::StringFromUTF8(paramTextVal.c_str());
+				std::string paramText = StdStringFromInteger(param + 1);
+				std::string paramTextVal = props.GetString(paramText.c_str());
+				GUI::gui_string sVal = GUI::StringFromUTF8(paramTextVal);
 				dlg.SetItemText(IDPARAMSTART + param, sVal.c_str());
 			}
 		}
@@ -1632,21 +1647,32 @@ bool SciTEWin::ParametersDialog(bool modal) {
 	return success;
 }
 
-int SciTEWin::WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) {
+SciTEBase::MessageBoxChoice SciTEWin::WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, MessageBoxStyle style) {
 	dialogsOnScreen++;
 	int ret = ::MessageBoxW(reinterpret_cast<HWND>(w.GetID()), msg.c_str(), appName, style | MB_SETFOREGROUND);
 	dialogsOnScreen--;
-	return ret;
+	switch (ret) {
+	case IDOK:
+		return mbOK;
+	case IDCANCEL:
+		return mbCancel;
+	case IDYES:
+		return mbYes;
+	case IDNO:
+		return mbNo;
+	default:
+		return mbOK;
+	}
 }
 
-void SciTEWin::FindMessageBox(const SString &msg, const SString *findItem) {
+void SciTEWin::FindMessageBox(const std::string &msg, const std::string *findItem) {
 	if (findItem == 0) {
 		GUI::gui_string msgBuf = LocaliseMessage(msg.c_str());
-		WindowMessageBox(wFindReplace.Created() ? wFindReplace : wSciTE, msgBuf, MB_OK | MB_ICONWARNING);
+		WindowMessageBox(wFindReplace.Created() ? wFindReplace : wSciTE, msgBuf);
 	} else {
-		GUI::gui_string findThing = GUI::StringFromUTF8(findItem->c_str());
+		GUI::gui_string findThing = GUI::StringFromUTF8(*findItem);
 		GUI::gui_string msgBuf = LocaliseMessage(msg.c_str(), findThing.c_str());
-		WindowMessageBox(wFindReplace.Created() ? wFindReplace : wSciTE, msgBuf, MB_OK | MB_ICONWARNING);
+		WindowMessageBox(wFindReplace.Created() ? wFindReplace : wSciTE, msgBuf);
 	}
 }
 

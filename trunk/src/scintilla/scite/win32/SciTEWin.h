@@ -19,6 +19,8 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include <sstream>
+#include <iomanip>
 
 #ifdef __MINGW_H
 #define _WIN32_IE	0x0400
@@ -33,20 +35,12 @@
 #define _WIN32_WINNT  0x0501
 #define WINVER 0x0501
 #endif
-#ifdef _MSC_VER
-// windows.h, et al, use a lot of nameless struct/unions - can't fix it, so allow it
-#pragma warning(disable: 4201)
-#endif
 #include <windows.h>
 #if defined(DISABLE_THEMES) || (defined(_MSC_VER) && (_MSC_VER <= 1200))
 // Old compilers do not have Uxtheme.h
 typedef void *HTHEME;
 #else
 #include <uxtheme.h>
-#endif
-#ifdef _MSC_VER
-// okay, that's done, don't allow it in our code
-#pragma warning(default: 4201)
 #endif
 #include <commctrl.h>
 #include <richedit.h>
@@ -56,12 +50,6 @@ typedef void *HTHEME;
 #include <process.h>
 #include <mmsystem.h>
 #include <commctrl.h>
-#ifdef _MSC_VER
-#include <direct.h>
-#endif
-#ifdef __DMC__
-#include <dir.h>
-#endif
 
 #if defined(DTBG_CLIPRECT) && !defined(DISABLE_THEMES)
 #define THEME_AVAILABLE
@@ -91,7 +79,6 @@ typedef void *HTHEME;
 
 #include "GUI.h"
 
-#include "SString.h"
 #include "StringList.h"
 #include "StringHelpers.h"
 #include "FilePath.h"
@@ -105,6 +92,7 @@ typedef void *HTHEME;
 #include "Cookie.h"
 #include "Worker.h"
 #include "FileWorker.h"
+#include "MatchMarker.h"
 #include "SciTEBase.h"
 #include "SciTEKeys.h"
 #include "UniqueInstance.h"
@@ -187,6 +175,7 @@ protected:
 	RECT rcWorkArea;
 	GUI::gui_char openWhat[200];
 	GUI::gui_char tooltipText[MAX_PATH*2 + 1];
+	bool tbLarge;
 	bool modalParameters;
 	int filterDefault;
 	bool staticBuild;
@@ -234,6 +223,7 @@ protected:
 	virtual void ReadLocalization();
 	virtual void GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize);
 
+	virtual void ReadPropertiesInitial();
 	virtual void ReadProperties();
 
 	virtual void TimerStart(int mask);
@@ -257,8 +247,9 @@ protected:
 
 	int DoDialog(HINSTANCE hInst, const TCHAR *resName, HWND hWnd, DLGPROC lpProc);
 	GUI::gui_string DialogFilterFromProperty(const GUI::gui_char *filterProperty);
-	virtual bool OpenDialog(FilePath directory, const GUI::gui_char *filter);
-	FilePath ChooseSaveName(FilePath directory, const char *title, const GUI::gui_char *filter=0, const char *ext=0);
+	void CheckCommonDialogError();
+	virtual bool OpenDialog(FilePath directory, const GUI::gui_char *filesFilter);
+	FilePath ChooseSaveName(FilePath directory, const char *title, const GUI::gui_char *filesFilter = 0, const char *ext = 0);
 	virtual bool SaveAsDialog();
 	virtual void SaveACopy();
 	virtual void SaveAsHTML();
@@ -276,10 +267,10 @@ protected:
 	/// Handle default print setup values and ask the user its preferences.
 	virtual void PrintSetup();
 
-	BOOL HandleReplaceCommand(int cmd, bool reverseFind = false);
+	BOOL HandleReplaceCommand(int cmd, bool reverseDirection = false);
 
-	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style);
-	virtual void FindMessageBox(const SString &msg, const SString *findItem=0);
+	virtual MessageBoxChoice WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, MessageBoxStyle style = mbsIconWarning);
+	virtual void FindMessageBox(const std::string &msg, const std::string *findItem = 0);
 	virtual void AboutDialog();
 	void DropFiles(HDROP hdrop);
 	void MinimizeToTray();
@@ -330,7 +321,6 @@ protected:
 	BOOL GrepMessage(HWND hDlg, UINT message, WPARAM wParam);
 	static BOOL CALLBACK GrepDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 	virtual void FindIncrement();
-	bool FindReplaceAdvanced();
 	virtual void Find();
 	virtual void FindInFiles();
 	virtual void Replace();
@@ -357,7 +347,7 @@ protected:
 
 	BOOL AboutMessage(HWND hDlg, UINT message, WPARAM wParam);
 	static BOOL CALLBACK AboutDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-	void AboutDialogWithBuild(int staticBuild);
+	void AboutDialogWithBuild(int staticBuild_);
 
 	void RestorePosition();
 
@@ -373,15 +363,15 @@ public:
 	/// Management of the command line parameters.
 	void Run(const GUI::gui_char *cmdLine);
 	uptr_t EventLoop();
-	void OutputAppendEncodedStringSynchronised(GUI::gui_string s, int codePage);
+	void OutputAppendEncodedStringSynchronised(GUI::gui_string s, int codePageDocument);
 	void ResetExecution();
 	void ExecuteNext();
 	DWORD ExecuteOne(const Job &jobToRun);
 	void ProcessExecute();
-	void ShellExec(const SString &cmd, const char *dir);
+	void ShellExec(const std::string &cmd, const char *dir);
 	virtual void Execute();
 	virtual void StopExecute();
-	virtual void AddCommand(const SString &cmd, const SString &dir, JobSubsystem jobType, const SString &input = "", int flags=0);
+	virtual void AddCommand(const std::string &cmd, const std::string &dir, JobSubsystem jobType, const std::string &input = "", int flags = 0);
 
 	virtual bool PerformOnNewThread(Worker *pWorker);
 	virtual void PostOnMainThread(int cmd, Worker *pWorker);
@@ -392,10 +382,11 @@ public:
 	LRESULT KeyUp(WPARAM wParam);
 	virtual void AddToPopUp(const char *label, int cmd=0, bool enabled=true);
 	LRESULT ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam);
+	void CheckForScintillaFailure(int statusFailure);
 	LRESULT WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam);
 
-	virtual SString EncodeString(const SString &s);
-	virtual SString GetRangeInUIEncoding(GUI::ScintillaWindow &wCurrent, int selStart, int selEnd);
+	virtual std::string EncodeString(const std::string &s);
+	virtual std::string GetRangeInUIEncoding(GUI::ScintillaWindow &wCurrent, int selStart, int selEnd);
 
 	HACCEL GetAcceleratorTable() {
 		return hAccTable;

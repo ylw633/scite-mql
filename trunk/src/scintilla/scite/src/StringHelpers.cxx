@@ -10,6 +10,9 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
+#include <algorithm>
+#include <functional>
 
 #include "Scintilla.h"
 
@@ -21,22 +24,55 @@ bool StartsWith(GUI::gui_string const &s, GUI::gui_string const &start) {
 		(std::equal(s.begin(), s.begin() + start.size(), start.begin()));
 }
 
+bool StartsWith(std::string const &s, const char *start) {
+	const size_t startSize = strlen(start);
+	std::string sStart(start);
+	return (s.size() >= startSize) &&
+		(std::equal(s.begin(), s.begin() + startSize, sStart.begin()));
+}
+
 bool EndsWith(GUI::gui_string const &s, GUI::gui_string const &end) {
 	return (s.size() >= end.size()) &&
 		(std::equal(s.begin() + s.size() - end.size(), s.end(), end.begin()));
 }
 
-int Substitute(GUI::gui_string &s, const GUI::gui_string &sFind, const GUI::gui_string &sReplace) {
+bool Contains(std::string const &s, char ch) {
+	return s.find(ch) != std::string::npos;
+}
+
+int Substitute(std::wstring &s, const std::wstring &sFind, const std::wstring &sReplace) {
 	int c = 0;
 	size_t lenFind = sFind.size();
 	size_t lenReplace = sReplace.size();
 	size_t posFound = s.find(sFind);
-	while (posFound != GUI::gui_string::npos) {
+	while (posFound != std::wstring::npos) {
 		s.replace(posFound, lenFind, sReplace);
 		posFound = s.find(sFind, posFound + lenReplace);
 		c++;
 	}
 	return c;
+}
+
+int Substitute(std::string &s, const std::string &sFind, const std::string &sReplace) {
+	int c = 0;
+	size_t lenFind = sFind.size();
+	size_t lenReplace = sReplace.size();
+	size_t posFound = s.find(sFind);
+	while (posFound != std::string::npos) {
+		s.replace(posFound, lenFind, sReplace);
+		posFound = s.find(sFind, posFound + lenReplace);
+		c++;
+	}
+	return c;
+}
+
+bool RemoveStringOnce(std::string &s, const char *marker) {
+	size_t modText = s.find(marker);
+	if (modText != std::string::npos) {
+		s.erase(modText, strlen(marker));
+		return true;
+	}
+	return false;
 }
 
 std::string StdStringFromInteger(int i) {
@@ -45,13 +81,60 @@ std::string StdStringFromInteger(int i) {
 	return std::string(number);
 }
 
-void LowerCaseAZ(char *s) {
-	while (*s) {
-		if (*s >= 'A' && *s <= 'Z') {
-			*s = static_cast<char>(*s - 'A' + 'a');
-		}
-		s++;
+std::string StdStringFromSizeT(size_t i) {
+	std::ostringstream strstrm;
+	strstrm << i;
+	return strstrm.str();
+}
+
+std::string StdStringFromDouble(double d, int precision) {
+	char number[32];
+	sprintf(number, "%.*f", precision, d);
+	return std::string(number);
+}
+
+static int LowerCaseAZ(int c) {
+	if (c >= 'A' && c <= 'Z') {
+		return c - 'A' + 'a';
+	} else {
+		return c;
 	}
+}
+
+void LowerCaseAZ(std::string &s) {
+	std::transform(s.begin(), s.end(), s.begin(), std::ptr_fun<int, int>(LowerCaseAZ));
+}
+
+int CompareNoCase(const char *a, const char *b) {
+	while (*a && *b) {
+		if (*a != *b) {
+			char upperA = MakeUpperCase(*a);
+			char upperB = MakeUpperCase(*b);
+			if (upperA != upperB)
+				return upperA - upperB;
+		}
+		a++;
+		b++;
+	}
+	// Either *a or *b is nul
+	return *a - *b;
+}
+
+bool EqualCaseInsensitive(const char *a, const char *b) {
+	return 0 == CompareNoCase(a, b);
+}
+
+bool isprefix(const char *target, const char *prefix) {
+	while (*target && *prefix) {
+		if (*target != *prefix)
+			return false;
+		target++;
+		prefix++;
+	}
+	if (*prefix)
+		return false;
+	else
+		return true;
 }
 
 /**
@@ -199,11 +282,17 @@ unsigned int UnSlash(char *s) {
 	return static_cast<unsigned int>(o - sStart);
 }
 
+std::string UnSlashString(const char *s) {
+	std::string sCopy(s, strlen(s) + 1);
+	unsigned int len = UnSlash(&sCopy[0]);
+	return sCopy.substr(0, len);
+}
+
 /**
  * Convert C style \0oo into their indicated characters.
  * This is used to get control characters into the regular expresion engine.
  */
-unsigned int UnSlashLowOctal(char *s) {
+static unsigned int UnSlashLowOctal(char *s) {
 	char *sStart = s;
 	char *o = s;
 	while (*s) {
@@ -219,4 +308,10 @@ unsigned int UnSlashLowOctal(char *s) {
 	}
 	*o = '\0';
 	return static_cast<unsigned int>(o - sStart);
+}
+
+std::string UnSlashLowOctalString(const char *s) {
+	std::string sCopy(s, strlen(s) + 1);
+	unsigned int len = UnSlashLowOctal(&sCopy[0]);
+	return sCopy.substr(0, len);
 }

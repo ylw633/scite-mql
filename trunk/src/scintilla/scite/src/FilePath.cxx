@@ -21,10 +21,6 @@
 
 #include <unistd.h>
 
-#if defined(GTK)
-#include <gtk/gtk.h>
-#endif
-
 #include <dirent.h>
 #include <errno.h>
 
@@ -34,29 +30,11 @@
 
 #undef _WIN32_WINNT
 #define _WIN32_WINNT  0x0500
-#ifdef _MSC_VER
-// windows.h, et al, use a lot of nameless struct/unions - can't fix it, so allow it
-#pragma warning(disable: 4201)
-#endif
 #include <windows.h>
-#ifdef _MSC_VER
-// okay, that's done, don't allow it in our code
-#pragma warning(default: 4201)
-// Turn off MS dislike of POSIX
-#pragma warning(disable: 4996)
-#endif
 #include <commctrl.h>
 
 // For chdir
-#ifdef _MSC_VER
 #include <direct.h>
-#endif
-#ifdef __DMC__
-#include <dir.h>
-#endif
-#ifdef __MINGW32_VERSION
-#include <direct.h>
-#endif
 
 #endif
 
@@ -64,7 +42,6 @@
 
 #include "GUI.h"
 
-#include "SString.h"
 #include "FilePath.h"
 
 #if defined(__unix__)
@@ -209,7 +186,7 @@ FilePath FilePath::BaseName() const {
 		} else {
 			return FilePath(fileName.substr(dirEnd + 1));
 		}
-	} else if (extStart) {
+	} else if (extStart != GUI::gui_string::npos) {
 		return FilePath(fileName.substr(0, extStart));
 	} else {
 		return fileName;
@@ -219,7 +196,7 @@ FilePath FilePath::BaseName() const {
 FilePath FilePath::Extension() const {
 	size_t dirEnd = fileName.rfind(pathSepChar);
 	size_t extStart = fileName.rfind('.');
-	if ((extStart != GUI::gui_string::npos) && (extStart > dirEnd))
+	if ((extStart != GUI::gui_string::npos) && ((dirEnd == GUI::gui_string::npos) || (extStart > dirEnd)))
 		return fileName.substr(extStart + 1);
 	else
 		return GUI_TEXT("");
@@ -298,31 +275,30 @@ static int stat(const wchar_t *path, struct _stat *buffer) {
 
 #endif
 
-static GUI::gui_char *split(GUI::gui_char*& s, GUI::gui_char c) {
-	GUI::gui_char *t = s;
-	if (s && (s = strchr(s, c)) != NULL)
-		* s++ = '\0';
-	return t;
-}
-
 FilePath FilePath::NormalizePath() const {
-	GUI::gui_char *path = new GUI::gui_char[fileName.length() + 1];
-	strcpy(path, AsInternal());
+	if (fileName.empty()) {
+		return FilePath();
+	}
+	GUI::gui_string path = fileName;
 #ifdef WIN32
 	// Convert unix path separators to Windows
-	std::replace(path, path+strlen(path), L'/', pathSepChar);
+	std::replace(path.begin(), path.end(), L'/', pathSepChar);
 #endif
-	GUI::gui_char *absPath = new GUI::gui_char[fileName.length() + 1];
+	GUI::gui_string absPathString(fileName.length() + 1, 0);
+	GUI::gui_char *absPath = &absPathString[0];
 	GUI::gui_char *cur = absPath;
 	*cur = '\0';
-	GUI::gui_char *tmp = path;
-	if (*tmp == pathSepChar) {
+	GUI::gui_char *part = &path[0];
+	if (*part == pathSepChar) {
 		*cur++ = pathSepChar;
 		*cur = '\0';
-		tmp++;
+		part++;
 	}
-	GUI::gui_char *part;
-	while ((part = split(tmp, pathSepChar)) != NULL) {
+	// Split into components and remove x/.. and .
+	while (part) {
+		GUI::gui_char *next = strchr(part, pathSepChar);
+		if (next)
+			*next++ = 0;
 		GUI::gui_char *last;
 		if (strcmp(part, GUI_TEXT(".")) == 0)
 			;
@@ -338,11 +314,9 @@ FilePath FilePath::NormalizePath() const {
 			strcpy(cur, part);
 			cur += strlen(part);
 		}
+		part = next;
 	}
-	FilePath ret(absPath);
-	delete []path;
-	delete []absPath;
-	return ret;
+	return FilePath(absPath);
 }
 
 /**
@@ -442,6 +416,24 @@ FILE *FilePath::Open(const GUI::gui_char *mode) const {
 	}
 }
 
+/// Size of block for file reading.
+static const size_t readBlockSize = 64 * 1024;
+
+std::vector<char> FilePath::Read() const {
+	std::vector<char> data;
+	FILE *fp = Open(fileRead);
+	if (fp) {
+		std::vector<char> block(readBlockSize);
+		size_t lenBlock = fread(&block[0], 1, block.size(), fp);
+		while (lenBlock > 0) {
+			data.insert(data.end(), block.begin(), block.begin() + lenBlock);
+			lenBlock = fread(&block[0], 1, block.size(), fp);
+		}
+		fclose(fp);
+	}
+	return data;
+}
+
 void FilePath::Remove() const {
 	unlink(AsInternal());
 }
@@ -509,9 +501,9 @@ bool FilePath::IsDirectory() const {
 #endif
 	if (stat(AsInternal(), &statusFile) != -1)
 #ifdef WIN32
-		return statusFile.st_mode & _S_IFDIR;
+		return (statusFile.st_mode & _S_IFDIR) != 0;
 #else
-		return statusFile.st_mode & S_IFDIR;
+		return (statusFile.st_mode & S_IFDIR) != 0;
 #endif
 	else
 		return false;
@@ -619,16 +611,7 @@ void FilePath::FixName() {
 std::string CommandExecute(const GUI::gui_char *command, const GUI::gui_char *directoryForRun) {
 	std::string output;
 #ifdef _WIN32
-	SECURITY_ATTRIBUTES sa = {sizeof(SECURITY_ATTRIBUTES), 0, 0};
-	sa.bInheritHandle = TRUE;
-	sa.lpSecurityDescriptor = NULL;
-
-	SECURITY_DESCRIPTOR sd;
-	// Make a real security thing to allow inheriting handles
-	::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
-	::SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE);
-	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-	sa.lpSecurityDescriptor = &sd;
+	SECURITY_ATTRIBUTES sa = {sizeof(SECURITY_ATTRIBUTES), NULL, TRUE};
 
 	HANDLE hPipeWrite = NULL;
 	HANDLE hPipeRead = NULL;
@@ -663,7 +646,7 @@ std::string CommandExecute(const GUI::gui_char *command, const GUI::gui_char *di
 
 	PROCESS_INFORMATION pi = {0, 0, 0, 0};
 
-	bool running = ::CreateProcessW(
+	BOOL running = ::CreateProcessW(
 			  NULL,
 			  const_cast<wchar_t *>(command),
 			  NULL, NULL,
@@ -678,7 +661,7 @@ std::string CommandExecute(const GUI::gui_char *command, const GUI::gui_char *di
 
 		DWORD bytesRead = 0;
 		DWORD bytesAvail = 0;
-		char buffer[16 * 1024];
+		char buffer[8 * 1024];
 
 		if (::PeekNamedPipe(hPipeRead, buffer, sizeof(buffer), &bytesRead, &bytesAvail, NULL)) {
 			if (bytesAvail > 0) {

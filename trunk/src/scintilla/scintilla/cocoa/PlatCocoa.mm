@@ -12,23 +12,26 @@
  * This file is dual licensed under LGPL v2.1 and the Scintilla license (http://www.scintilla.org/License.txt).
  */
 
+#include <assert.h>
+#include <sys/time.h>
+
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+
+#include <stdexcept>
+#include <vector>
+#include <map>
+
+#import <Foundation/NSGeometry.h>
+
 #import "Platform.h"
 #import "ScintillaView.h"
 #import "ScintillaCocoa.h"
 #import "PlatCocoa.h"
 
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <assert.h>
-#include <sys/time.h>
-#include <stdexcept>
-#include <vector>
-#include <map>
-
+#include "StringCopy.h"
 #include "XPM.h"
-
-#import <Foundation/NSGeometry.h>
 
 using namespace Scintilla;
 
@@ -51,7 +54,9 @@ NSRect PRectangleToNSRect(PRectangle& rc)
  */
 PRectangle NSRectToPRectangle(NSRect& rc)
 {
-  return PRectangle(rc.origin.x, rc.origin.y, rc.size.width + rc.origin.x, rc.size.height + rc.origin.y);
+  return PRectangle(static_cast<XYPOSITION>(rc.origin.x), static_cast<XYPOSITION>(rc.origin.y),
+					static_cast<XYPOSITION>(NSMaxX(rc)),
+					static_cast<XYPOSITION>(NSMaxY(rc)));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -178,7 +183,7 @@ void SurfaceImpl::Release()
   }
   bitmapData = NULL;
   gc = NULL;
-  
+
   bitmapWidth = 0;
   bitmapHeight = 0;
   x = 0;
@@ -202,7 +207,7 @@ void SurfaceImpl::Init(WindowID)
   // XXX Docs on QDBeginCGContext are light, a better way to do this would be good.
   // AFAIK we should not hold onto a context retrieved this way, thus the need for
   // acquire/release of the context.
-  
+
   Release();
 }
 
@@ -221,19 +226,19 @@ void SurfaceImpl::Init(SurfaceID sid, WindowID)
 void SurfaceImpl::InitPixMap(int width, int height, Surface* /* surface_ */, WindowID /* wid */)
 {
   Release();
-  
+
   // Create a new bitmap context, along with the RAM for the bitmap itself
   bitmapWidth = width;
   bitmapHeight = height;
-  
+
   const int bitmapBytesPerRow = (width * BYTES_PER_PIXEL);
   const int bitmapByteCount = (bitmapBytesPerRow * height);
-  
+
   // Create an RGB color space.
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
   if (colorSpace == NULL)
     return;
-  
+
   // Create the bitmap.
   bitmapData = new uint8_t[bitmapByteCount];
   // create the context
@@ -244,7 +249,7 @@ void SurfaceImpl::InitPixMap(int width, int height, Surface* /* surface_ */, Win
                              bitmapBytesPerRow,
                              colorSpace,
                              kCGImageAlphaPremultipliedLast);
-    
+
   if (gc == NULL)
   {
     // the context couldn't be created for some reason,
@@ -253,10 +258,10 @@ void SurfaceImpl::InitPixMap(int width, int height, Surface* /* surface_ */, Win
     bitmapData = NULL;
   }
   textLayout->setContext (gc);
-  
+
   // the context retains the color space, so we can release it
   CGColorSpaceRelease(colorSpace);
-  
+
   if (gc != NULL && bitmapData != NULL)
   {
     // "Erase" to white.
@@ -273,9 +278,9 @@ void SurfaceImpl::PenColour(ColourDesired fore)
   if (gc)
   {
     ColourDesired colour(fore.AsLong());
-    
+
     // Set the Stroke color to match
-    CGContextSetRGBStrokeColor(gc, colour.GetRed() / 255.0, colour.GetGreen() / 255.0, 
+    CGContextSetRGBStrokeColor(gc, colour.GetRed() / 255.0, colour.GetGreen() / 255.0,
                                colour.GetBlue() / 255.0, 1.0 );
   }
 }
@@ -287,9 +292,9 @@ void SurfaceImpl::FillColour(const ColourDesired& back)
   if (gc)
   {
     ColourDesired colour(back.AsLong());
-    
+
     // Set the Fill color to match
-    CGContextSetRGBFillColor(gc, colour.GetRed() / 255.0, colour.GetGreen() / 255.0, 
+    CGContextSetRGBFillColor(gc, colour.GetRed() / 255.0, colour.GetGreen() / 255.0,
                              colour.GetBlue() / 255.0, 1.0 );
   }
 }
@@ -301,17 +306,17 @@ CGImageRef SurfaceImpl::GetImage()
   // For now, assume that GetImage can only be called on PixMap surfaces.
   if (bitmapData == NULL)
     return NULL;
-  
+
   CGContextFlush(gc);
-  
+
   // Create an RGB color space.
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
   if( colorSpace == NULL )
     return NULL;
-  
+
   const int bitmapBytesPerRow = ((int) bitmapWidth * BYTES_PER_PIXEL);
   const int bitmapByteCount = (bitmapBytesPerRow * (int) bitmapHeight);
-  
+
   // Make a copy of the bitmap data for the image creation and divorce it
   // From the SurfaceImpl lifetime
   CFDataRef dataRef = CFDataCreate(kCFAllocatorDefault, bitmapData, bitmapByteCount);
@@ -335,18 +340,18 @@ CGImageRef SurfaceImpl::GetImage()
                           0,
                           kCGRenderingIntentDefault);
   }
-  
+
   // The image retains the color space, so we can release it.
   CGColorSpaceRelease(colorSpace);
   colorSpace = NULL;
-  
+
   // Done with the data provider.
   CGDataProviderRelease(dataProvider);
   dataProvider = NULL;
-  
+
   // Done with the data provider.
   CFRelease(dataRef);
-    
+
   return image;
 }
 
@@ -386,7 +391,7 @@ void SurfaceImpl::MoveTo(int x_, int y_)
 void SurfaceImpl::LineTo(int x_, int y_)
 {
   CGContextBeginPath( gc );
-  
+
   // Because Quartz is based on floating point, lines are drawn with half their colour
   // on each side of the line. Integer coordinates specify the INTERSECTION of the pixel
   // division lines. If you specify exact pixel values, you get a line that
@@ -406,23 +411,23 @@ void SurfaceImpl::Polygon(Scintilla::Point *pts, int npts, ColourDesired fore,
 {
   // Allocate memory for the array of points.
   std::vector<CGPoint> points(npts);
-  
+
   for (int i = 0;i < npts;i++)
   {
     // Quartz floating point issues: plot the MIDDLE of the pixels
     points[i].x = pts[i].x + 0.5;
     points[i].y = pts[i].y + 0.5;
   }
-  
+
   CGContextBeginPath(gc);
-  
+
   // Set colours
   FillColour(back);
   PenColour(fore);
-  
+
   // Draw the polygon
   CGContextAddLines(gc, points.data(), npts);
-  
+
   // Explicitly close the path, so it is closed for stroking AND filling (implicit close = filling only)
   CGContextClosePath( gc );
   CGContextDrawPath( gc, kCGPathFillStroke );
@@ -437,7 +442,7 @@ void SurfaceImpl::RectangleDraw(PRectangle rc, ColourDesired fore, ColourDesired
     CGContextBeginPath( gc );
     FillColour(back);
     PenColour(fore);
-    
+
     // Quartz integer -> float point conversion fun (see comment in SurfaceImpl::LineTo)
     // We subtract 1 from the Width() and Height() so that all our drawing is within the area defined
     // by the PRectangle. Otherwise, we draw one pixel too far to the right and bottom.
@@ -480,7 +485,7 @@ void releaseImageRefCallback(CGImageRef pattern)
 void SurfaceImpl::FillRectangle(PRectangle rc, Surface &surfacePattern)
 {
   SurfaceImpl& patternSurface = static_cast<SurfaceImpl &>(surfacePattern);
-  
+
   // For now, assume that copy can only be called on PixMap surfaces. Shows up black.
   CGImageRef image = patternSurface.GetImage();
   if (image == NULL)
@@ -488,11 +493,11 @@ void SurfaceImpl::FillRectangle(PRectangle rc, Surface &surfacePattern)
     FillRectangle(rc, ColourDesired(0));
     return;
   }
-  
+
   const CGPatternCallbacks drawImageCallbacks = { 0,
     reinterpret_cast<CGPatternDrawPatternCallback>(drawImageRefCallback),
     reinterpret_cast<CGPatternReleaseInfoCallback>(releaseImageRefCallback) };
-  
+
   CGPatternRef pattern = CGPatternCreate(image,
                                          CGRectMake(0, 0, patternSurface.bitmapWidth, patternSurface.bitmapHeight),
                                          CGAffineTransformIdentity,
@@ -507,10 +512,10 @@ void SurfaceImpl::FillRectangle(PRectangle rc, Surface &surfacePattern)
     // Create a pattern color space
     CGColorSpaceRef colorSpace = CGColorSpaceCreatePattern( NULL );
     if( colorSpace != NULL ) {
-      
+
       CGContextSaveGState( gc );
       CGContextSetFillColorSpace( gc, colorSpace );
-      
+
       // Unlike the documentation, you MUST pass in a "components" parameter:
       // For coloured patterns it is the alpha value.
       const CGFloat alpha = 1.0;
@@ -533,12 +538,11 @@ void SurfaceImpl::RoundedRectangle(PRectangle rc, ColourDesired fore, ColourDesi
   // which is a rectangle with rounded corners each having a radius of 4 pixels.
   // It would be almost as good just cutting off the corners with lines at
   // 45 degrees as is done on GTK+.
-  
+
   // Create a rectangle with semicircles at the corners
   const int MAX_RADIUS = 4;
-  int radius = Platform::Minimum( MAX_RADIUS, rc.Height()/2 );
-  radius = Platform::Minimum( radius, rc.Width()/2 );
-  
+  const int radius = std::min(MAX_RADIUS, static_cast<int>(std::min(rc.Height()/2, rc.Width()/2)));
+
   // Points go clockwise, starting from just below the top left
   // Corners are kept together, so we can easily create arcs to connect them
   CGPoint corners[4][3] =
@@ -564,7 +568,7 @@ void SurfaceImpl::RoundedRectangle(PRectangle rc, ColourDesired fore, ColourDesi
       { rc.left, rc.bottom - radius - 1 },
     },
   };
-  
+
   // Align the points in the middle of the pixels
   for( int i = 0; i < 4; ++ i )
   {
@@ -574,20 +578,20 @@ void SurfaceImpl::RoundedRectangle(PRectangle rc, ColourDesired fore, ColourDesi
       corners[i][j].y += 0.5;
     }
   }
-  
+
   PenColour( fore );
   FillColour( back );
-  
+
   // Move to the last point to begin the path
   CGContextBeginPath( gc );
   CGContextMoveToPoint( gc, corners[3][2].x, corners[3][2].y );
-  
+
   for ( int i = 0; i < 4; ++ i )
   {
     CGContextAddLineToPoint( gc, corners[i][0].x, corners[i][0].y );
     CGContextAddArcToPoint( gc, corners[i][1].x, corners[i][1].y, corners[i][2].x, corners[i][2].y, radius );
   }
-  
+
   // Close the path to enclose it for stroking and for filling, then draw it
   CGContextClosePath( gc );
   CGContextDrawPath( gc, kCGPathFillStroke );
@@ -616,7 +620,7 @@ static void DrawChamferedRectangle(CGContextRef gc, PRectangle rc, int cornerSiz
       { rc.left, rc.bottom - cornerSize - 1 },
     },
   };
-  
+
   // Align the points in the middle of the pixels
   for( int i = 0; i < 4; ++ i )
   {
@@ -630,13 +634,13 @@ static void DrawChamferedRectangle(CGContextRef gc, PRectangle rc, int cornerSiz
   // Move to the last point to begin the path
   CGContextBeginPath( gc );
   CGContextMoveToPoint( gc, corners[3][1].x, corners[3][1].y );
-  
+
   for ( int i = 0; i < 4; ++ i )
   {
     CGContextAddLineToPoint( gc, corners[i][0].x, corners[i][0].y );
     CGContextAddLineToPoint( gc, corners[i][1].x, corners[i][1].y );
   }
-  
+
   // Close the path to enclose it for stroking and for filling, then draw it
   CGContextClosePath( gc );
   CGContextDrawPath( gc, mode );
@@ -704,25 +708,25 @@ static CGImageRef ImageCreateFromRGBA(int width, int height, const unsigned char
 	if (colorSpace) {
 		const int bitmapBytesPerRow = ((int) width * 4);
 		const int bitmapByteCount = (bitmapBytesPerRow * (int) height);
-		
+
 		// Create a data provider.
 		CGDataProviderRef dataProvider = 0;
 		if (invert) {
 			unsigned char *pixelsUpsideDown = new unsigned char[bitmapByteCount];
-		
+
 			for (int y=0; y<height; y++) {
 				int yInverse = height - y - 1;
 				memcpy(pixelsUpsideDown + y * bitmapBytesPerRow,
 				       pixelsImage + yInverse * bitmapBytesPerRow,
 				       bitmapBytesPerRow);
 			}
-			
+
 			dataProvider = CGDataProviderCreateWithData(
 								NULL, pixelsUpsideDown, bitmapByteCount, ProviderReleaseData);
 		} else {
 			dataProvider = CGDataProviderCreateWithData(
 								NULL, pixelsImage, bitmapByteCount, NULL);
-			
+
 		}
 		if (dataProvider) {
 			// Create the CGImage.
@@ -740,7 +744,7 @@ static CGImageRef ImageCreateFromRGBA(int width, int height, const unsigned char
 
 			CGDataProviderRelease(dataProvider);
 		}
-		
+
 		// The image retains the color space, so we can release it.
 		CGColorSpaceRelease(colorSpace);
 	}
@@ -757,80 +761,32 @@ void SurfaceImpl::DrawRGBAImage(PRectangle rc, int width, int height, const unsi
 }
 
 void SurfaceImpl::Ellipse(PRectangle rc, ColourDesired fore, ColourDesired back) {
-  // Drawing an ellipse with bezier curves. Code modified from:
-  // http://www.codeguru.com/gdi/ellipse.shtml
-  // MAGICAL CONSTANT to map ellipse to beziers 2/3*(sqrt(2)-1)
-  const double EToBConst = 0.2761423749154;
-  
-  CGSize offset = CGSizeMake((int)(rc.Width() * EToBConst), (int)(rc.Height() * EToBConst));
-  CGPoint centre = CGPointMake((rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2);
-  
-  // The control point array
-  CGPoint cCtlPt[13];
-  
-  // Assign values to all the control points
-  cCtlPt[0].x  =
-  cCtlPt[1].x  =
-  cCtlPt[11].x =
-  cCtlPt[12].x = rc.left + 0.5;
-  cCtlPt[5].x  =
-  cCtlPt[6].x  =
-  cCtlPt[7].x  = rc.right - 0.5;
-  cCtlPt[2].x  =
-  cCtlPt[10].x = centre.x - offset.width + 0.5;
-  cCtlPt[4].x  =
-  cCtlPt[8].x  = centre.x + offset.width + 0.5;
-  cCtlPt[3].x  =
-  cCtlPt[9].x  = centre.x + 0.5;
-  
-  cCtlPt[2].y  =
-  cCtlPt[3].y  =
-  cCtlPt[4].y  = rc.top + 0.5;
-  cCtlPt[8].y  =
-  cCtlPt[9].y  =
-  cCtlPt[10].y = rc.bottom - 0.5;
-  cCtlPt[7].y  =
-  cCtlPt[11].y = centre.y + offset.height + 0.5;
-  cCtlPt[1].y =
-  cCtlPt[5].y  = centre.y - offset.height + 0.5;
-  cCtlPt[0].y =
-  cCtlPt[12].y =
-  cCtlPt[6].y  = centre.y + 0.5;
-  
+  CGRect ellipseRect = CGRectMake(rc.left, rc.top, rc.Width(), rc.Height());
   FillColour(back);
   PenColour(fore);
-  
-  CGContextBeginPath( gc );
-  CGContextMoveToPoint( gc, cCtlPt[0].x, cCtlPt[0].y );
-  
-  for ( int i = 1; i < 13; i += 3 )
-  {
-    CGContextAddCurveToPoint( gc, cCtlPt[i].x, cCtlPt[i].y, cCtlPt[i+1].x, cCtlPt[i+1].y, cCtlPt[i+2].x, cCtlPt[i+2].y );
-  }
-  
-  // Close the path to enclose it for stroking and for filling, then draw it
-  CGContextClosePath( gc );
-  CGContextDrawPath( gc, kCGPathFillStroke );
+  CGContextBeginPath(gc);
+  CGContextAddEllipseInRect(gc, ellipseRect);
+  CGContextDrawPath(gc, kCGPathFillStroke);
 }
 
 void SurfaceImpl::CopyImageRectangle(Surface &surfaceSource, PRectangle srcRect, PRectangle dstRect)
 {
   SurfaceImpl& source = static_cast<SurfaceImpl &>(surfaceSource);
   CGImageRef image = source.GetImage();
-  
+
   CGRect src = PRectangleToCGRect(srcRect);
   CGRect dst = PRectangleToCGRect(dstRect);
-  
+
   /* source from QuickDrawToQuartz2D.pdf on developer.apple.com */
   float w = (float) CGImageGetWidth(image);
   float h = (float) CGImageGetHeight(image);
   CGRect drawRect = CGRectMake (0, 0, w, h);
   if (!CGRectEqualToRect (src, dst))
   {
-    float sx = CGRectGetWidth(dst) / CGRectGetWidth(src);
-    float sy = CGRectGetHeight(dst) / CGRectGetHeight(src);
-    float dx = CGRectGetMinX(dst) - (CGRectGetMinX(src) * sx);
-    float dy = CGRectGetMinY(dst) - (CGRectGetMinY(src) * sy);
+    CGFloat sx = CGRectGetWidth(dst) / CGRectGetWidth(src);
+    CGFloat sy = CGRectGetHeight(dst) / CGRectGetHeight(src);
+    CGFloat dx = CGRectGetMinX(dst) - (CGRectGetMinX(src) * sx);
+    CGFloat dy = CGRectGetMinY(dst) - (CGRectGetMinY(src) * sy);
     drawRect = CGRectMake (dx, dy, w*sx, h*sy);
   }
   CGContextSaveGState (gc);
@@ -844,10 +800,10 @@ void SurfaceImpl::Copy(PRectangle rc, Scintilla::Point from, Surface &surfaceSou
   // Maybe we have to make the Surface two contexts:
   // a bitmap context which we do all the drawing on, and then a "real" context
   // which we copy the output to when we call "Synchronize". Ugh! Gross and slow!
-  
+
   // For now, assume that copy can only be called on PixMap surfaces
   SurfaceImpl& source = static_cast<SurfaceImpl &>(surfaceSource);
-  
+
   // Get the CGImageRef
   CGImageRef image = source.GetImage();
   // If we could not get an image reference, fill the rectangle black
@@ -856,19 +812,19 @@ void SurfaceImpl::Copy(PRectangle rc, Scintilla::Point from, Surface &surfaceSou
     FillRectangle( rc, ColourDesired( 0 ) );
     return;
   }
-  
+
   // Now draw the image on the surface
-  
+
   // Some fancy clipping work is required here: draw only inside of rc
   CGContextSaveGState( gc );
   CGContextClipToRect( gc, PRectangleToCGRect( rc ) );
-  
+
   //Platform::DebugPrintf(stderr, "Copy: CGContextDrawImage: (%d, %d) - (%d X %d)\n", rc.left - from.x, rc.top - from.y, source.bitmapWidth, source.bitmapHeight );
   CGContextDrawImage( gc, CGRectMake( rc.left - from.x, rc.top - from.y, source.bitmapWidth, source.bitmapHeight ), image );
-  
+
   // Undo the clipping fun
   CGContextRestoreGState( gc );
-  
+
   // Done with the image
   CGImageRelease( image );
   image = NULL;
@@ -953,7 +909,7 @@ CFStringEncoding EncodingFromCharacterSet(bool unicode, int characterSet)
   }
 }
 
-void SurfaceImpl::DrawTextTransparent(PRectangle rc, Font &font_, XYPOSITION ybase, const char *s, int len, 
+void SurfaceImpl::DrawTextTransparent(PRectangle rc, Font &font_, XYPOSITION ybase, const char *s, int len,
                                       ColourDesired fore)
 {
 	CFStringEncoding encoding = EncodingFromCharacterSet(unicodeMode, FontCharacterSet(font_));
@@ -962,7 +918,7 @@ void SurfaceImpl::DrawTextTransparent(PRectangle rc, Font &font_, XYPOSITION yba
 
 	QuartzTextStyle* style = reinterpret_cast<QuartzTextStyle*>(font_.GetID());
 	style->setCTStyleColor(color);
-	
+
 	CGColorRelease(color);
 
 	textLayout->setText (reinterpret_cast<const UInt8*>(s), len, encoding, *reinterpret_cast<QuartzTextStyle*>(font_.GetID()));
@@ -987,10 +943,10 @@ void SurfaceImpl::MeasureWidths(Font &font_, const char *s, int len, XYPOSITION 
 {
 	CFStringEncoding encoding = EncodingFromCharacterSet(unicodeMode, FontCharacterSet(font_));
 	textLayout->setText (reinterpret_cast<const UInt8*>(s), len, encoding, *reinterpret_cast<QuartzTextStyle*>(font_.GetID()));
-	
+
 	CTLineRef mLine = textLayout->getCTLine();
 	assert(mLine != NULL);
-	
+
 	if (unicodeMode) {
 		// Map the widths given for UTF-16 characters back onto the UTF-8 input string
 		CFIndex fit = textLayout->getStringLength();
@@ -1000,13 +956,13 @@ void SurfaceImpl::MeasureWidths(Font &font_, const char *s, int len, XYPOSITION 
 		while (ui<fit) {
 			size_t lenChar = utf8LengthFromLead(us[i]);
 			size_t codeUnits = (lenChar < 4) ? 1 : 2;
-			CGFloat xPosition = CTLineGetOffsetForStringIndex(mLine, ui+1, NULL);
+			CGFloat xPosition = CTLineGetOffsetForStringIndex(mLine, ui+codeUnits, NULL);
 			for (unsigned int bytePos=0; (bytePos<lenChar) && (i<len); bytePos++) {
-				positions[i++] = xPosition;
+				positions[i++] = static_cast<XYPOSITION>(xPosition);
 			}
 			ui += codeUnits;
 		}
-		int lastPos = 0;
+		XYPOSITION lastPos = 0.0f;
 		if (i > 0)
 			lastPos = positions[i-1];
 		while (i<len) {
@@ -1018,14 +974,14 @@ void SurfaceImpl::MeasureWidths(Font &font_, const char *s, int len, XYPOSITION 
 			size_t lenChar = Platform::IsDBCSLeadByte(codePage, s[i]) ? 2 : 1;
 			CGFloat xPosition = CTLineGetOffsetForStringIndex(mLine, ui+1, NULL);
 			for (unsigned int bytePos=0; (bytePos<lenChar) && (i<len); bytePos++) {
-				positions[i++] = xPosition;
+				positions[i++] = static_cast<XYPOSITION>(xPosition);
 			}
 			ui++;
 		}
 	} else {	// Single byte encoding
 		for (int i=0;i<len;i++) {
 			CGFloat xPosition = CTLineGetOffsetForStringIndex(mLine, i+1, NULL);
-			positions[i] = xPosition;
+			positions[i] = static_cast<XYPOSITION>(xPosition);
 		}
 	}
 
@@ -1036,8 +992,8 @@ XYPOSITION SurfaceImpl::WidthText(Font &font_, const char *s, int len) {
   {
     CFStringEncoding encoding = EncodingFromCharacterSet(unicodeMode, FontCharacterSet(font_));
     textLayout->setText (reinterpret_cast<const UInt8*>(s), len, encoding, *reinterpret_cast<QuartzTextStyle*>(font_.GetID()));
-    
-	return textLayout->MeasureStringWidth();
+
+	return static_cast<XYPOSITION>(textLayout->MeasureStringWidth());
   }
   return 1;
 }
@@ -1048,7 +1004,7 @@ XYPOSITION SurfaceImpl::WidthChar(Font &font_, char ch) {
   {
     CFStringEncoding encoding = EncodingFromCharacterSet(unicodeMode, FontCharacterSet(font_));
     textLayout->setText (reinterpret_cast<const UInt8*>(str), 1, encoding, *reinterpret_cast<QuartzTextStyle*>(font_.GetID()));
-    
+
     return textLayout->MeasureStringWidth();
   }
   else
@@ -1062,18 +1018,18 @@ const char sizeString[] = "`~!@#$%^&*()-_=+\\|[]{};:\"\'<,>.?/1234567890"
 XYPOSITION SurfaceImpl::Ascent(Font &font_) {
   if (!font_.GetID())
     return 1;
-  
+
 	float ascent = reinterpret_cast<QuartzTextStyle*>( font_.GetID() )->getAscent();
-	return ascent + 0.5;
+	return ascent + 0.5f;
 
 }
 
 XYPOSITION SurfaceImpl::Descent(Font &font_) {
   if (!font_.GetID())
     return 1;
-  
+
 	float descent = reinterpret_cast<QuartzTextStyle*>( font_.GetID() )->getDescent();
-	return descent + 0.5;
+	return descent + 0.5f;
 
 }
 
@@ -1084,26 +1040,25 @@ XYPOSITION SurfaceImpl::InternalLeading(Font &) {
 XYPOSITION SurfaceImpl::ExternalLeading(Font &font_) {
   if (!font_.GetID())
     return 1;
-  
+
 	float leading = reinterpret_cast<QuartzTextStyle*>( font_.GetID() )->getLeading();
-	return leading + 0.5;
+	return leading + 0.5f;
 
 }
 
 XYPOSITION SurfaceImpl::Height(Font &font_) {
 
-	int ht = Ascent(font_) + Descent(font_);
-	return ht;
+	return Ascent(font_) + Descent(font_);
 }
 
 XYPOSITION SurfaceImpl::AverageCharWidth(Font &font_) {
-  
+
   if (!font_.GetID())
     return 1;
-  
-  const int sizeStringLength = (sizeof( sizeString ) / sizeof( sizeString[0] ) - 1);
-  int width = WidthText( font_, sizeString, sizeStringLength  );
-  
+
+  const int sizeStringLength = ELEMENTS( sizeString );
+  XYPOSITION width = WidthText( font_, sizeString, sizeStringLength  );
+
   return (int) ((width / (float) sizeStringLength) + 0.5);
 }
 
@@ -1139,21 +1094,7 @@ Window::~Window()
 {
 }
 
-//--------------------------------------------------------------------------------------------------
-
-void Window::Destroy()
-{
-  if (wid)
-  {
-    id idWin = reinterpret_cast<id>(wid);
-    if ([idWin isKindOfClass: [NSWindow class]])
-    {
-      NSWindow* win = reinterpret_cast<NSWindow*>(idWin);
-      [win release];
-    }
-  }
-  wid = 0;
-}
+// Window::Destroy needs to see definition of ListBoxImpl so is located after ListBoxImpl
 
 //--------------------------------------------------------------------------------------------------
 
@@ -1165,12 +1106,12 @@ bool Window::HasFocus()
 
 //--------------------------------------------------------------------------------------------------
 
-static int ScreenMax(NSWindow* win)
+static CGFloat ScreenMax(NSWindow* win)
 {
-  NSScreen* screen = [win screen];
-  NSRect frame = [screen frame];
-  return frame.origin.y + frame.size.height;
+  return NSMaxY([[NSScreen mainScreen] frame]);
 }
+
+//--------------------------------------------------------------------------------------------------
 
 PRectangle Window::GetPosition()
 {
@@ -1185,7 +1126,7 @@ PRectangle Window::GetPosition()
       NSView* view = reinterpret_cast<NSView*>(idWin);
       win = [view window];
       rect = [view convertRect: [view bounds] toView: nil];
-      rect.origin = [win convertBaseToScreen:rect.origin];
+      rect = [win convertRectToScreen:rect];
     }
     else
     {
@@ -1193,11 +1134,11 @@ PRectangle Window::GetPosition()
       win = reinterpret_cast<NSWindow*>(idWin);
       rect = [win frame];
     }
-    int screenHeight = ScreenMax(win);
+    CGFloat screenHeight = ScreenMax(win);
     // Invert screen positions to match Scintilla
     return PRectangle(
-        NSMinX(rect), screenHeight - NSMaxY(rect),
-        NSMaxX(rect), screenHeight - NSMinY(rect));
+        static_cast<XYPOSITION>(NSMinX(rect)), static_cast<XYPOSITION>(screenHeight - NSMaxY(rect)),
+        static_cast<XYPOSITION>(NSMaxX(rect)), static_cast<XYPOSITION>(screenHeight - NSMinY(rect)));
   }
   else
   {
@@ -1218,14 +1159,15 @@ void Window::SetPosition(PRectangle rc)
       // Moves this view inside the parent view
       NSRect nsrc = NSMakeRect(rc.left, rc.bottom, rc.Width(), rc.Height());
       NSView* view = reinterpret_cast<NSView*>(idWin);
-      nsrc.origin = [[view window] convertScreenToBase:nsrc.origin];
+      nsrc = [[view window] convertRectFromScreen:nsrc];
       [view setFrame: nsrc];
     }
     else
     {
       // NSWindow
+      PLATFORM_ASSERT([idWin isKindOfClass: [NSWindow class]]);
       NSWindow* win = reinterpret_cast<NSWindow*>(idWin);
-      int screenHeight = ScreenMax(win);
+      CGFloat screenHeight = ScreenMax(win);
       NSRect nsrc = NSMakeRect(rc.left, screenHeight - rc.bottom,
           rc.Width(), rc.Height());
       [win setFrame: nsrc display:YES];
@@ -1380,11 +1322,11 @@ PRectangle Window::GetMonitorRect(Point)
       NSWindow* win = reinterpret_cast<NSWindow*>(idWin);
       NSScreen* screen = [win screen];
       NSRect rect = [screen frame];
-      int screenHeight = rect.origin.y + rect.size.height;
+      CGFloat screenHeight = rect.origin.y + rect.size.height;
       // Invert screen positions to match Scintilla
       return PRectangle(
-          NSMinX(rect), screenHeight - NSMaxY(rect),
-          NSMaxX(rect), screenHeight - NSMinY(rect));
+          static_cast<XYPOSITION>(NSMinX(rect)), static_cast<XYPOSITION>(screenHeight - NSMaxY(rect)),
+          static_cast<XYPOSITION>(NSMaxX(rect)), static_cast<XYPOSITION>(screenHeight - NSMinY(rect)));
     }
   }
   return PRectangle();
@@ -1422,6 +1364,8 @@ static NSImage* ImageFromXPM(XPM* pxpm)
 }
 
 //----------------- ListBox and related classes ----------------------------------------------------
+
+//----------------- IListBox -----------------------------------------------------------------------
 
 namespace {
 
@@ -1567,9 +1511,9 @@ private:
   int lineHeight;
   bool unicodeMode;
   int desiredVisibleRows;
-  unsigned int maxItemWidth;
+  XYPOSITION maxItemWidth;
   unsigned int aveCharWidth;
-  unsigned int maxIconWidth;
+  XYPOSITION maxIconWidth;
   Font font;
   int maxWidth;
 
@@ -1578,7 +1522,7 @@ private:
   NSTableColumn* colIcon;
   NSTableColumn* colText;
   AutoCompletionDataSource* ds;
-	
+
   LinesData ld;
   CallBackAction doubleClickAction;
   void* doubleClickActionData;
@@ -1615,6 +1559,9 @@ public:
     doubleClickActionData = data;
   }
   void SetList(const char* list, char separator, char typesep);
+
+  // To clean up when closed
+  void ReleaseViews();
 
   // For access from AutoCompletionDataSource implement IListBox
   int Rows();
@@ -1663,6 +1610,7 @@ void ListBoxImpl::Create(Window& /*parent*/, int /*ctrlID*/, Scintilla::Point pt
 
   [table setTarget:ds];
   [table setDoubleAction:@selector(doubleClick:)];
+  table.selectionHighlightStyle = NSTableViewSelectionHighlightStyleSourceList;
   wid = winLB;
 }
 
@@ -1700,19 +1648,20 @@ PRectangle ListBoxImpl::GetDesiredRect()
   rcDesired = GetPosition();
 
   // There appears to be an extra pixel above and below the row contents
-  int itemHeight = [table rowHeight] + 2;
+  CGFloat itemHeight = [table rowHeight] + 2;
 
   int rows = Length();
   if ((rows == 0) || (rows > desiredVisibleRows))
     rows = desiredVisibleRows;
 
-  rcDesired.bottom = rcDesired.top + itemHeight * rows;
+  rcDesired.bottom = rcDesired.top + static_cast<XYPOSITION>(itemHeight * rows);
   rcDesired.right = rcDesired.left + maxItemWidth + aveCharWidth;
 
   if (Length() > rows)
   {
     [scroller setHasVerticalScroller:YES];
-    rcDesired.right += [NSScroller scrollerWidth];
+    rcDesired.right += [NSScroller scrollerWidthForControlSize:NSRegularControlSize
+						 scrollerStyle:NSScrollerStyleLegacy];
   }
   else
   {
@@ -1729,7 +1678,21 @@ int ListBoxImpl::CaretFromEdge()
   if ([colIcon isHidden])
     return 3;
   else
-    return 6 + [colIcon width];
+    return 6 + static_cast<int>([colIcon width]);
+}
+
+void ListBoxImpl::ReleaseViews()
+{
+  [table release];
+  table = nil;
+  [scroller release];
+  scroller = nil;
+  [colIcon release];
+  colIcon = nil;
+  [colText release ];
+  colText = nil;
+  [ds release];
+  ds = nil;
 }
 
 void ListBoxImpl::Clear()
@@ -1745,7 +1708,7 @@ void ListBoxImpl::Append(char* s, int type)
   ld.Add(count, type, s);
 
   Scintilla::SurfaceImpl surface;
-  unsigned int width = surface.WidthText(font, s, static_cast<int>(strlen(s)));
+  XYPOSITION width = surface.WidthText(font, s, static_cast<int>(strlen(s)));
   if (width > maxItemWidth)
   {
     maxItemWidth = width;
@@ -1757,7 +1720,7 @@ void ListBoxImpl::Append(char* s, int type)
     NSImage* img = it->second;
     if (img)
     {
-      unsigned int widthIcon = img.size.width;
+      XYPOSITION widthIcon = static_cast<XYPOSITION>(img.size.width);
       if (widthIcon > maxIconWidth)
       {
         [colIcon setHidden: NO];
@@ -1839,8 +1802,7 @@ void ListBoxImpl::GetValue(int n, char* value, int len)
     value[0] = '\0';
     return;
   }
-  strncpy(value, textString, len);
-  value[len - 1] = '\0';
+  strlcpy(value, textString, len);
 }
 
 void ListBoxImpl::RegisterImage(int type, const char* xpm_data)
@@ -1948,6 +1910,28 @@ ListBox* ListBox::Allocate()
 	return lb;
 }
 
+//--------------------------------------------------------------------------------------------------
+
+void Window::Destroy()
+{
+  ListBoxImpl *listbox = dynamic_cast<ListBoxImpl *>(this);
+  if (listbox)
+  {
+    listbox->ReleaseViews();
+  }
+  if (wid)
+  {
+    id idWin = reinterpret_cast<id>(wid);
+    if ([idWin isKindOfClass: [NSWindow class]])
+    {
+      NSWindow* win = reinterpret_cast<NSWindow*>(idWin);
+      [win release];
+    }
+  }
+  wid = 0;
+}
+
+
 //----------------- ScintillaContextMenu -----------------------------------------------------------
 
 @implementation ScintillaContextMenu : NSMenu
@@ -2009,7 +1993,7 @@ void Menu::Show(Point, Window &)
 ElapsedTime::ElapsedTime() {
   struct timeval curTime;
   gettimeofday( &curTime, NULL );
-  
+
   bigBit = curTime.tv_sec;
   littleBit = curTime.tv_usec;
 }
@@ -2071,11 +2055,11 @@ int Platform::DefaultFontSize()
  * Returns the time span in which two consecutive mouse clicks must occur to be considered as
  * double click.
  *
- * @return
+ * @return time span in milliseconds
  */
 unsigned int Platform::DoubleClickTime()
 {
-  float threshold = [[NSUserDefaults standardUserDefaults] floatForKey: 
+  float threshold = [[NSUserDefaults standardUserDefaults] floatForKey:
                      @"com.apple.mouse.doubleClickThreshold"];
   if (threshold == 0)
     threshold = 0.5;
@@ -2094,7 +2078,7 @@ bool Platform::MouseButtonBounce()
 /**
  * Helper method for the backend to reach through to the scintilla window.
  */
-long Platform::SendScintilla(WindowID w, unsigned int msg, unsigned long wParam, long lParam) 
+long Platform::SendScintilla(WindowID w, unsigned int msg, unsigned long wParam, long lParam)
 {
   return scintilla_send_message(w, msg, wParam, lParam);
 }
@@ -2121,7 +2105,7 @@ bool Platform::IsDBCSLeadByte(int codePage, char ch)
     // Shift_jis
     return ((uch >= 0x81) && (uch <= 0x9F)) ||
         ((uch >= 0xE0) && (uch <= 0xFC));
-        // Lead bytes F0 to FC may be a Microsoft addition. 
+        // Lead bytes F0 to FC may be a Microsoft addition.
   case 936:
     // GBK
     return (uch >= 0x81) && (uch <= 0xFE);
@@ -2185,7 +2169,7 @@ void Platform::DebugPrintf(const char *format, ...)
 {
   const int BUF_SIZE = 2000;
   char buffer[BUF_SIZE];
-  
+
   va_list pArguments;
   va_start(pArguments, format);
   vsnprintf(buffer, BUF_SIZE, format, pArguments);
@@ -2217,10 +2201,9 @@ bool Platform::ShowAssertionPopUps(bool assertionPopUps_)
 void Platform::Assert(const char *c, const char *file, int line)
 {
   char buffer[2000];
-  sprintf(buffer, "Assertion [%s] failed at %s %d", c, file, line);
-  strcat(buffer, "\r\n");
+  snprintf(buffer, sizeof(buffer), "Assertion [%s] failed at %s %d\r\n", c, file, line);
   Platform::DebugDisplay(buffer);
-#ifdef DEBUG 
+#ifdef DEBUG
   // Jump into debugger in assert on Mac (CL269835)
   ::Debugger();
 #endif
@@ -2241,7 +2224,7 @@ int Platform::Clamp(int val, int minVal, int maxVal)
 
 /**
  * Implements the platform specific part of library loading.
- * 
+ *
  * @param modulePath The path to the module to load.
  * @return A library instance or NULL if the module could not be found or another problem occurred.
  */

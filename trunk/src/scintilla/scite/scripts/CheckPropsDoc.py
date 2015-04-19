@@ -2,6 +2,7 @@
 # CheckMentioned.py
 # Find all the properties used in SciTE source files and check if they
 # are mentioned in scite/doc/SciTEDoc.html.
+# Requires Python 2.5 or later
 
 import os
 import string
@@ -25,6 +26,7 @@ knownDebugOptionalAndArchaicProperties = {
 	"bookmark.pixmap":1,	# Debug
 	"lexerpath.*.lpeg":1,	# Option for Scintillua
 	"ipc.director.name":1,	# Archaic
+	"two.phase.draw":1,	# Archaic
 }
 
 # These properties are either set by SciTE and used (not set) in property files or
@@ -104,7 +106,7 @@ for srcPath in srcPaths:
 			#print parts
 			if len(parts) > 1:
 				propertyName = parts[1]
-				if propertyName:
+				if propertyName and propertyName != "1":
 					propertyNames[propertyName] = 0
 					#print propertyName
 		if '"' in srcLine and nameOKSrc(srcPath):

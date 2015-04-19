@@ -21,18 +21,6 @@ extern const GUI::gui_char fileWrite[];
 #endif
 #endif
 
-#ifdef WIN32
-#ifdef _MSC_VER
-// Shut up level 4 warning:
-// warning C4710: function 'void whatever(...)' not inlined
-// warning C4800: forcing value to bool 'true' or 'false' (performance warning)
-#pragma warning(disable: 4710 4800)
-#endif
-#ifdef __DMC__
-#include <time.h>
-#endif
-#endif
-
 class FilePath;
 
 typedef std::vector<FilePath> FilePathSet;
@@ -70,6 +58,7 @@ public:
 	bool SetWorkingDirectory() const;
 	void List(FilePathSet &directories, FilePathSet &files);
 	FILE *Open(const GUI::gui_char *mode) const;
+	std::vector<char> Read() const;
 	void Remove() const;
 	time_t ModifiedTime() const;
 	long GetFileLength() const;

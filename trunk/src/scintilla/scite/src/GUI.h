@@ -68,8 +68,10 @@ typedef std::wstring gui_string;
 #endif
 
 gui_string StringFromUTF8(const char *s);
+gui_string StringFromUTF8(const std::string &s);
 std::string UTF8FromString(const gui_string &s);
-gui_string StringFromInteger(int i);
+gui_string StringFromInteger(long i);
+gui_string HexStringFromInteger(long i);
 
 typedef void *WindowID;
 class Window {
@@ -136,7 +138,8 @@ class ScintillaWindow : public Window {
 	SciFnDirect fn;
 	sptr_t ptr;
 public:
-	ScintillaWindow() : fn(0), ptr(0) {
+	sptr_t status;
+	ScintillaWindow() : fn(0), ptr(0), status() {
 	}
 	void SetID(WindowID wid_) {
 		wid = wid_;
@@ -165,15 +168,15 @@ public:
 		if (!fn)
 			throw ScintillaFailure(SC_STATUS_FAILURE);
 		sptr_t retVal = fn(ptr, msg, wParam, lParam);
-		sptr_t status = fn(ptr, SCI_GETSTATUS, 0, 0);
-		if (status > 0)
+		status = fn(ptr, SCI_GETSTATUS, 0, 0);
+		if (status > 0 && status < SC_STATUS_WARN_START)
 			throw ScintillaFailure(status);
 		return static_cast<int>(retVal);
 	}
 	sptr_t CallReturnPointer(unsigned int msg, uptr_t wParam=0, sptr_t lParam=0) {
 		sptr_t retVal = fn(ptr, msg, wParam, lParam);
-		sptr_t status = fn(ptr, SCI_GETSTATUS, 0, 0);
-		if (status > 0)
+		status = fn(ptr, SCI_GETSTATUS, 0, 0);
+		if (status > 0 && status < SC_STATUS_WARN_START)
 			throw ScintillaFailure(status);
 		return retVal;
 	}

@@ -9,10 +9,10 @@
 #define SCITE_H
 
 // Version numbers and dates
-#define VERSION_SCITE "3.3.6"
-#define VERSION_WORDS 3, 3, 6, 0
-#define COPYRIGHT_DATES "December 1998-October 2013"
-#define COPYRIGHT_YEARS "1998-2013"
+#define VERSION_SCITE "3.5.5"
+#define VERSION_WORDS 3, 5, 5, 0
+#define COPYRIGHT_DATES "December 1998-April 2015"
+#define COPYRIGHT_YEARS "1998-2015"
 
 // Menu IDs.
 // These are located 100 apart. No one will want more than 100 in each menu ;)
@@ -54,7 +54,7 @@
 
 #define MRU_START	17
 #define IMPORT_START 20
-#define TOOLS_START 3
+#define TOOLS_START 4
 
 // Edit
 #define IDM_UNDO			201
@@ -122,6 +122,7 @@
 #define IDM_FINISHEDEXECUTE	305
 #define IDM_NEXTMSG			306
 #define IDM_PREVMSG			307
+#define IDM_CLEAN			308
 
 #define IDM_MACRO_SEP		310
 #define IDM_MACRORECORD		311
@@ -269,4 +270,26 @@
 #define IDBM_BACKSLASH 104
 #define IDBM_AROUND 105
 #define IDBM_UP 106
+
+#define IDBM_20_WORD 201
+#define IDBM_20_CASE 202
+#define IDBM_20_REGEX 203
+#define IDBM_20_BACKSLASH 204
+#define IDBM_20_AROUND 205
+#define IDBM_20_UP 206
+
+#define IDBM_24_WORD 301
+#define IDBM_24_CASE 302
+#define IDBM_24_REGEX 303
+#define IDBM_24_BACKSLASH 304
+#define IDBM_24_AROUND 305
+#define IDBM_24_UP 306
+
+#define IDBM_32_WORD 401
+#define IDBM_32_CASE 402
+#define IDBM_32_REGEX 403
+#define IDBM_32_BACKSLASH 404
+#define IDBM_32_AROUND 405
+#define IDBM_32_UP 406
+
 #endif

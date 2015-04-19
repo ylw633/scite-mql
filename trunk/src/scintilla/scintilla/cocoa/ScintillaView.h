@@ -70,21 +70,23 @@ extern NSString *const SCIUpdateUINotification;
  * SCIContentView is the Cocoa interface to the Scintilla backend. It handles text input and
  * provides a canvas for painting the output.
  */
-@interface SCIContentView : NSView <NSTextInputClient, NSUserInterfaceValidations>
+@interface SCIContentView : NSView <
+  NSTextInputClient,
+  NSUserInterfaceValidations,
+  NSDraggingSource,
+  NSDraggingDestination>
 {
 @private
   ScintillaView* mOwner;
   NSCursor* mCurrentCursor;
-  NSTrackingRectTag mCurrentTrackingRect;
+  NSTrackingArea *trackingArea;
 
   // Set when we are in composition mode and partial input is displayed.
   NSRange mMarkedTextRange;
-  BOOL undoCollectionWasActive;
 }
 
 @property (nonatomic, assign) ScintillaView* owner;
 
-- (void) removeMarkedText;
 - (void) setCursor: (int) cursor;
 
 - (BOOL) canUndo;
@@ -98,15 +100,15 @@ extern NSString *const SCIUpdateUINotification;
   // The back end is kind of a controller and model in one.
   // It uses the content view for display.
   Scintilla::ScintillaCocoa* mBackend;
-  
+
   // This is the actual content to which the backend renders itself.
   SCIContentView* mContent;
-  
+
   NSScrollView *scrollView;
   SCIMarginView *marginView;
-  
+
   CGFloat zoomDelta;
-  
+
   // Area to display additional controls (e.g. zoom info, caret position, status info).
   NSView <InfoBarCommunicator>* mInfoBar;
   BOOL mInfoBarAtTop;
@@ -120,9 +122,6 @@ extern NSString *const SCIUpdateUINotification;
 
 + (Class) contentViewClass;
 
-- (void) positionSubViews;
-
-- (void) sendNotification: (NSString*) notificationName;
 - (void) notify: (NotificationType) type message: (NSString*) message location: (NSPoint) location
           value: (float) value;
 - (void) setCallback: (id <InfoBarCommunicator>) callback;
@@ -132,18 +131,20 @@ extern NSString *const SCIUpdateUINotification;
 
 // Scroller handling
 - (void) setMarginWidth: (int) width;
-- (void) scrollerAction: (id) sender;
 - (SCIContentView*) content;
+- (void) updateMarginCursors;
 
 // NSTextView compatibility layer.
 - (NSString*) string;
 - (void) setString: (NSString*) aString;
-- (void) insertText: (NSString*) aString;
+- (void) insertText: (id) aString;
 - (void) setEditable: (BOOL) editable;
 - (BOOL) isEditable;
 - (NSRange) selectedRange;
 
 - (NSString*) selectedString;
+
+- (void) deleteRange: (NSRange) range;
 
 - (void)setFontName: (NSString*) font
                size: (int) size
@@ -175,8 +176,8 @@ extern NSString *const SCIUpdateUINotification;
 - (void) setLexerProperty: (NSString*) name value: (NSString*) value;
 - (NSString*) getLexerProperty: (NSString*) name;
 
-// The delegate property should be used instead of registerNotifyCallback which will be deprecated.
-- (void) registerNotifyCallback: (intptr_t) windowid value: (Scintilla::SciNotifyFunc) callback;
+// The delegate property should be used instead of registerNotifyCallback which is deprecated.
+- (void) registerNotifyCallback: (intptr_t) windowid value: (Scintilla::SciNotifyFunc) callback __attribute__((deprecated));
 
 - (void) setInfoBar: (NSView <InfoBarCommunicator>*) aView top: (BOOL) top;
 - (void) setStatusText: (NSString*) text;

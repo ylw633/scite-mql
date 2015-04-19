@@ -8,13 +8,13 @@
 
 .SUFFIXES: .cxx .c .o .h .a
 ifdef CLANG
+CXX = clang++ -Wno-deprecated-register
 CC = clang
-CCOMP = clang
-else
-CC = g++
-CCOMP = gcc
+# Can choose aspect to sanitize: address and undefined can simply change SANITIZE but for
+# thread also need to create Position Independent Executable -> search online documentation
+SANITIZE = address
+#SANITIZE = undefined
 endif
-AR = ar
 RANLIB = touch
 
 ifdef GTK3
@@ -54,9 +54,13 @@ else
 THREADFLAGS=
 endif
 
+ifdef CXX11_REGEX
+REFLAGS=-DCXX11_REGEX
+endif
+
 ifdef DEBUG
 ifdef CLANG
-CTFLAGS=-DDEBUG -g -fsanitize=address $(CXXBASEFLAGS) $(THREADFLAGS)
+CTFLAGS=-DDEBUG -g -fsanitize=$(SANITIZE) $(CXXBASEFLAGS) $(THREADFLAGS)
 else
 CTFLAGS=-DDEBUG -g $(CXXBASEFLAGS) $(THREADFLAGS)
 endif
@@ -65,15 +69,15 @@ CTFLAGS=-DNDEBUG -Os $(CXXBASEFLAGS) $(THREADFLAGS)
 endif
 
 CFLAGS:=$(CTFLAGS)
-CXXTFLAGS:=--std=c++0x $(CTFLAGS)
+CXXTFLAGS:=--std=c++0x $(CTFLAGS) $(REFLAGS)
 
 CONFIGFLAGS:=$(shell pkg-config --cflags $(GTKVERSION))
 MARSHALLER=scintilla-marshal.o
 
 .cxx.o:
-	$(CC) $(CONFIGFLAGS) $(CXXTFLAGS) $(CXXFLAGS) -c $<
+	$(CXX) $(CONFIGFLAGS) $(CXXTFLAGS) $(CXXFLAGS) -c $<
 .c.o:
-	$(CCOMP) $(CONFIGFLAGS) $(CFLAGS) -w -c $<
+	$(CC) $(CONFIGFLAGS) $(CFLAGS) -w -c $<
 
 LEXOBJS:=$(addsuffix .o,$(basename $(notdir $(wildcard ../lexers/Lex*.cxx))))
 
@@ -86,11 +90,12 @@ analyze:
 	clang --analyze $(CONFIGFLAGS) $(CXXTFLAGS) $(CXXFLAGS) *.cxx ../src/*.cxx ../lexlib/*.cxx ../lexers/*.cxx
 
 deps:
-	$(CC) -MM $(CONFIGFLAGS) $(CXXTFLAGS) *.cxx ../src/*.cxx ../lexlib/*.cxx ../lexers/*.cxx | sed -e 's/\/usr.* //' | grep [a-zA-Z] >deps.mak
+	$(CXX) -MM $(CONFIGFLAGS) $(CXXTFLAGS) *.cxx ../src/*.cxx ../lexlib/*.cxx ../lexers/*.cxx | sed -e 's/\/usr.* //' | grep [a-zA-Z] >deps.mak
 
 $(COMPLIB): Accessor.o CharacterSet.o LexerBase.o LexerModule.o LexerSimple.o StyleContext.o WordList.o \
 	CharClassify.o Decoration.o Document.o PerLine.o Catalogue.o CallTip.o CaseConvert.o CaseFolder.o \
-	ScintillaBase.o ContractionState.o Editor.o ExternalLexer.o PropSetSimple.o PlatGTK.o \
+	ScintillaBase.o ContractionState.o EditModel.o Editor.o EditView.o ExternalLexer.o MarginView.o \
+	PropSetSimple.o PlatGTK.o \
 	KeyMap.o LineMarker.o PositionCache.o ScintillaGTK.o CellBuffer.o CharacterCategory.o ViewStyle.o \
 	RESearch.o RunStyles.o Selection.o Style.o Indicator.o AutoComplete.o UniConversion.o XPM.o \
 	$(MARSHALLER) $(LEXOBJS)

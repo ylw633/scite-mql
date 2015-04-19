@@ -33,6 +33,7 @@
 #include <QTextLayout>
 #include <QTextLine>
 #include <QLibrary>
+#include <QElapsedTimer>
 #include <cstdio>
 
 #ifdef SCI_NAMESPACE
@@ -471,7 +472,7 @@ void SurfaceImpl::MeasureWidths(Font &font,
 		int i=0;
 		while (ui<fit) {
 			size_t lenChar = utf8LengthFromLead(us[i]);
-			size_t codeUnits = (lenChar < 4) ? 1 : 2;
+			int codeUnits = (lenChar < 4) ? 1 : 2;
 			qreal xPosition = tl.cursorToX(ui+codeUnits);
 			for (unsigned int bytePos=0; (bytePos<lenChar) && (i<len); bytePos++) {
 				positions[i++] = qRound(xPosition);
@@ -528,7 +529,7 @@ XYPOSITION SurfaceImpl::Descent(Font &font)
 	QFontMetrics metrics(*FontPointer(font), device);
 	// Qt returns 1 less than true descent
 	// See: QFontEngineWin::descent which says:
-	// ### we substract 1 to even out the historical +1 in QFontMetrics's
+	// ### we subtract 1 to even out the historical +1 in QFontMetrics's
 	// ### height=asc+desc+1 equation. Fix in Qt5.
 	return metrics.descent() + 1;
 }
@@ -738,8 +739,7 @@ PRectangle Window::GetMonitorRect(Point pt)
 	QPoint posGlobal = window(wid)->mapToGlobal(QPoint(pt.x, pt.y));
 	QDesktopWidget *desktop = QApplication::desktop();
 	QRect rectScreen = desktop->availableGeometry(posGlobal);
-	rectScreen.moveLeft(-originGlobal.x());
-	rectScreen.moveTop(-originGlobal.y());
+	rectScreen.translate(-originGlobal.x(), -originGlobal.y());
 	return PRectangle(rectScreen.left(), rectScreen.top(),
 	        rectScreen.right(), rectScreen.bottom());
 }
@@ -770,6 +770,7 @@ public:
 	virtual void RegisterImage(int type, const char *xpmData);
 	virtual void RegisterRGBAImage(int type, int width, int height,
 		const unsigned char *pixelsImage);
+	virtual void RegisterQPixmapImage(int type, const QPixmap& pm);
 	virtual void ClearRegisteredImages();
 	virtual void SetDoubleClickAction(CallBackAction action, void *data);
 	virtual void SetList(const char *list, char separator, char typesep);
@@ -832,6 +833,16 @@ void ListBoxImpl::Create(Window &parent,
 	list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	list->move(location.x, location.y);
 
+	int maxIconWidth = 0;
+	int maxIconHeight = 0;
+	foreach (QPixmap im, images) {
+		if (maxIconWidth < im.width())
+			maxIconWidth = im.width();
+		if (maxIconHeight < im.height())
+			maxIconHeight = im.height();
+	}
+	list->setIconSize(QSize(maxIconWidth, maxIconHeight));
+
 	wid = list;
 }
 
@@ -883,9 +894,16 @@ int ListBoxImpl::CaretFromEdge()
 			maxIconWidth = im.width();
 	}
 
-	// The '7' is from trial and error on Windows - there may be
+	int extra;
+	// The 12 is from trial and error on OS X and the 7
+	// is from trial and error on Windows - there may be
 	// a better programmatic way to find any padding factors.
-	return maxIconWidth  + (2 * list->frameWidth()) + 7;
+#ifdef Q_OS_DARWIN
+	extra = 12;
+#else
+	extra = 7;
+#endif
+	return maxIconWidth + (2 * list->frameWidth()) + extra;
 }
 
 void ListBoxImpl::Clear()
@@ -916,6 +934,13 @@ int ListBoxImpl::Length()
 void ListBoxImpl::Select(int n)
 {
 	ListWidget *list = static_cast<ListWidget *>(wid);
+	QModelIndex index = list->model()->index(n, 0);
+	if (index.isValid()) {
+		QRect row_rect = list->visualRect(index);
+		if (!list->viewport()->rect().contains(row_rect)) {
+			list->scrollTo(index, QAbstractItemView::PositionAtTop);
+		}
+	}
 	list->setCurrentRow(n);
 }
 
@@ -950,21 +975,39 @@ void ListBoxImpl::GetValue(int n, char *value, int len)
 	value[len-1] = '\0';
 }
 
+void ListBoxImpl::RegisterQPixmapImage(int type, const QPixmap& pm)
+{
+	images[type] = pm;
+
+	ListWidget *list = static_cast<ListWidget *>(wid);
+	if (list != NULL) {
+		QSize iconSize = list->iconSize();
+		if (pm.width() > iconSize.width() || pm.height() > iconSize.height())
+			list->setIconSize(QSize(qMax(pm.width(), iconSize.width()), 
+						 qMax(pm.height(), iconSize.height())));
+	}
+
+}
+
 void ListBoxImpl::RegisterImage(int type, const char *xpmData)
 {
-	images[type] = QPixmap(reinterpret_cast<const char * const *>(xpmData));
+	RegisterQPixmapImage(type, QPixmap(reinterpret_cast<const char * const *>(xpmData)));
 }
 
 void ListBoxImpl::RegisterRGBAImage(int type, int width, int height, const unsigned char *pixelsImage)
 {
 	std::vector<unsigned char> imageBytes = ImageByteSwapped(width, height, pixelsImage);
 	QImage image(&imageBytes[0], width, height, QImage::Format_ARGB32);
-	images[type] = QPixmap::fromImage(image);
+	RegisterQPixmapImage(type, QPixmap::fromImage(image));
 }
 
 void ListBoxImpl::ClearRegisteredImages()
 {
 	images.clear();
+	
+	ListWidget *list = static_cast<ListWidget *>(wid);
+	if (list != NULL)
+		list->setIconSize(QSize(0, 0));
 }
 
 void ListBoxImpl::SetDoubleClickAction(CallBackAction action, void *data)
@@ -978,7 +1021,7 @@ void ListBoxImpl::SetList(const char *list, char separator, char typesep)
 	// This method is *not* platform dependent.
 	// It is borrowed from the GTK implementation.
 	Clear();
-	int count = strlen(list) + 1;
+	size_t count = strlen(list) + 1;
 	std::vector<char> words(list, list+count);
 	char *startword = &words[0];
 	char *numword = NULL;
@@ -1082,7 +1125,7 @@ public:
 
 	virtual Function FindFunction(const char *name) {
 		if (lib) {
-			// C++ standard doesn't like casts betwen function pointers and void pointers so use a union
+			// C++ standard doesn't like casts between function pointers and void pointers so use a union
 			union {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 				QFunctionPointer fp;
@@ -1262,21 +1305,28 @@ int Platform::DBCSCharMaxLength()
 
 //----------------------------------------------------------------------
 
-static QTime timer;
+static QElapsedTimer timer;
 
 ElapsedTime::ElapsedTime() : bigBit(0), littleBit(0)
 {
-	timer.start();
+	if (!timer.isValid()) {
+		timer.start();
+	}
+	qint64 ns64Now = timer.nsecsElapsed();
+	bigBit = static_cast<unsigned long>(ns64Now >> 32);
+	littleBit = static_cast<unsigned long>(ns64Now & 0xFFFFFFFF);
 }
 
 double ElapsedTime::Duration(bool reset)
 {
-	double result = timer.elapsed();
+	qint64 ns64Now = timer.nsecsElapsed();
+	qint64 ns64Start = (static_cast<qint64>(static_cast<unsigned long>(bigBit)) << 32) + static_cast<unsigned long>(littleBit);
+	double result = ns64Now - ns64Start;
 	if (reset) {
-		timer.restart();
+		bigBit = static_cast<unsigned long>(ns64Now >> 32);
+		littleBit = static_cast<unsigned long>(ns64Now & 0xFFFFFFFF);
 	}
-	result /= 1000.0;
-	return result;
+	return result / 1000000000.0;	// 1 billion nanoseconds in a second
 }
 
 #ifdef SCI_NAMESPACE

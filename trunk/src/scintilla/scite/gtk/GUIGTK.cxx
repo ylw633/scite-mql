@@ -32,13 +32,17 @@ gui_string StringFromUTF8(const char *s) {
 		return gui_string("");
 }
 
+gui_string StringFromUTF8(const std::string &s) {
+	return s;
+}
+
 std::string UTF8FromString(const gui_string &s) {
 	return s;
 }
 
-gui_string StringFromInteger(int i) {
+gui_string StringFromInteger(long i) {
 	char number[32];
-	sprintf(number, "%0d", i);
+	sprintf(number, "%0ld", i);
 	return gui_string(number);
 }
 

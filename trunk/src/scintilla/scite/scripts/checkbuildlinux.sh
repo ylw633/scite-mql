@@ -30,13 +30,19 @@
 # On Fedora 17, qmake is called qmake-qt4 so sepbuild.py should probe for correct name.
 # There are also problems with clang failing in the g++ 4.7 headers.
 
-# Run up to 2 commands in parallel
-set JOBS=-j 2
+# Run commands in parallel up to number of processors 
+JOBS="-j $(getconf _NPROCESSORS_ONLN)"
 
 cd ../..
 
 # ************************************************************
 # Target 1: gcc build for GTK+ 2
+cd scintilla/test/unit
+make clean
+make $JOBS test
+make clean
+cd ../../..
+
 cd scintilla/gtk
 make clean
 make $JOBS CHECK_DEPRECATED=1

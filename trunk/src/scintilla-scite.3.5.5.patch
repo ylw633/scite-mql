@@ -1,0 +1,204 @@
+# HG changeset patch
+# User ylw <ylw633@gmail.com>
+# Date 1429476088 18000
+#      Sun Apr 19 15:41:28 2015 -0500
+# Node ID dc64751cce5037b72972877d261ea2e2e37f4d8b
+# Parent  41dc0fe079ebaa2c0c30625507f9669829de2d24
+mql patch
+
+diff -r 41dc0fe079eb -r dc64751cce50 scintilla/include/SciLexer.h
+--- a/scintilla/include/SciLexer.h	Sun Apr 19 15:39:20 2015 -0500
++++ b/scintilla/include/SciLexer.h	Sun Apr 19 15:41:28 2015 -0500
+@@ -177,6 +177,10 @@
+ #define SCE_C_USERLITERAL 25
+ #define SCE_C_TASKMARKER 26
+ #define SCE_C_ESCAPESEQUENCE 27
++#define SCE_C_KEYWORD6 28
++#define SCE_C_KEYWORD7 29
++#define SCE_C_KEYWORD8 30
++#define SCE_C_KEYWORD9 31
+ #define SCE_D_DEFAULT 0
+ #define SCE_D_COMMENT 1
+ #define SCE_D_COMMENTLINE 2
+@@ -498,6 +502,8 @@
+ #define SCE_ERR_JAVA_STACK 20
+ #define SCE_ERR_VALUE 21
+ #define SCE_ERR_GCC_INCLUDED_FROM 22
++#define SCE_ERR_MQL 23
++#define SCE_ERR_MQLWRN   24
+ #define SCE_BAT_DEFAULT 0
+ #define SCE_BAT_COMMENT 1
+ #define SCE_BAT_WORD 2
+diff -r 41dc0fe079eb -r dc64751cce50 scintilla/include/Scintilla.iface
+--- a/scintilla/include/Scintilla.iface	Sun Apr 19 15:39:20 2015 -0500
++++ b/scintilla/include/Scintilla.iface	Sun Apr 19 15:41:28 2015 -0500
+@@ -2817,6 +2817,10 @@
+ val SCE_C_USERLITERAL=25
+ val SCE_C_TASKMARKER=26
+ val SCE_C_ESCAPESEQUENCE=27
++val SCE_C_KEYWORD6=28
++val SCE_C_KEYWORD7=29
++val SCE_C_KEYWORD8=30
++val SCE_C_KEYWORD9=31
+ # Lexical states for SCLEX_D
+ lex D=SCLEX_D SCE_D_
+ val SCE_D_DEFAULT=0
+@@ -3173,6 +3177,8 @@
+ val SCE_ERR_JAVA_STACK=20
+ val SCE_ERR_VALUE=21
+ val SCE_ERR_GCC_INCLUDED_FROM=22
++val SCE_ERR_MQL=23
++val SCE_ERR_MQLWRN=24
+ # Lexical states for SCLEX_BATCH
+ lex Batch=SCLEX_BATCH SCE_BAT_
+ val SCE_BAT_DEFAULT=0
+diff -r 41dc0fe079eb -r dc64751cce50 scintilla/lexers/LexCPP.cxx
+--- a/scintilla/lexers/LexCPP.cxx	Sun Apr 19 15:39:20 2015 -0500
++++ b/scintilla/lexers/LexCPP.cxx	Sun Apr 19 15:41:28 2015 -0500
+@@ -353,6 +353,10 @@
+             "Global classes and typedefs",
+             "Preprocessor definitions",
+             "Task marker and error marker keywords",
++			"Third keywords set",
++			"Forth keywords set",
++			"Fifth keywords set",
++			"Sixth keywords set",
+             0,
+ };
+ 
+@@ -444,6 +448,11 @@
+ 	WordList keywords3;
+ 	WordList keywords4;
+ 	WordList ppDefinitions;
++	WordList keywords6;
++	WordList keywords7;
++	WordList keywords8;
++	WordList keywords9;
++
+ 	WordList markerList;
+ 	struct SymbolValue {
+ 		std::string value;
+@@ -589,6 +598,18 @@
+ 	case 5:
+ 		wordListN = &markerList;
+ 		break;
++	case 6:
++		wordListN = &keywords6;
++		break;
++	case 7:
++		wordListN = &keywords7;
++		break;
++	case 8:
++		wordListN = &keywords8;
++		break;
++	case 9:
++		wordListN = &keywords9;
++		break;
+ 	}
+ 	int firstModification = -1;
+ 	if (wordListN) {
+@@ -809,6 +830,14 @@
+ 						sc.ChangeState(SCE_C_WORD2|activitySet);
+ 					} else if (keywords4.InList(s)) {
+ 						sc.ChangeState(SCE_C_GLOBALCLASS|activitySet);
++					} else if (keywords6.InList(s)) {
++						sc.ChangeState(SCE_C_KEYWORD6|activitySet);
++					} else if (keywords7.InList(s)) {
++						sc.ChangeState(SCE_C_KEYWORD7|activitySet);
++					} else if (keywords8.InList(s)) {
++						sc.ChangeState(SCE_C_KEYWORD8|activitySet);
++					} else if (keywords9.InList(s)) {
++						sc.ChangeState(SCE_C_KEYWORD9|activitySet);
+ 					} else {
+ 						int subStyle = classifierIdentifiers.ValueFor(s);
+ 						if (subStyle >= 0) {
+diff -r 41dc0fe079eb -r dc64751cce50 scintilla/lexers/LexOthers.cxx
+--- a/scintilla/lexers/LexOthers.cxx	Sun Apr 19 15:39:20 2015 -0500
++++ b/scintilla/lexers/LexOthers.cxx	Sun Apr 19 15:41:28 2015 -0500
+@@ -957,6 +957,7 @@
+ 		// CTags: <identifier>\t<filename>\t<message>
+ 		// Lua 5 traceback: \t<filename>:<line>:<message>
+ 		// Lua 5.1: <exe>: <filename>:<line>:<message>
++		// MQL: <filename>(<line>,<column>) : error|warning <num>: <message>
+ 		bool initialTab = (lineBuffer[0] == '\t');
+ 		bool initialColonPart = false;
+ 		bool canBeCtags = !initialTab;	// For ctags must have an identifier with no spaces then a tab
+@@ -964,7 +965,8 @@
+ 			stGccStart, stGccDigit, stGccColumn, stGcc,
+ 			stMsStart, stMsDigit, stMsBracket, stMsVc, stMsDigitComma, stMsDotNet,
+ 			stCtagsStart, stCtagsFile, stCtagsStartString, stCtagsStringDollar, stCtags,
+-			stUnrecognized
++			stUnrecognized,
++			stMql
+ 		} state = stInitial;
+ 		for (unsigned int i = 0; i < lengthLine; i++) {
+ 			char ch = lineBuffer[i];
+@@ -1046,7 +1048,6 @@
+ 			} else if (state == stMsDigitComma) {	// <filename>(<line>,
+ 				if (ch == ')') {
+ 					state = stMsDotNet;
+-					break;
+ 				} else if ((ch != ' ') && !Is0To9(ch)) {
+ 					state = stUnrecognized;
+ 				}
+@@ -1065,6 +1066,12 @@
+ 			} else if ((state == stCtagsStartString) && ((lineBuffer[i] == '$') && (lineBuffer[i + 1] == '/'))) {
+ 				state = stCtagsStringDollar;
+ 				break;
++			} else if (state == stMsDotNet) {
++				if (ch == ' ' && chNext == ':' && lineBuffer[i + 2] == ' ') 
++					state = stMql;
++			} else if (state == stMql) {
++				if (ch == 'e') return SCE_ERR_MQL;
++				if (ch == 'w') return SCE_ERR_MQLWRN;
+ 			}
+ 		}
+ 		if (state == stGcc) {
+diff -r 41dc0fe079eb -r dc64751cce50 scite/src/IFaceTable.cxx
+--- a/scite/src/IFaceTable.cxx	Sun Apr 19 15:39:20 2015 -0500
++++ b/scite/src/IFaceTable.cxx	Sun Apr 19 15:41:28 2015 -0500
+@@ -707,6 +707,10 @@
+ 	{"SCE_C_VERBATIM",13},
+ 	{"SCE_C_WORD",5},
+ 	{"SCE_C_WORD2",16},
++	{"SCE_C_KEYWORD6",28},
++	{"SCE_C_KEYWORD7",29},
++	{"SCE_C_KEYWORD8",30},
++	{"SCE_C_KEYWORD9",31},
+ 	{"SCE_DIFF_ADDED",6},
+ 	{"SCE_DIFF_CHANGED",7},
+ 	{"SCE_DIFF_COMMAND",2},
+diff -r 41dc0fe079eb -r dc64751cce50 scite/src/SciTEBuffers.cxx
+--- a/scite/src/SciTEBuffers.cxx	Sun Apr 19 15:39:20 2015 -0500
++++ b/scite/src/SciTEBuffers.cxx	Sun Apr 19 15:41:28 2015 -0500
+@@ -1828,6 +1828,30 @@
+ 			}
+ 			break;
+ 		}
++		
++	case SCE_ERR_MQLWRN:
++	case SCE_ERR_MQL: {
++			const char *start = cdoc;
++			while (isspacechar(*start)) {
++				start++;
++			}
++			const char *endPath = strchr(start, '(');
++			if (endPath) {
++				if (!isdigitchar(endPath[1])) {
++					// This handles the common case of include files in the C:\Program Files (x86)\ directory
++					endPath = strchr(endPath + 1, '(');
++				}
++				if (endPath) {
++					ptrdiff_t length = endPath - start;
++					sourcePath.assign(start, length);
++					endPath++;
++					const char *startCol = strchr(endPath, ',') + 1;
++					column = atoi(startCol);
++					return atoi(endPath) - 1;
++				}
++			}
++			break;
++		}
+ 	}	// switch
+ 	return -1;
+ }

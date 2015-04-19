@@ -31,13 +31,6 @@ static bool strstart(const char *haystack, const char *needle) {
 	return strncmp(haystack, needle, strlen(needle)) == 0;
 }
 
-static int strchacnt(const char *haystack, const char needle) {
-	int count = 0;
-	for (int i = 0; i < strlen(haystack); i++)
-		if (haystack[i] == needle) count++;
-	return count;
-}
-
 static bool Is0To9(char ch) {
 	return (ch >= '0') && (ch <= '9');
 }
@@ -950,10 +943,6 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 	           strstr(lineBuffer, ".java:")) {
 		// Java stack back trace
 		return SCE_ERR_JAVA_STACK;
-	} else if (strchacnt(lineBuffer, ';') >= 4) {
-		// metalang error / warning
-		const char *lineSt = strrchr(lineBuffer, ';');
-		return (lineSt[-1] != ';') ? SCE_ERR_MQL : SCE_ERR_MQLWRN;
 	} else if (strstart(lineBuffer, "In file included from ") ||
 	           strstart(lineBuffer, "                 from ")) {
 		// GCC showing include path to following error
@@ -968,6 +957,7 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 		// CTags: <identifier>\t<filename>\t<message>
 		// Lua 5 traceback: \t<filename>:<line>:<message>
 		// Lua 5.1: <exe>: <filename>:<line>:<message>
+		// MQL: <filename>(<line>,<column>) : error|warning <num>: <message>
 		bool initialTab = (lineBuffer[0] == '\t');
 		bool initialColonPart = false;
 		bool canBeCtags = !initialTab;	// For ctags must have an identifier with no spaces then a tab
@@ -975,7 +965,8 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 			stGccStart, stGccDigit, stGccColumn, stGcc,
 			stMsStart, stMsDigit, stMsBracket, stMsVc, stMsDigitComma, stMsDotNet,
 			stCtagsStart, stCtagsFile, stCtagsStartString, stCtagsStringDollar, stCtags,
-			stUnrecognized
+			stUnrecognized,
+			stMql
 		} state = stInitial;
 		for (unsigned int i = 0; i < lengthLine; i++) {
 			char ch = lineBuffer[i];
@@ -1048,15 +1039,15 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 						!CompareCaseInsensitive(word, "fatal") || !CompareCaseInsensitive(word, "catastrophic") ||
 						!CompareCaseInsensitive(word, "note") || !CompareCaseInsensitive(word, "remark")) {
 						state = stMsVc;
-					} else
+					} else {
 						state = stUnrecognized;
+					}
 				} else {
 					state = stUnrecognized;
 				}
 			} else if (state == stMsDigitComma) {	// <filename>(<line>,
 				if (ch == ')') {
 					state = stMsDotNet;
-					break;
 				} else if ((ch != ' ') && !Is0To9(ch)) {
 					state = stUnrecognized;
 				}
@@ -1075,6 +1066,12 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 			} else if ((state == stCtagsStartString) && ((lineBuffer[i] == '$') && (lineBuffer[i + 1] == '/'))) {
 				state = stCtagsStringDollar;
 				break;
+			} else if (state == stMsDotNet) {
+				if (ch == ' ' && chNext == ':' && lineBuffer[i + 2] == ' ') 
+					state = stMql;
+			} else if (state == stMql) {
+				if (ch == 'e') return SCE_ERR_MQL;
+				if (ch == 'w') return SCE_ERR_MQLWRN;
 			}
 		}
 		if (state == stGcc) {

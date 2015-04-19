@@ -18,8 +18,6 @@ DLLS=$(DIR_BIN)\Scintilla.dll $(DIR_BIN)\SciLexer.dll
 
 WIDEFLAGS=-DUNICODE -D_UNICODE
 
-CC=cl
-RC=rc
 LD=link
 
 CXXFLAGS=-Zi -TP -MP -W4 -EHsc -Zc:forScope -Zc:wchar_t -D_CRT_SECURE_NO_DEPRECATE=1 -D_CRT_NONSTDC_NO_DEPRECATE $(WIDEFLAGS)
@@ -31,11 +29,11 @@ CXXNDEBUG=-O1 -Oi -MT -DNDEBUG -GL
 NAME=-Fo
 LDFLAGS=-OPT:REF -LTCG -DEBUG
 LDDEBUG=
-LIBS=KERNEL32.lib USER32.lib GDI32.lib MSIMG32.lib COMDLG32.lib COMCTL32.lib ADVAPI32.lib IMM32.lib SHELL32.LIB OLE32.LIB UXTHEME.LIB
+LIBS=KERNEL32.lib USER32.lib GDI32.lib MSIMG32.lib COMDLG32.lib COMCTL32.lib ADVAPI32.lib IMM32.lib SHELL32.LIB OLE32.LIB OLEAUT32.LIB UXTHEME.LIB
 NOLOGO=-nologo
 
 !IFDEF QUIET
-CC=@$(CC)
+CXX=@$(CXX)
 CXXFLAGS=$(CXXFLAGS) $(NOLOGO)
 CCFLAGS=$(CCFLAGS) $(NOLOGO)
 LDFLAGS=$(LDFLAGS) $(NOLOGO)
@@ -52,63 +50,43 @@ CCFLAGS=$(CCFLAGS) $(CXXNDEBUG)
 
 INCLUDEDIRS=-I../../scintilla/include -I../../scintilla/win32 -I../src
 
-OBJS=\
-	SciTEBase.obj \
-	FileWorker.obj \
+SHAREDOBJS=\
 	Cookie.obj \
 	Credits.obj \
+	DirectorExtension.obj \
+	Exporters.obj \
 	FilePath.obj \
+	FileWorker.obj \
+	GUIWin.obj \
+	IFaceTable.obj \
 	JobQueue.obj \
+	MatchMarker.obj \
+	MultiplexExtension.obj \
+	PropSetFile.obj \
+	SciTEBase.obj \
 	SciTEBuffers.obj \
 	SciTEIO.obj \
-	Exporters.obj \
-	PropSetFile.obj \
-	StringHelpers.obj \
-	StringList.obj \
 	SciTEProps.obj \
-	Utf8_16.obj \
-	SciTEWin.obj \
 	SciTEWinBar.obj \
 	SciTEWinDlg.obj \
+	StringHelpers.obj \
+	StringList.obj \
 	Strips.obj \
-	IFaceTable.obj \
-	DirectorExtension.obj \
-	MultiplexExtension.obj \
 	StyleDefinition.obj \
 	StyleWriter.obj \
-	GUIWin.obj \
 	UniqueInstance.obj \
+	Utf8_16.obj \
 	WinMutex.obj
+
+OBJS=\
+	$(SHAREDOBJS) \
+	SciTEWin.obj
 
 LEXLIB=..\..\scintilla\win32\Lexers.lib
 
 OBJSSTATIC=\
-	SciTEBase.obj \
-	FileWorker.obj \
-	Cookie.obj \
-	Credits.obj \
-	FilePath.obj \
-	JobQueue.obj \
-	SciTEBuffers.obj \
-	SciTEIO.obj \
-	Exporters.obj \
-	PropSetFile.obj \
-	StringHelpers.obj \
-	StringList.obj \
-	SciTEProps.obj \
-	Utf8_16.obj \
+	$(SHAREDOBJS) \
 	Sc1.obj \
-	SciTEWinBar.obj \
-	SciTEWinDlg.obj \
-	Strips.obj \
-	IFaceTable.obj \
-	DirectorExtension.obj \
-	MultiplexExtension.obj \
-	StyleDefinition.obj \
-	StyleWriter.obj \
-	GUIWin.obj \
-	UniqueInstance.obj \
-	WinMutex.obj \
 	..\..\scintilla\win32\Accessor.obj \
 	..\..\scintilla\win32\AutoComplete.obj \
 	..\..\scintilla\win32\CallTip.obj \
@@ -122,8 +100,11 @@ OBJSSTATIC=\
 	..\..\scintilla\win32\ContractionState.obj \
 	..\..\scintilla\win32\Decoration.obj \
 	..\..\scintilla\win32\Document.obj \
+	..\..\scintilla\win32\EditModel.obj \
 	..\..\scintilla\win32\Editor.obj \
+	..\..\scintilla\win32\EditView.obj \
 	..\..\scintilla\win32\ExternalLexer.obj \
+	..\..\scintilla\win32\HanjaDic.obj \
 	..\..\scintilla\win32\Indicator.obj \
 	..\..\scintilla\win32\KeyMap.obj \
 	..\..\scintilla\win32\LexerBase.obj \
@@ -131,6 +112,7 @@ OBJSSTATIC=\
 	..\..\scintilla\win32\LexerSimple.obj \
 	..\..\scintilla\win32\LineMarker.obj \
 	..\..\scintilla\win32\PerLine.obj \
+	..\..\scintilla\win32\MarginView.obj \
 	..\..\scintilla\win32\PlatWin.obj \
 	..\..\scintilla\win32\PositionCache.obj \
 	..\..\scintilla\win32\PropSetSimple.obj \
@@ -150,18 +132,19 @@ OBJSSTATIC=\
 #**LEXPROPS=\\\n\($(DIR_BIN)\\\* \)
 LEXPROPS=\
 $(DIR_BIN)\abaqus.properties $(DIR_BIN)\ada.properties \
-$(DIR_BIN)\asm.properties $(DIR_BIN)\asn1.properties $(DIR_BIN)\au3.properties \
-$(DIR_BIN)\ave.properties $(DIR_BIN)\avs.properties $(DIR_BIN)\baan.properties \
-$(DIR_BIN)\blitzbasic.properties $(DIR_BIN)\bullant.properties \
-$(DIR_BIN)\caml.properties $(DIR_BIN)\cmake.properties \
-$(DIR_BIN)\cobol.properties $(DIR_BIN)\conf.properties \
-$(DIR_BIN)\cpp.properties $(DIR_BIN)\csound.properties \
-$(DIR_BIN)\css.properties $(DIR_BIN)\d.properties $(DIR_BIN)\ecl.properties \
-$(DIR_BIN)\eiffel.properties $(DIR_BIN)\erlang.properties \
-$(DIR_BIN)\escript.properties $(DIR_BIN)\flagship.properties \
-$(DIR_BIN)\forth.properties $(DIR_BIN)\fortran.properties \
-$(DIR_BIN)\freebasic.properties $(DIR_BIN)\gap.properties \
-$(DIR_BIN)\haskell.properties $(DIR_BIN)\html.properties \
+$(DIR_BIN)\asl.properties $(DIR_BIN)\asm.properties $(DIR_BIN)\asn1.properties \
+$(DIR_BIN)\au3.properties $(DIR_BIN)\ave.properties $(DIR_BIN)\avs.properties \
+$(DIR_BIN)\baan.properties $(DIR_BIN)\blitzbasic.properties \
+$(DIR_BIN)\bullant.properties $(DIR_BIN)\caml.properties \
+$(DIR_BIN)\cmake.properties $(DIR_BIN)\cobol.properties \
+$(DIR_BIN)\conf.properties $(DIR_BIN)\cpp.properties \
+$(DIR_BIN)\csound.properties $(DIR_BIN)\css.properties $(DIR_BIN)\d.properties \
+$(DIR_BIN)\ecl.properties $(DIR_BIN)\eiffel.properties \
+$(DIR_BIN)\erlang.properties $(DIR_BIN)\escript.properties \
+$(DIR_BIN)\flagship.properties $(DIR_BIN)\forth.properties \
+$(DIR_BIN)\fortran.properties $(DIR_BIN)\freebasic.properties \
+$(DIR_BIN)\gap.properties $(DIR_BIN)\haskell.properties \
+$(DIR_BIN)\hex.properties $(DIR_BIN)\html.properties \
 $(DIR_BIN)\inno.properties $(DIR_BIN)\kix.properties \
 $(DIR_BIN)\latex.properties $(DIR_BIN)\lisp.properties \
 $(DIR_BIN)\lot.properties $(DIR_BIN)\lout.properties $(DIR_BIN)\lua.properties \
@@ -174,7 +157,8 @@ $(DIR_BIN)\pascal.properties $(DIR_BIN)\perl.properties \
 $(DIR_BIN)\pov.properties $(DIR_BIN)\powerpro.properties \
 $(DIR_BIN)\powershell.properties $(DIR_BIN)\ps.properties \
 $(DIR_BIN)\purebasic.properties $(DIR_BIN)\python.properties \
-$(DIR_BIN)\r.properties $(DIR_BIN)\rebol.properties $(DIR_BIN)\ruby.properties \
+$(DIR_BIN)\r.properties $(DIR_BIN)\rebol.properties \
+$(DIR_BIN)\registry.properties $(DIR_BIN)\ruby.properties \
 $(DIR_BIN)\rust.properties $(DIR_BIN)\scriptol.properties \
 $(DIR_BIN)\smalltalk.properties $(DIR_BIN)\sorcins.properties \
 $(DIR_BIN)\specman.properties $(DIR_BIN)\spice.properties \
@@ -254,17 +238,17 @@ $(PROGSTATIC): $(OBJSSTATIC) $(LEXLIB) Sc1Res.res
 # Some source files are compiled into more than one object because of different conditional compilation
 
 {..\src}.cxx.obj::
-	$(CC) $(CXXFLAGS) -c $<
+	$(CXX) $(CXXFLAGS) -c $<
 {.}.cxx.obj::
-	$(CC) $(CXXFLAGS) -c $<
+	$(CXX) $(CXXFLAGS) -c $<
 
 {..\lua\src}.c.obj::
-	$(CC) $(CCFLAGS) -c $<
+	$(CXX) $(CCFLAGS) -c $<
 {..\lua\src\lib}.c.obj::
-	$(CC) $(CCFLAGS) -c $<
+	$(CXX) $(CCFLAGS) -c $<
 
 Sc1.obj: SciTEWin.cxx
-	$(CC) $(CXXFLAGS) -DSTATIC_BUILD -c $(NAME)$@ SciTEWin.cxx
+	$(CXX) $(CXXFLAGS) -DSTATIC_BUILD -c $(NAME)$@ SciTEWin.cxx
 
 # Dependencies
 DirectorExtension.obj: \
@@ -272,7 +256,6 @@ DirectorExtension.obj: \
 	../../scintilla/include/Scintilla.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -285,6 +268,7 @@ DirectorExtension.obj: \
 	../src/JobQueue.h \
 	../src/Cookie.h \
 	../src/Worker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h
 GUIWin.obj: \
 	GUIWin.cxx \
@@ -296,7 +280,6 @@ SciTEWin.obj: \
 	../../scintilla/include/Scintilla.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -310,6 +293,7 @@ SciTEWin.obj: \
 	../src/Cookie.h \
 	../src/Worker.h \
 	../src/FileWorker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h \
 	../src/SciTEKeys.h \
 	UniqueInstance.h \
@@ -325,7 +309,6 @@ Sc1.obj: \
 	../../scintilla/include/Scintilla.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -339,6 +322,7 @@ Sc1.obj: \
 	../src/Cookie.h \
 	../src/Worker.h \
 	../src/FileWorker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h \
 	../src/SciTEKeys.h \
 	UniqueInstance.h \
@@ -354,7 +338,6 @@ SciTEWinBar.obj: \
 	../../scintilla/include/Scintilla.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -368,6 +351,7 @@ SciTEWinBar.obj: \
 	../src/Cookie.h \
 	../src/Worker.h \
 	../src/FileWorker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h \
 	../src/SciTEKeys.h \
 	UniqueInstance.h \
@@ -379,7 +363,6 @@ SciTEWinDlg.obj: \
 	../../scintilla/include/Scintilla.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -393,6 +376,7 @@ SciTEWinDlg.obj: \
 	../src/Cookie.h \
 	../src/Worker.h \
 	../src/FileWorker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h \
 	../src/SciTEKeys.h \
 	UniqueInstance.h \
@@ -404,7 +388,6 @@ Strips.obj: \
 	../../scintilla/include/Scintilla.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -418,6 +401,7 @@ Strips.obj: \
 	../src/Cookie.h \
 	../src/Worker.h \
 	../src/FileWorker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h \
 	../src/SciTEKeys.h \
 	UniqueInstance.h \
@@ -429,7 +413,6 @@ UniqueInstance.obj: \
 	../src/GUI.h \
 	SciTEWin.h \
 	../../scintilla/include/ILexer.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -443,6 +426,7 @@ UniqueInstance.obj: \
 	../src/Cookie.h \
 	../src/Worker.h \
 	../src/FileWorker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h \
 	../src/SciTEKeys.h \
 	UniqueInstance.h \
@@ -453,14 +437,12 @@ WinMutex.obj: \
 	../src/Mutex.h
 Cookie.obj: \
 	../src/Cookie.cxx \
-	../src/SString.h \
 	../src/Cookie.h
 Credits.obj: \
 	../src/Credits.cxx \
 	../../scintilla/include/Scintilla.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -473,13 +455,13 @@ Credits.obj: \
 	../src/JobQueue.h \
 	../src/Cookie.h \
 	../src/Worker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h
 Exporters.obj: \
 	../src/Exporters.cxx \
 	../../scintilla/include/Scintilla.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -492,19 +474,19 @@ Exporters.obj: \
 	../src/JobQueue.h \
 	../src/Cookie.h \
 	../src/Worker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h
 FilePath.obj: \
 	../src/FilePath.cxx \
 	../../scintilla/include/Scintilla.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/FilePath.h
 FileWorker.obj: \
 	../src/FileWorker.cxx \
 	../../scintilla/include/Scintilla.h \
 	../../scintilla/include/ILexer.h \
+	../src/Mutex.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/FilePath.h \
 	../src/Cookie.h \
 	../src/Worker.h \
@@ -514,13 +496,17 @@ JobQueue.obj: \
 	../src/JobQueue.cxx \
 	../../scintilla/include/Scintilla.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
 	../src/PropSetFile.h \
 	../src/SciTE.h \
 	../src/Mutex.h \
 	../src/JobQueue.h
+MatchMarker.obj: \
+	../src/MatchMarker.cxx \
+	../../scintilla/include/Scintilla.h \
+	../src/GUI.h \
+	../src/MatchMarker.h
 MultiplexExtension.obj: \
 	../src/MultiplexExtension.cxx \
 	../../scintilla/include/Scintilla.h \
@@ -531,7 +517,6 @@ PropSetFile.obj: \
 	../src/PropSetFile.cxx \
 	../../scintilla/include/Scintilla.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
 	../src/PropSetFile.h
@@ -541,7 +526,6 @@ SciTEBase.obj: \
 	../../scintilla/include/SciLexer.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -555,6 +539,7 @@ SciTEBase.obj: \
 	../src/Cookie.h \
 	../src/Worker.h \
 	../src/FileWorker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h
 SciTEBuffers.obj: \
 	../src/SciTEBuffers.cxx \
@@ -562,7 +547,6 @@ SciTEBuffers.obj: \
 	../../scintilla/include/SciLexer.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -576,13 +560,13 @@ SciTEBuffers.obj: \
 	../src/Cookie.h \
 	../src/Worker.h \
 	../src/FileWorker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h
 SciTEIO.obj: \
 	../src/SciTEIO.cxx \
 	../../scintilla/include/Scintilla.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -596,6 +580,7 @@ SciTEIO.obj: \
 	../src/Cookie.h \
 	../src/Worker.h \
 	../src/FileWorker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h \
 	../src/Utf8_16.h
 SciTEProps.obj: \
@@ -604,7 +589,6 @@ SciTEProps.obj: \
 	../../scintilla/include/SciLexer.h \
 	../../scintilla/include/ILexer.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringList.h \
 	../src/StringHelpers.h \
 	../src/FilePath.h \
@@ -618,6 +602,7 @@ SciTEProps.obj: \
 	../src/JobQueue.h \
 	../src/Cookie.h \
 	../src/Worker.h \
+	../src/MatchMarker.h \
 	../src/SciTEBase.h
 StringHelpers.obj: \
 	../src/StringHelpers.cxx \
@@ -626,13 +611,11 @@ StringHelpers.obj: \
 	../src/StringHelpers.h
 StringList.obj: \
 	../src/StringList.cxx \
-	../src/SString.h \
 	../src/StringList.h
 StyleDefinition.obj: \
 	../src/StyleDefinition.cxx \
 	../../scintilla/include/Scintilla.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/StringHelpers.h \
 	../src/StyleDefinition.h
 StyleWriter.obj: \
@@ -649,7 +632,6 @@ LuaExtension.obj: \
 	../src/LuaExtension.cxx \
 	../../scintilla/include/Scintilla.h \
 	../src/GUI.h \
-	../src/SString.h \
 	../src/FilePath.h \
 	../src/StyleWriter.h \
 	../src/Extender.h \
