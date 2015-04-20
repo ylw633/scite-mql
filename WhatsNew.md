@@ -1,3 +1,7 @@
+# Version 1.6.0 #
+  * Update Scite to 3.5.5
+  * Officially support MT4 build 600+
+
 # Version 1.5.0 #
   * Update Scite to 3.3.6
   * Update metalang.exe to Build 509
