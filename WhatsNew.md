@@ -1,3 +1,8 @@
+# Version 2.0.0 #
+  * Based on SciTE-Ru 3.5.4 100Ru
+  * Added UDF call-tip support
+  * Multiple new themes
+
 # Version 1.6.0 #
   * Update Scite to 3.5.5
   * Officially support MT4 build 600+
