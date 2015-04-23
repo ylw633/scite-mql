@@ -1,3 +1,0 @@
-fcn=function |() {\n    \n}
-ajax=$.ajax({\n\ttype:"POST",\n\turl: "|",\n\tdata: "",\n\tasync:true,\n\tsuccess: function(data){\n\t\talert(data);\n\t}\n}); 
-getjson=$.getJSON("|callback=?",{name:"value"}, function(json){\n\talert(json);\n}); 
