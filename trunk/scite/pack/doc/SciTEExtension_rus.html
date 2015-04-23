@@ -1,0 +1,208 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta name="generator" content="HTML Tidy, see www.w3.org" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <style type="text/css">
+    td {border:none;}
+  </style>
+  <title>SciTE Extension Interface</title>
+</head>
+
+<body>
+  <table bgcolor="#000000" width="100%" cellspacing="0" cellpadding="0" border="0" class="tmenu">
+    <tr>
+      <td><img src="SciTEIco.png" height="64" width="64" alt="Scintilla icon"></td>
+      <td width="100%"><font size="5">SciTE Extension Interface</font></td>
+    </tr>
+  </table>
+
+  <table bgcolor="#CCCCCC" width="100%" cellspacing="0" cellpadding="8" border="0" class="tmenu">
+    <tr><td>
+      <a href="SciTEDoc_rus.html">Документация</a>&nbsp;&nbsp;
+      <a href="SciTEFAQ_rus.html">FAQ</a>&nbsp;&nbsp;
+      <a href="SciTERegEx_rus.html">Регулярные выражения</a>&nbsp;&nbsp;
+      <nobr>SciTE Extension</nobr>&nbsp;&nbsp;
+      <a href="SciTELua_rus.html">LUA</a>&nbsp;&nbsp;
+      <a href="SciTEDirector_rus.html">SciTE Director</a>&nbsp;&nbsp;
+      <a href="CommandValues_rus.html">Команды SciTE и Scintilla</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Pack_rus.html">Сборка Ru-Board</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Kernel_rus.html">Ядро SciTE-Ru</a>&nbsp;&nbsp;
+      <a href="../tools/LuaLib/shell_rus.html">Shell</a>&nbsp;&nbsp;
+      <a href="../tools/Helper/SciTE.Helper_rus.html">SciTE Helper</a>&nbsp;&nbsp;
+      <a href="ScintillaHistory_rus.html">История</a>
+    </td></tr>
+  </table>
+
+    <h3>Назначение</h3>
+
+    <p>Любой заинтересованный человек может создать расширенную версию редактора SciTE, обладающую новыми дополнительными возможностями. Так, например, для редактора, разработанного для
+специфического окружения, можно добавить возможность выполнения скриптов в среде SciTE
+или позволить другому процессу управлять SciTE посредством механима IPC.</p>
+    <p>Приведем два примера расширений. <a href="SciTEDirector_rus.html">SciTE Director Interface</a> позволяет управлять редактором SciTE из внешнего приложения,
+такого как менеджер проектов. <a href="SciTELua_rus.html">SciTE Lua Scripting Extension</a> является внедрением скриптового языка Lua в SciTE, выполненное
+посредством интерфейса расширения.</p>
+
+	<h3>Интерфейс расширения.</h3>
+
+	<div class="example">
+	bool Initialise(ExtensionAPI *host_);<br />
+	bool Finalise();<br />
+	bool Clear();<br />
+	bool Load(const char *filename);<br />
+	bool InitBuffer(int index);<br />
+	bool ActivateBuffer(int index);<br />
+	bool RemoveBuffer(int index);<br />
+	bool OnOpen(const char *path);<br />
+	bool OnSwitchFile(const char *path);<br />
+	bool OnBeforeSave(const char *path);<br />
+	bool OnSave(const char *path);<br />
+	bool OnChar(char ch);<br />
+	bool OnExecute(const char *s);<br />
+	bool OnSavePointReached();<br />
+	bool OnSavePointLeft();<br />
+	bool OnStyle(unsigned int, int, int, Accessor *);<br />
+	bool OnDoubleClick();<br />
+	bool OnUpdateUI();<br />
+	bool OnMarginClick();<br />
+	bool OnMacro(const char *, const char *);<br />
+	bool SendProperty(const char *);<br />
+	bool OnKey(int keyval, int modifiers);<br />
+	bool OnDwellStart(int pos, const char *word);<br />
+	bool OnClose(const char *filename);<br />
+    </div>
+	<p>Расширение должно реализовать интерфейс Расширения, определенный в
+scite/src/Extender.h. Только первые 4 метода должны быть реализованы,
+несмотря на то, что их реализация может быть настолько простой, как просто
+возвращение false. Остальные методы имеют пустую реализацию по умолчанию. Методы,
+добавляемые к этому интерфейсу впоследствие, должны иметь такую реализацию по
+умолчанию, которая позволит компилироваться существующим расширениям.</p>
+	<p>Каждый метод возвращает логическое значение, указывающее, закончил ли метод
+всю требующуюся обработку, и что дополнительной обработки не требуется. В обычных
+условиях false возвращается, чтобы показать, что дополнительная обработка может
+быть проведена.</p>
+	<p>Расширение может использовать методы Initialise и Finalise для выделения
+и освобождения выделенных ресурсов. Указатель ExtensionAPI может быть сохранен в
+методе Initialise чтобы обеспечить расширению связь со SciTE.</p>
+	<p>Методы Clear и Load используются для поддержки расширений, которым
+необходимо загружать такие ресурсы, как файлы скриптов при открытии файлов.
+Когда файл открывается в SciTE, то сначала расширение запрашивает очистку любых
+данных, связанных с предыдущим файлом, через Clear. Затем SciTE приводит свойство
+"extension" в соответстие с именем файла, так для x.cpp, ищется extension.*.cpp.
+Файл с таким именем ищется в стандартном месте для размещения файлов свойств
+(property file), и, если находится, то вызывается Load с путем в качестве
+аргумента.</p>
+	<p>Методы InitBuffer, ActivateBuffer и RemoveBuffer обеспечивают необходимые
+ловушки, так чтобы расширение имело механизм связывания данных с конкретным
+буфером, образом сходным с тем, которым сам SciTE запоминает каждого буфера.
+InitBuffer вызывается в момент открытия нового документа в данном буфере. Буфер
+может быть вновь выделенным или использованным повторно, если достигнуто
+максимальное количество буферов. Как только буфер инициализирован, он становится
+активным. Соответственно, ActivateBuffer вызывается всякий раз когда пользователь
+переключается на другой загруженный буфер. RemoveBuffer вызывается, когда
+существующий буфер закрывается. Соответственно, индексы буферов, которые
+следуют за удаляемым буфером, сдвигаются на 1. После RemoveBuffer, расширение
+получит InitBuffer или ActivateBuffer, чтобы установить новый активный буфер.</p>
+
+	<p>OnExecute вызывается только когда выполняется команда расширения. Это
+указывается в свойствах как subsystem 3.</p>
+
+	<p>OnBeforeSave вызывается перед сохранением файла и расширение может
+реализоавть сохранение файла само и вернет true, чтобы предотвратить выполнение сохранения файла по умолчанию.</p>
+
+<p>Остальные методы вызываются во время событий, происходящих в SciTE,
+позволяя расширению отвечать на эти события.</p>
+
+<h3>Интерфейс ExtensionAPI</h3>
+
+<div class="example">
+enum Pane { paneEditor=1, paneOutput=2, paneFindOutput=3 };<br />
+sptr_t Send(Pane p, unsigned int msg, uptr_t wParam=0, sptr_t lParam=0);<br />
+char *Range(Pane p, int start, int end);<br />
+void Remove(Pane p, int start, int end);<br />
+void Insert(Pane p, int pos, const char *s);<br />
+void Trace(const char *s);<br />
+char *Property(const char *key);<br />
+void SetProperty(const char *key, const char *val);<br />
+uptr_t GetInstance();<br />
+void ShutDown();<br />
+void Perform(const char *actions);<br />
+void DoMenuCommand(int cmdID);<br />
+void UpdateStatusBar(bool bUpdateSlowData);<br />
+</div>
+
+<p>Расширение может выполнить обратный вызов в SciTE, используя этот интерфейс, который является упрощенным способом вызова функциональности SciTE.</p>
+
+<p>Така же как и нормальня панель редактора и панель вывода, этот интерфейс
+предоставляет возможность будущей особенности, когда третья панель может быть
+использована для вывода команд поиска. В настоящее время это назначено на панель вывода.</p>
+
+<p>Send позволяет посылать сообщения элементу Scintilla, содержащемуся в каждой
+панели.</p>
+
+<p>Range возвращает текст панели. Он должен быть удален посредством delete[].
+Remove и Insert используются для удаления и вставки текста в панель.</p>
+
+<p>Trace отображает строку в конце панели вывода.</p>
+
+<p>Свойства SciTE можно читать и записывать через Property и SetProperty.
+Результат, возвращенный методом Property должен быть удален через delete[].</p>
+
+<p>GetInstance является спецификой Windows и возвращает HINSTANCE приложения,
+который необходим для получения доступа к услугам платформы.</p>
+
+<p>ShutDown является эквивалентом выбора пользователем пункта меню Quit. Если
+есть несохраненные файлы, пользователю будет выведен запрос на их сохранение,
+которое может быть отменено из этого диалога. Таким образом, при определенных
+обстоятельствах, приложение будет продолжать выполняться после вызова ShutDown.</p>
+
+<p>Perform принимает строку, содержащую действие, символ ':' и аргумент.
+В настоящее время единственным известным действием является открыть, в качестве
+аргумента передается путь. Это используется в
+<a href="SciTEDirector_rus.html">Director extension</a> для передачи команд от других приложений. В будущем возможна передача других действий через этот метод.</p>
+
+<h3>Подключение расширения</h3>
+
+<p>Расширение добавляется явно кодом при старте функции. Под Windows
+DirectorExtension подключается кодом, аналогичным следующему упрощенному примеру:
+</p>
+
+<div class="example">
+DirectorExtension director;<br />
+Extension *extender = &director;<br />
+//...<br />
+SciTEWin MainWind(extender);
+</div>
+
+<p>Было бы лучше сделать механизм неявного подключения сходным со способом,
+которым лексеры подключаются к Scintilla, определяя, какое расширение используется
+простым внедрением объектных файлов в SciTE. Также было бы хорошо разрешить
+подключение расширений во время выполнения расширений, помещенных в DLL или
+в разделяемые объектные библиотеки.</p>
+
+<h3>Уплотнение</h3>
+
+<p>SciTE допускает использование нескольких расширений одновременно. Расширение
+уплотнитель (multiplexer) поддерживает список расширений и вызывает каждое по
+очереди для каждого метода. Как только расширение возвращает true, указывая, что
+обработку можно прервать, уплотнитель возвращает управление без прохода по
+остальным элементам списка. Тем не менее, для некоторых методов, таких как
+Initialise и Finalise, уплотнитель проходит по оставшимся расширениям независимо
+от значения, возвращенного предыдущим расширением.</p>
+
+<h3>Потоко-безопасность</h3>
+
+<p>В общем случае, SciTE является однопоточным приложением. Тем не менее, под
+Windows, команды вызывают OnExecute из отдельного рабочего потока. Класс
+SingleThreadExtension может быть использован для "упаковки" расширения так,
+чтобы вызовы OnExecute направлялись в основной поток. Конечно, потоко-безопасность
+вашего расширения не обязательна, или оно не реализует OnExecute, или оно является
+cпецифичным для GTK.</p>
+
+<p><hr><li>Русский перевод: <b><a href="http://forum.ru-board.com/profile.cgi?action=show&member=oldBob" target=_blank>Boris A. Brandin</a></b></p>
+</body>
+</html>
+

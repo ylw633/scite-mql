@@ -1,0 +1,183 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <title>SciTE Регулярные выражения</title>
+</head>
+
+<body>
+  <table bgcolor="#000000" width="100%" cellspacing="0" cellpadding="0" border="0" class="tmenu">
+    <tr>
+      <td><img src="SciTEIco.png" height="64" width="64" alt="Scintilla icon"></td>
+      <td width="100%"><font size="5">Регулярные выражения в SciTE</font></td>
+    </tr>
+  </table>
+
+  <table bgcolor="#CCCCCC" width="100%" cellspacing="0" cellpadding="8" border="0" class="tmenu">
+    <tr><td>
+      <a href="SciTEDoc_rus.html">Документация</a>&nbsp;&nbsp;
+      <a href="SciTEFAQ_rus.html">FAQ</a>&nbsp;&nbsp;
+      <nobr>Регулярные выражения</nobr>&nbsp;&nbsp;
+      <a href="SciTEExtension_rus.html">SciTE Extension</a>&nbsp;&nbsp;
+      <a href="SciTELua_rus.html">LUA</a>&nbsp;&nbsp;
+      <a href="SciTEDirector_rus.html">SciTE Director</a>&nbsp;&nbsp;
+      <a href="CommandValues_rus.html">Команды SciTE и Scintilla</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Pack_rus.html">Сборка Ru-Board</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Kernel_rus.html">Ядро SciTE-Ru</a>&nbsp;&nbsp;
+      <a href="../tools/LuaLib/shell_rus.html">Shell</a>&nbsp;&nbsp;
+      <a href="../tools/Helper/SciTE.Helper_rus.html">SciTE Helper</a>&nbsp;&nbsp;
+      <a href="ScintillaHistory_rus.html">История</a>
+    </td></tr>
+  </table>
+
+    <h3>Назначение</h3>
+    <p>
+      Для поиска по шаблону удобнее использовать регулярные выражения, чем текстовый поиск. Например, для поиска переменных в файлах свойств SciTE, которые выглядят как <b>$(name.subname)</b> можно использовать:<br />
+      <code>\$([a-z.]+)</code> (или <code>\$\([a-z.]+\)</code> в posix-режиме)
+    </p>
+    <p>
+      Использование регулярных выражений для замены позволяет производить комплексные преобразования. Например: пару номеров разделенных "," (запятой) можно поменять местами, используя замену с регулярным выражением:<br />
+      <code>\([0-9]+\),\([0-9]+\)</code> (или <code>([0-9]+),([0-9]+)</code> в posix-режиме, или даже <code>(\d+),(\d+)</code>)<br />
+      на:<br />
+      <code>\2,\1</code>
+    </p>
+    <h3>Синтаксис</h3>
+    <p>
+		Синтаксис регулярных выражений зависит от параметра <code>find.replace.regexp.posix</code>.<br />
+		Если он установлен в 0, используется старый Unix-овый синтаксис, где \( и \) обозначают границы подвыражений (подшаблонов), а ( и ) - сами себя.<br />
+		Если же он установлен в 1, то используется общепринятый синтаксис, где ( и ) обозначают границы подвыражений (подшаблонов), а \( и \), соответственно, круглые скобки.<br />
+			<table cols="3" width="100%">
+				<col width="1%" align="center"/>
+				<col width="15%" style="padding:2 10" />
+				<col style="padding:2 10" />
+				<thead>
+					<tr>
+						<th>№</th>
+						<th>Выражение</th>
+						<th>Пояснения</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><span class="ref">[1]</span></td>
+						<td>символ</td>
+						<td>символы соответствуют сами себе, за исключением специальных символов (метасимволов):  <code>. \ [ ] * + ? ^ $</code> и <code>( )</code> в posix-режиме. </td>
+					</tr>
+					<tr>
+						<td><span class="ref">[2]</span></td>
+						<td><code>.</code> (точка)</td>
+						<td>соответствует любому символу.</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[3]</span></td>
+						<td><code>\</code> (слеш)</td>
+						<td>
+							<ul><li><code>\a</code>, <code>\b</code>, <code>\f</code>,<code>\n</code>, <code>\r</code>, <code>\t</code>, <code>\v</code> - обозначают управляющий символ, соответственно, BEL(звонок), BS(backspaсe), FF(новая страница), LF(новая строка), CR(возврат каретки), TAB (знак табуляции) и VT (вертикальный знак табуляции);<br />
+							Предупреждение: <code>\r</code> и <code>\n</code> никогда не будут найдены, потому что в Scintilla регулярные выражения обрабатывают строку за строкой за исключением символов конца строки.<br><br>
+							<li>Если следующий за слешем символ соответствует:
+							<br> - правой или левой круглой скобке (не в posix-режиме), то см. <span class="ref">[8]</span>;
+							<br> - цифре от 1 до 9, то см. <span class="ref">[9]</span>;
+							<br> - угловой скобке, то см. <span class="ref">[10]</span>;
+							<br> - символу d, D, s, S, w или W, то см. <span class="ref">[11]</span>;
+							<br> - символу x и двум шестнадцатеричным цифрам, то см. <span class="ref">[12]</span>;
+							</li></ul>
+							Во всех остальных случаях слеш используется как экранирующий символ для всех других метасимволов и самого себя, поскольку любой другой символ (кроме описанных выше), следующий непосредственно за слешем, воспринимается как есть.
+						</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[4]</span></td>
+						<td><code>[</code>...<code>]</code> (набор символов)</td>
+						<td>Соответствует одному из символов из набора. Если первый символ "^", то соответствует любому символу, НЕ перечисленному в наборе. Условное обозначение <strong>[S-E]</strong> используется для задания набора символов от S до E, включительно. Специальные символы "]" и "-" не имеют специального значения, если стоят первыми в наборе символов. Чтобы включить оба этих символа в набор пишите "-" первым: <strong>[-]A-Z]</strong> (или просто ставьте слеш перед ними <span class="ref">[3]</span>).
+							<table style="border: 0px;">
+								<tr><th class="noborder">примеры:</th><th class="noborder">соответствует:</th></tr>
+								<tr><td class="noborder"><code>[-]|]</code></td><td class="noborder">соответствует этим 3 символам</td></tr>
+								<tr><td class="noborder"><code>[]-|]</code></td><td class="noborder">соответствует символам от ] до |</td></tr>
+								<tr><td class="noborder"><code>[a-z]</code></td><td class="noborder">любая прописная буква (латиница)</td></tr>
+								<tr><td class="noborder"><code>[^-]]</code></td><td class="noborder">любой символ за исключением "-" и "]"</td></tr>
+								<tr><td class="noborder"><code>[^A-Z]</code></td><td class="noborder">любой символ (латиница) за исключением заглавных букв</td></tr>
+								<tr><td class="noborder"><code>[a-zA-Z]</code></td><td class="noborder">любая буква (латиница)</td></tr>
+							</table>
+						</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[5]</span></td>
+						<td><code>*</code></td>
+						<td>любое выражение из <span class="ref">[1]</span> - <span class="ref">[4]</span> (за исключением <span class="ref">[8]</span>, <span class="ref">[9]</span> и <span class="ref">[10]</span> форм из <span class="ref">[3]</span>), с закрывающим символом "*" соответствует нулевому или большему количеству совпадений выражения данного вида.</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[6]</span></td>
+						<td><code>+</code></td>
+						<td>то же самое, что и <span class="ref">[5]</span>, но минимум одно совпадение.</td>
+					</tr>
+					<tr>
+						<td><span class="ref"><nobr>[5-6]</nobr></span></td>
+						<td><code></code></td>
+						<td>Обе формы <span class="ref">[5]</span> и <span class="ref">[6]</span> - "жадные" (они соответствуют наибольшему количеству совпадений из возможных).
+						Но если за ними следует 'ленивый' квантор (?) то <span class="ref">[5]</span> и <span class="ref">[6]</span> соответствуют наименьшему количеству совпадений.</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[7]</span></td>
+						<td><code>?</code></td>
+						<td>то же самое, что и <span class="ref">[5]</span>, но соответствует нулю или единственному вхождению.</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[8]</span></td>
+						<td><code>\(</code>...<code>\)</code></td>
+						<td>регулярное выражение вида <span class="ref">[1]</span> - <span class="ref">[13]</span>, записанное как <b>\(выражение\)</b> (или <b>(выражение)</b> в posix-режиме) используется для создания подвыражений (подшаблонов) и соответствует самому выражению в скобках. Подвыражения (подшаблоны) используются для <span class="ref">[9]</span> и для замены по шаблону. Подвыражения (подшаблоны) нумеруются с 1.</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[9]</span></td>
+						<td><code>\1</code>...<code>\9</code></td>
+						<td>соответствует найденному ранее подвыражению (подшаблону) (<span class="ref">[8]</span>).</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[10]</span></td>
+						<td><code>\&lt; \&gt;</code></td>
+						<td>регулярное выражение, начинающееся с "\&lt;" и/или заканчивающееся на "\&gt;", ограничивает шаблон поиска началом слова и/или концом слова. Определено, что слово должно быть строкой, начинающейся и/или заканчивающейся одним из символов <code>A-Z a-z 0-9</code> и "<code>_</code>". Scintilla расширяет это определение, основываясь на пользовательских настройках. Перед словом и/или после него должно быть хотя бы по одному символу, не входящему в это определение.
+					</tr>
+					<tr>
+						<td><span class="ref">[11]</span></td>
+						<td><code>\</code> и следующий за ним один символов <code>d, D, s, S, w</code> или <code>W</code></td>
+						<td>задает класс символов (внешний и внутренний наборы []).
+						<ul>
+							<li>d: десятичная цифра</li>
+							<li>D: любой символ кроме десятичных цифр</li>
+							<li>s: пробельный символ (пробел, \t \n \r \f \v)</li>
+							<li>S: любой символ кроме пробельных (см. выше)</li>
+							<li>w: любая цифра или буква и подчеркивание (можно изменить в пользовательских настройках)</li>
+							<li>W: любой символ кроме букв, цифр и подчеркивания (см. выше)</li>
+						</ul>
+						</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[12]</span></td>
+						<td><code>\xHH</code><br>(где H - шестнадцатеричная цифра)</td>
+						<td>определяет символ с данным ASCII кодом. Если цифр после <code>x</code> нет, то соответствует символу "x"</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[13]</span></td>
+						<td><br /></td>
+						<td>составное регулярное выражение <b>xy</b>, где <b>x</b> и <b>y</b> регулярные выражения в виде <span class="ref">[1]</span> - <span class="ref">[12]</span> соответствует совпадению выражения <b>x</b> и следующим за ним совпадением выражения <b>y</b>.</td>
+					</tr>
+					<tr>
+						<td><span class="ref">[14]</span></td>
+						<td><code>^ $</code></td>
+						<td>регулярное выражение начинающееся с символа "^" и/или заканчивающееся на символ "$" ограничевает шаблон поиска началом и/или концом строки. В любом другом месте в выражении символы "^" и "$" трактуются как обычные символы.</td>
+					</tr>
+				</tbody>
+			</table>
+    </p>
+    <h3>Благодарности</h3>
+    <p>
+    Большая часть документации написана Ozan S. Yigit.<br />
+    Дополнено Neil Hodgson и Philippe Lhoste.<br />
+    Все в данном документе находиться в общественном доступе.
+    </p>
+    <li>Русский перевод: <b><a href="http://forum.ru-board.com/profile.cgi?action=show&member=s_mart" target=_blank>s_mart</a></b> и <b><a href="http://forum.ru-board.com/profile.cgi?action=show&member=dB6" target=_blank>dB6</a></b>
+    </p>
+  </body>
+</html>
+

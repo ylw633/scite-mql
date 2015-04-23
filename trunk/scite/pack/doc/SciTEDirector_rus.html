@@ -1,0 +1,295 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <title>SciTE Director Interface</title>
+</head>
+
+<body>
+  <table bgcolor="#000000" width="100%" cellspacing="0" cellpadding="0" border="0" class="tmenu">
+    <tr>
+      <td><img src="SciTEIco.png" height="64" width="64" alt="Scintilla icon"></td>
+      <td width="100%"><font size="5">SciTE Director Interface</font></td>
+    </tr>
+  </table>
+
+  <table bgcolor="#CCCCCC" width="100%" cellspacing="0" cellpadding="8" border="0" class="tmenu">
+    <tr><td>
+      <a href="SciTEDoc_rus.html">Документация</a>&nbsp;&nbsp;
+      <a href="SciTEFAQ_rus.html">FAQ</a>&nbsp;&nbsp;
+      <a href="SciTERegEx_rus.html">Регулярные выражения</a>&nbsp;&nbsp;
+      <a href="SciTEExtension_rus.html">SciTE Extension</a>&nbsp;&nbsp;
+      <a href="SciTELua_rus.html">LUA</a>&nbsp;&nbsp;
+      <nobr>SciTE Director</nobr>&nbsp;&nbsp;
+      <a href="CommandValues_rus.html">Команды SciTE и Scintilla</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Pack_rus.html">Сборка Ru-Board</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Kernel_rus.html">Ядро SciTE-Ru</a>&nbsp;&nbsp;
+      <a href="../tools/LuaLib/shell_rus.html">Shell</a>&nbsp;&nbsp;
+      <a href="../tools/Helper/SciTE.Helper_rus.html">SciTE Helper</a>&nbsp;&nbsp;
+      <a href="ScintillaHistory_rus.html">История</a>
+    </td></tr>
+  </table>
+
+    <h3>
+       Назначение
+    </h3>
+	<p>При разработке программ работают не с одним файлом. Разработчик будет работать с группой связанных файлов в рамках одного проекта. Функциональность менеджера проектов должна быть добавлена в SciTE, так другие редакторы имеют её, но это может налагать особое видение того как управлять проектами включая формат файлов проекта. Однако, SciTE имеет интерфейс который можно использовать для менеджеров проектов или подобных приложений для контроля SciTE. Любые приложения которые контролируют SciTE называются "Директор".</p>
+	<p>Сейчас SciTE Director работает только под Windows. В будущем, если будет возможность заменить низкоуровневый интерфейс, он будет доступен для других платформ.</p>
+	<p>Сейчас доступно только одно приложение-директор
+	<a href="http://llt.chez-alice.fr/">Filerx</a>.</p>
+	<p>Этот интерфейс реализован поверх <a href="SciTEExtension_rus.html">интерфейса расширений SciTE</a>, в файле  scite\win32\DirectorExtension.cxx.</p>
+    <h3>
+       Прямое соединение, широковещательная рассылка и точное указание адресов возврата
+    </h3>
+	<p>В каждый момент времени только одно приложение может быть <i>директором</i> SciTE, управляя SciTE как пожелает. Для поддержки других способов взаимодействия, приложения могут рассылать сообщения всем активным интерфейсам директора. В этом случае каждое сообщение должно содержать точный адрес возврата куда быдет посылатся  ответ на данное широковещательное сообщение.
+	</p>
+    <h3>
+       Низкоуровневый интерфейс под Windows
+    </h3>
+	<p>Сообщение Windows <b>WM_COPYDATA</b> используется для передачи данных между SciTE и Директором. Сообщения посылаются между окнами созданными двумя приложениями. Окно SciTE принимает только это сообщение.
+	Поля <b>lpData</b> и <b>cbData</b> в структуре <b>COPYDATASTRUCT</b> используются для передачи строки между двумя процессами, поле cbData содержит длину строки которая указана в <b>lpData</b>. Строка не должна заканчиваться '\0'. Поле <b>dwData</b> должно быть 0.</p>
+	<p>Перед тем как сообщение должно быть послано, необходимо определить дескриптор окна куда посылается сообщение. Обычно он передается когда приложение запускается как аргумент в командной строке. Каждое приложение может запустить другое. SciTE делает свой дескриптор окна доступным в свойстве <b>WindowID</b> и принимает свойство <b>director.hwnd</b> как дескриптор окна в которое посылает сообщения.</p>
+	<p>Например, для запуска Filerx в меню Tools:</p>
+	<div class="example">
+	command.name.0.*=Project Editor<br/>
+	command.0.*="C:\os\scite\bin\filerx.exe" "$(FileDir)" "$(WindowID)"<br/>
+	command.subsystem.0.*=2
+	</div>
+	<p>И наоборот, Filerx может запустить SciTE с командной строки, где указан его десктриптор окна, также как и файл который нужно редактировать:</p>
+	<div class="example">
+	SciTE -director.hwnd=937846 c:\os\scite\src\SciTEBase.cxx
+	</div>
+	<p>Одно приложение получив дескриптор окна другого приложения долно передать свой дескриптор окна используя идентификационное сообщение как описано ниже. Тогда оба приложения могут посылать сообщения.</p>
+	<p>Для того чтобы найти активный интерфейс директора необходимо послать широковещательное сообщение "SciTEDirectorInterface" и смотреть какое окно ответит тем же значением как и это сообщение.
+	Пример кода шировещательной рассылки:</p>
+	<div class="highlighted">
+<SPAN class=S0></SPAN><SPAN class=S5>unsigned</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S5>int</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>SDI</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>=</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>::</SPAN><SPAN class=S11>RegisterWindowMessage</SPAN><SPAN class=S10>(</SPAN><SPAN class=S0></SPAN><SPAN class=S6>"SciTEDirectorInterface"</SPAN><SPAN class=S10>);</SPAN><SPAN class=S0><BR>
+</SPAN><SPAN class=S11>HWND</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>w</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>=</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>::</SPAN><SPAN class=S11>GetWindow</SPAN><SPAN class=S10>(::</SPAN><SPAN class=S11>GetDesktopWindow</SPAN><SPAN class=S10>(),</SPAN><SPAN class=S0></SPAN><SPAN class=S11>GW_CHILD</SPAN><SPAN class=S10>);</SPAN><SPAN class=S0><BR>
+</SPAN><SPAN class=S5>while</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>(</SPAN><SPAN class=S11>w</SPAN><SPAN class=S10>)</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>{</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S11>DWORD</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>res</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>=</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S4>0</SPAN><SPAN class=S10>;</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S2>//&nbsp;Неоходимо&nbsp;ограничить&nbsp;время&nbsp;для&nbsp;избежания&nbsp;зависших&nbsp;приложений</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S10>::</SPAN><SPAN class=S11>SendMessageTimeout</SPAN><SPAN class=S10>(</SPAN><SPAN class=S11>w</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>SDI</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S4>0</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S4>0</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S11>SMTO_NORMAL</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S4>1000</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>&amp;</SPAN><SPAN class=S11>res</SPAN><SPAN class=S10>);</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S5>if</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>(</SPAN><SPAN class=S11>res</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>==</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S5>static_cast</SPAN><SPAN class=S10>&lt;</SPAN><SPAN class=S11>DWORD</SPAN><SPAN class=S10>&gt;(</SPAN><SPAN class=S11>SDI</SPAN><SPAN class=S10>))</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>{</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S2>//&nbsp;Replied&nbsp;with&nbsp;same&nbsp;SDI&nbsp;code&nbsp;so&nbsp;should</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S2>//&nbsp;understand&nbsp;SDI's&nbsp;version&nbsp;of&nbsp;WM_COPYDATA</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S10>::</SPAN><SPAN class=S11>SendMessage</SPAN><SPAN class=S10>(</SPAN><SPAN class=S11>w</SPAN><SPAN class=S10>,</SPAN><SPAN class=S11>WM_COPYDATA</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S10>(</SPAN><SPAN class=S11>UINT</SPAN><SPAN class=S10>)</SPAN><SPAN class=S11>m_hWnd</SPAN><SPAN class=S10>,(</SPAN><SPAN class=S5>long</SPAN><SPAN class=S10>)&amp;</SPAN><SPAN class=S11>cds</SPAN><SPAN class=S10>);</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S10>}</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S11>w</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>=</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>::</SPAN><SPAN class=S11>GetWindow</SPAN><SPAN class=S10>(</SPAN><SPAN class=S11>w</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>GW_HWNDNEXT</SPAN><SPAN class=S10>);</SPAN><SPAN class=S0><BR>
+</SPAN><SPAN class=S10>}</SPAN><SPAN class=S0><BR>
+</SPAN>
+</div>
+<p>Для извещения что окно верхнего уровня поддерживает интерфейс Директора:</p>
+<div class="highlighted">
+<SPAN class=S0></SPAN><SPAN class=S11>LRESULT</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>PASCAL</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>DirectorExtension_WndProc</SPAN><SPAN class=S10>(</SPAN><SPAN class=S11>HWND</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>hWnd</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S11>UINT</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>iMessage</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>WPARAM</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>wParam</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>LPARAM</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>lParam</SPAN><SPAN class=S10>)</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>{</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S5>unsigned</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S5>int</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>SDI</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>=</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>::</SPAN><SPAN class=S11>RegisterWindowMessage</SPAN><SPAN class=S10>(</SPAN><SPAN class=S6>"SciTEDirectorInterface"</SPAN><SPAN class=S10>);</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S5>if</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>(</SPAN><SPAN class=S11>iMessage</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>==</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>SDI</SPAN><SPAN class=S10>)</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>{</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S5>return</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>SDI</SPAN><SPAN class=S10>;</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S10>}</SPAN><SPAN class=S0><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;</SPAN><SPAN class=S5>return</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S10>::</SPAN><SPAN class=S11>DefWindowProc</SPAN><SPAN class=S10>(</SPAN><SPAN class=S11>hWnd</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>iMessage</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0>&nbsp;</SPAN><SPAN class=S11>wParam</SPAN><SPAN class=S10>,</SPAN><SPAN class=S0></SPAN><SPAN class=S11>lParam</SPAN><SPAN class=S10>);</SPAN><SPAN class=S0><BR>
+</SPAN><SPAN class=S10>}</SPAN><BR>
+</div>
+    <h3>
+       Низкоуровневый интерфейс под GTK+
+    </h3>
+	<p>Еще не внедрен.
+	Предлагаемое решение использует входной буфер fifo для каждого приложения поддерживающего интерфейс SciTe Director, расположенный в  /tmp с именем по шаблону "/tmp/SciTE&lt;PID&gt;.director". Это позволяет перечислять все активные интерфейсы директора и также открывать необходимый интерфейс когда буфер fifo общается каким-нибудь другим способом, таким как аргументы командной строки или командами identity:.</p>
+    <h3>
+       Высокоуровневый интерфейс
+    </h3>
+	<p>Сообщения используют эскейп-символы в стиле C для представления управляющих символов. Передаются только видимые символы, команды разделяются '\n'.</p>
+	<p>Строка передаваемая через низкоуровневый интерфейс содержит: опционально адрес возврата окруженный символами ':', команду, символ ':' и опционально аргумент. Часто в качестве аргумента передается путь к файлу. Символ ':' должен быть даже если аргументов нет. Например, SciTE понимает сообщение</p>
+	<div class="example">
+	open:c:\\os\\scintilla\\include\\Scintilla.iface
+	</div>
+	<p>как команду открыть файл "c:\os\scintilla\include\Scintilla.iface" также как пользователь сделал бы эту операцию.</p>
+	<p>Если первый символ команды ':' то строка до следующего ':' есть адрес возврата, так SciTE ответит на команду:</p>
+	<div class="example">
+	:73658:askfilename:
+	</div>
+	<p>посылкой имени редактируемого файла окну с дескриптором 73658.</p>
+	<h4>Команды понимаемые SciTE:</h4>
+	<table border="1">
+		<tr>
+			<td>askfilename:</td>
+			<td>Вернуть имя редактируемого файла.</td>
+		</tr>
+		<tr>
+			<td>askproperty:&lt;key&gt;</td>
+			<td>Вернуть значение параметра.</td>
+		</tr>
+		<tr>
+			<td>close:</td>
+			<td>Закрыть текущий файл.</td>
+		</tr>
+		<tr>
+			<td>closing:</td>
+			<td>Директор закрывается - SciTE закрывается тоже, если был запущен директором.</td>
+		</tr>
+		<tr>
+			<td>currentmacro:&lt;string&gt;</td>
+			<td>Присвоить текущему макросу имя.</td>
+		</tr>
+		<tr>
+			<td>cwd:</td>
+			<td>Изменить рабочую директорию.</td>
+		</tr>
+		<tr>
+			<td>enumproperties:dyn|local|user|base|embed</td>
+			<td>Перечислить все параметры в заданном окружении.</td>
+		</tr>
+		<tr>
+			<td>exportashtml:&lt;path&gt;</td>
+			<td>Записать документ в формат HTML по указанному пути.</td>
+		</tr>
+		<tr>
+			<td>exportasrtf:&lt;path&gt;</td>
+			<td>Записать документ в формат RTF по указанному пути.</td>
+		</tr>
+		<tr>
+			<td>exportaspdf:&lt;path&gt;</td>
+			<td>Записать документ в формат PDF по указанному пути.</td>
+		</tr>
+		<tr>
+			<td>exportaslatex:&lt;path&gt;</td>
+			<td>Записать документ в формат LaTeX по указанному пути..</td>
+		</tr>
+		<tr>
+			<td>exportasxml:&lt;path&gt;</td>
+			<td>Записать документ в формат XML по указанному пути.</td>
+		</tr>
+		<tr>
+			<td>extender:&lt;command&gt;</td>
+			<td>Выполнить заданную команду <a href="SciTEExtension_rus.html">интерфейса расширений</a>.</td>
+		</tr>
+		<tr>
+			<td>find:&lt;string&gt;</td>
+			<td>Найти строку, показать и выделить ее.</td>
+		</tr>
+		<tr>
+			<td>goto:&lt;lineNumber&gt;[,&lt;columnNumber&gt;]</td>
+			<td>Передвинуть курсор на заданную строку и сделать ее видимой.<br>
+			Если задана позиция курсора, то выделяется слово в этой позиции или передвигает каретку если слова нет.</td>
+		</tr>
+		<tr>
+			<td>identity:&lt;hwndDirector&gt;</td>
+			<td>Задать дескриптор окна директора куда SciTE будет посылать сообщения.
+			Значение в десятичном формате.</td>
+		</tr>
+		<tr>
+			<td>insert:&lt;value&gt;</td>
+			<td>В панели редактора заменить выделенный текст.</td>
+		</tr>
+		<tr>
+			<td>loadsession:&lt;path&gt;</td>
+			<td>Load a session as given by the indicated file.</td>
+		</tr>
+		<tr>
+			<td>macrocommand:&lt;command&gt;</td>
+			<td>Выполнить макрокоманду.
+			Смотрите исходные коды SciTE о синтаксисе команд.</td>
+		</tr>
+		<tr>
+			<td>macroenable:&lt;enable&gt;</td>
+			<td>Если "enable", отобразить меню для записи и выполнения макросов.</td>
+		</tr>
+		<tr>
+			<td>macrolist:&lt;list&gt;</td>
+			<td>Отобразить список макросов для выбора пользователем.</td>
+		</tr>
+		<tr>
+			<td>menucommand:&lt;cmd&gt;</td>
+			<td>Выполнить команду меню по номеру ID.</td>
+		</tr>
+		<tr>
+			<td>open:&lt;path&gt;</td>
+			<td>Открыть файл по заданному пути.</td>
+		</tr>
+		<tr>
+			<td>output:&lt;value&gt;</td>
+			<td>Отобразить значение в панели вывода, перезаписывает выделенный текст.</td>
+		</tr>
+		<tr>
+			<td>property:&lt;key&gt;=&lt;value&gt;</td>
+			<td>Присвоить значение параметру.</td>
+		</tr>
+		<tr>
+			<td>quit:</td>
+			<td>Закрыть SciTE.</td>
+		</tr>
+		<tr>
+			<td>reloadproperties:</td>
+			<td>Перезагрузить параметры из файлов.</td>
+		</tr>
+		<tr>
+			<td>replaceall:&lt;search&gt;\000&lt;replace&gt;</td>
+			<td>Заменить все найденные вхождения искомой строки на другую строку.</td>
+		</tr>
+		<tr>
+			<td>saveas:&lt;path&gt;</td>
+			<td>Сохранить документ по указанному пути.</td>
+		</tr>
+		<tr>
+			<td>savesession:&lt;path&gt;</td>
+			<td>Сохранить текущую сессию по указанному пути.</td>
+		</tr>
+	</table>
+	<h4>Команды посылаемые SciTE:</h4>
+	<table border="1">
+		<tr>
+			<td>closing:</td>
+			<td>SciTE закрывается.</td>
+		</tr>
+		<tr>
+			<td>dyn|local|user|base|embed:&lt;key&gt;=&lt;value&gt;</td>
+			<td>Присвоено значение параметру в заданном наборе.</td>
+		</tr>
+		<tr>
+			<td>filename:&lt;path&gt;</td>
+			<td>Файл по данному пути редактируется в данный момент.
+			Это ответ на действие askfilename: command.</td>
+		</tr>
+		<tr>
+			<td>identity:&lt;hwndSciTEReceiving&gt;</td>
+			<td>SciTE показывает директору дескриптор окна в которе следует посылать сообщения. Значение в десятичном формате.</td>
+		</tr>
+		<tr>
+			<td>macro:getlist</td>
+			<td>Возвращает список доступных макросов в ответ на команду macrolist.</td>
+		</tr>
+		<tr>
+			<td>macro:record:&lt;details&gt;</td>
+			<td>Начата запись макроса.
+			Смотрите исходные коды SciTE о синтаксисе аргумента details.</td>
+		</tr>
+		<tr>
+			<td>macro:run:&lt;macroName&gt;</td>
+			<td>Запущен макрос.</td>
+		</tr>
+		<tr>
+			<td>macro:stoprecord</td>
+			<td>Остановлена запись макроса.</td>
+		</tr>
+		<tr>
+			<td>opened:&lt;path&gt;</td>
+			<td>SciTE открыл файл по данному пути.</td>
+		</tr>
+		<tr>
+			<td>switched:&lt;path&gt;</td>
+			<td>SciTE переключил буфер на файл по данному пути.</td>
+		</tr>
+		<tr>
+			<td>saved:&lt;path&gt;</td>
+			<td>SciTE сохранил файл по данному пути.</td>
+		</tr>
+	</table>
+  <p>В будущем, будет доступно больше команд. Приложения должны игнорировать любые команды которые не понимают.</p>
+  <li>Русский перевод: <b><a href="http://forum.ru-board.com/profile.cgi?action=show&member=s_mart" target=_blank>s_mart</a></b>
+  </body>
+</html>
+

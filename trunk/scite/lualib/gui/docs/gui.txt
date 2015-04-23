@@ -1,0 +1,352 @@
+# SciTE GUI Extensions for Windows
+
+SciTE is already a very powerful and customizable source editor, but extensions lack the ability to interact with the user. `SciTE-GUI` is a binary extension written in C++ which provides a useful set of GUI controls that can be used by SciTE Lua scripts.
+
+To use this DLL, you need to call `require("gui")`; putting gui.dll next to your SciTE.exe should work fine.
+
+## Running Programs
+
+Lua provides `os.execute`, but it suffers from two serious limitations; first, you will get the dreaded flashing black box in a GUI application like SciTE, and second, it blocks until the program completes.  `gui.run` allows you to launch a program or open a document in a straightforward fashion, and it returns immediately. The arguments are:
+
+  # File name of program or document
+  # Parameters, if running a program that requires parameters
+  # Default directory (defaults to running in current directory)
+
+For example, assuming that SciTE is on your path:
+
+	gui.run("SciTE.exe","c:/test/hello.c")
+
+If .c files are associated with SciTE on your machine, then this will also work:
+
+	gui.run("c:/test/hello.c")
+
+And ditto for any document with an associated application:
+
+	gui.run("c:/test/docs/help.html")
+	gui.run [[c:\test\docs\writeup.doc]]
+
+## Extensions to SciTE Lua
+
+This DLL provides three new named callbacks that Lua scripts can define, in the same way as `OnClose`, etc. These are `OnActivate`, which will be called with either 0 or 1, depending on whether SciTE is moving to the background or the foreground;  `OnClosing` will be called just before SciTE closes down completely, and `OnCommand` will be called whenever a SciTE menu command is dispatched.
+
+The last function will receive the menu command id, such as `IDM_GO`, which are currently available as Lua constants (see CommandValues.html in the documentation for a full list of these constants.)  If this function returns true, then the command will not be handled by SciTE.
+
+## Message Boxes and Prompting for Input
+
+`gui.message(msg,kind)` will put up a simple message box with the desired message text; `kind` is one of the following strings: "message", "warning", "query" or "error" - the default is "message". It will return true or false depending on which button is pressed, 'Yes' for query message and 'OK' for the others.
+
+`gui.prompt_value(prompt,default)` will ask the user to enter a single string value, with a default specified (the default value of `default` is ""). If the user presses OK or <enter>, then the entered string is returned, otherwise `nil`.
+
+## File Open and Colour Dialogs
+
+`gui.open_dlg(caption,filter)` will present a standard Open File Dialog to the user, with the specified caption and filter. If no caption is given, "Open File" will be used, and if no filter is given, "All (*.*)|*.*" is the default filter. (A more elaborate filter would look like this: "Text (*.txt)|*.txt|All (*.*)|*.*")
+
+The chosen file name will be returned, otherwise `nil` if canceled.
+
+`gui.colour_dlg(default_colour)` will open the Windows Colour choser. You need to specificy `default_colour` because it's used to determine what form you want the result in. If you pass a 32-bit integer, it's assumed to actually be a 24-bit colour, and that will be the type of the result as well. If it's a HTML-style "#RRGGBB" string, then you will receive the result like that. This form is convenient for SciTE since all colour properties are specified in this format.
+
+## Floating Toolbars
+
+These are always on-top toolbars which can be used to call global Lua functions or SciTE menu commands. The arguments to `gui.toolbar` are:
+
+ # The caption of the window
+ # A table of items
+ # The size of the images
+ # A path to search for the images
+
+(If the last parameter isn't specified, then the current directory is used, which is probably not what you want generally.)
+
+The items are of the form "IMAGE:TOOLTIP|ACTION", where the IMAGE is a bitmap file (default extension .bmp), the TOOLTIP is the text displayed when the mouse hovers over the item, and ACTION is either the name of a global Lua function or one of the IDM_ SciTE menu constants (as listed in commands.html)
+
+	tt = gui.toolbar("toolbar!", {
+		"watch.bmp:watch this!|joy",
+		"stop.bmp:stop doin that!|sorrow",
+		"run.bmp:run,run,run|IDM_OPEN",
+	},16,[[c:\Program Files\scite]])
+	tt:position(500,300)
+
+The IMAGE can also be one of the following standard icons: COPY,CUT,DELETE,FILENEW,FILEOPEN,FILESAVE,FIND,HELP,PASTE,PRINT,REDOW,REPLACE,UNDO.
+
+Note that this window understands the general window methods discussed in the next section. In particular, you can hide, show and position the toolbar.
+
+## Windows
+
+The SciTE GUI extensions allow you to create new top-level windows, and define a few controls that can be placed inside them. They all understand the `show`, `hide`, `size` and `position` methods; the last two take two integers as arguments. The `client` method is used to wrap one of the available controls in a top-level window.
+
+	w = gui.window "next"
+	w:size(200,200)
+	w:position(400,240)
+	w:context_menu {
+		'some joy|joy',
+		'some pain|sorrow',
+	}
+	w:show()
+
+A context menu (on right click) can be attached to windows; the `context_menu` method is passed a table of items of the form "TEXT|ACTION", where ACTION has the same meaning as for toolbars.
+
+You can pack more than one control into a window using the `add` method, which takes an extra _alignment_ argument, which is one of "top","bottom","left","right" or "client", and a initial size in that direction.  A control with "top" alignment will dock itself to the top of the window, and so forth; "client" alignment makes a control take over all available space. In that case, it isn't necessary to provide a size.
+
+By default an additional _splitter_ control will be added, so that users can adjust their relative sizes interactively.
+
+	w:add(ls,"top",70)
+	w:add(txt,"top",70)
+	w:add(ls2,"client")
+	w:show()
+
+It's important that any controls be created immediately after the form, so they pick up the correct parent window.
+
+Finally, the `bounds` method will return the visibility and the bounds of any window or control. These are returned as five values; note how the bounds are specified by width and height:
+
+	visible,x,y,width,height = w:bounds()
+
+This is useful if you wish to remember the configuration of toolwindows when restoring a session.
+
+All such windows (and toolbars) will be automatically hidden when SciTE ceases to be the foreground application.
+
+### Panels
+
+Panels are windows without frames which can be either attached to the left or the right side of the editor pane.  Users often prefer their UI uncluttered by arbitrary windows floating about, and `gui.set_panel` is a way to embed them in the SciTE frame itself.
+
+    local w = gui.panel(100)
+    local ls = gui.list()
+    local dirs = gui.list()
+    local bookmarks = gui.list()
+    gui.set_panel(w,"right")
+    ls:size(100,100)
+    w:add(dirs,"top",150)
+    w:add(bookmarks,"top",150)
+    w:client(ls)
+    w:show()
+
+### List View Control
+
+Given a top-level window, you can make it contain a standard list view like so:
+
+	wls = gui.list()
+	wls:add_item "stuff"
+	wls:add_item "nonsense"
+	w:client(wls)
+	w:show()
+
+There are two callbacks which you can set on list views; on _selection_ and on _double click_. These can call any Lua function like so:
+
+	wls:on_double_click (print)
+	wls:on_select(function(i)
+		print('selected',i)
+	end)
+
+By default, list views are single-column, but you can create a more general list view and specify column titles and default column sizes. Note that in general the `add_item` method takes a list of strings, one for each column in the list:
+
+	ls = gui.list(true)
+	ls:add_column('Firstname',100)
+	ls:add_column('Lastname',100)
+	ls:add_item {'jan','botha'}
+	ls:add_item {'joan','taylor'}
+
+The index passed to `on_double_click` and `on_select` is _zero-based_, so watch out if you are also using Lua tables (the total number of items is `ls:count()`.) To find the text of an item, pass this index to the `get_item_text` list method.
+
+It is sometimes the case where the item text is descriptive only, so it's useful to associate Lua data with an item. `add_item` takes an optional second parameter, which is some arbitrary Lua data; could be a table, string, function, etc. Then use the `get_item_data` method to retrieve this data using the index as above.
+
+### Tab Control
+
+A tabbar is a control which provides a set of named tabs for accessing different tab pages, which can be any other control. This is useful if you have a number of lists and don't wish to clutter up your display unnecessarily.
+
+	t = gui.tabbar(w)
+	t:add_tab("column list",ls)
+	t:add_tab("another",wls)
+	t:on_select(function(idx)
+		print('tab',idx)
+	end)
+	w:client(t)
+	w:show()
+
+### Rich Text Control
+
+`gui.memo` creates a Windows Rich Text control. You can set its text using the `set_text` method; note that this text can contain any RTF markup, if it starts with the special '{\rtf' RTF marker.
+
+	txt = gui.memo()
+	txt:set_text [[
+	{\rtf
+	{\colortbl;\red0\green0\blue0;\red0\green0\blue255;\red0\green255\blue255;
+	\red0\green255\blue0;}
+	{\f1\cb0\cf2 This is colored text. The background is color
+	1 and the foreground is color 2.}\line
+	{\f1\cb0\cf3 More text!}\line
+	Regular old stuff
+	]]
+
+Although it may seem silly to make a limited text control available to SciTE, when Scintilla is so much more capable, text boxes are useful sometimes to present information - particularly if you basically want a list where the items are differently coloured.
+
+## Some Worked Examples
+
+### Context-sensitive Toolbars
+
+Floating toolbars can potentially be very irritating, especially if their commands are specialized and only apply to files of a particular type. cpp_toolbar.lua shows how to define a toolbar which is only visible when you are editing C/C++ files, although it would be even easier to do this for single extensions.
+
+The first task is to receive notification when the current file has changed:
+
+    local oldOnSwitchFile = OnSwitchFile
+    local oldOnOpen = OnOpen
+
+    function OnSwitchFile(file)
+        on_switch()
+        if oldOnSwitchFile then oldOnSwitchFile(file) end
+    end
+
+    function OnOpen(file)
+        on_switch()
+        if oldOnOpen then oldOnOpen(file) end
+    end
+
+Note that it is good practice to save the old function values, and call them as well, if they exist. If you're using `extman`, this can be more simply expressed as:
+
+    scite_OnOpenSwitch(on_switch)
+
+We can then define `on_switch`:
+
+    local header_ext = {h = true, hpp = true, hh = true, hxx = true}
+
+    local source_ext = {c = true, cpp = true, cc = true, cxx = true}
+
+    local function set_paths ()
+        path = props['FileDir']
+        name = props['FileName']
+        ext = props['FileExt']
+    end
+
+    local function on_switch ()
+        set_paths()
+        if header_ext[ext] or source_ext[ext] then -- is a C/C++ file
+            tt:show()
+        else
+            tt:hide()
+        end
+    end
+
+I've organized the extension-checking like this because one of the functions called by this toolbar will switch between source and header files:
+
+    function try_open (exts)
+        for ext,v in pairs(exts) do
+            local file = path..'\\'..name..'.'..ext
+            local f = io.open(file,'r')
+            if f then
+                f:close()
+                scite.Open(file)
+                return
+            end
+        end
+    end
+
+    function switch_header ()
+        if header_ext[ext] then
+            try_open(source_ext)
+        elseif source_ext[ext] then
+            try_open(header_ext)
+        end
+    end
+
+The other function on this toolbar will create a new named header file:
+
+    function new_header ()
+        name = gui.prompt_value("Give header base name",name)
+        local file = path..'\\'..name..'.h'
+        local f = io.open(file,'w')
+        local guard = '__'..name:upper()..'_H'
+        f:write('#ifndef '..guard..'\n')
+        f:write('#define '..guard..'\n\n')
+        f:write('#endif\n')
+        f:close()
+        scite.Open(file)
+    end
+
+This is a nice example of a function which does a specific job for a specific kind of source file which is tedious to do manually, and shows how `gui.prompt_value` can finally give you the power to ask the user meaningful questions.
+
+### A Useful Side Panel
+
+Although the standard file open dialog on Windows is not difficult to use, it would be quicker if there were a list of available files down the side.  The last example showed how to find out when the file changes; what we need to track is the _directory_ and the _current extension_. So when either of these change, we update the list with all files of that extension.  `gui.files` is what you need here to get a list of files; `extman` does provide `scite_Files` but it relies on another extension DLL to execute a `dir` command silently; `gui.files` asks the file system directly.  The files.lua example shows how to keep track of all this.
+
+Note that it is very useful to put the actual filename as data associated with the item. This allows you to use an appropriate representation for the item text.  For example, we present the filenames without any extension, if there are any matches, otherwise make a listing of all files with their extensions.  Or you could associate the full path of the filename with its basename, which could be used to do a history list, where the files may come from many directories.
+
+### Keeping Track of Bookmarks
+
+Also contained in files.lua, is a useful little list which contains information about each bookmark defined in SciTE.  SciTE bookmarks are very useful, but only apply within the file they are defined in. This bookmark list shows the line text at which the bookmark was defined, together with a little table which contains the actual file and line number.
+
+To do this we have to catch the bookmark toggle command using `OnCommand`. (It's possible to do this without `OnCommand`, but it is awkward.)  We don't know if the toggle is creating or deleting a bookmark, so we have to scan the list for a matching line of text first.
+
+    function OnCommand (id)
+        if id == IDM_BOOKMARK_TOGGLE then
+            local line = editor:GetCurLine()
+            -- is this line already in the list?
+            local inserting = true
+            for i = 0,bookmarks:count() - 1 do
+                if bookmarks:get_item_text(i) == line then
+                    bookmarks:delete_item(i)
+                    inserting = false
+                    break
+                end
+            end
+            if inserting then
+                local lno = editor:LineFromPosition(editor.CurrentPos)
+                bookmarks:add_item(line,{props['FilePath'],lno})
+            end
+        end
+    end
+
+    bookmarks:on_double_click(function(idx)
+        local pos = bookmarks:get_item_data(idx)
+        if pos then
+            scite.Open(pos[1])
+            editor:GotoLine(pos[2])
+        end
+    end)
+
+
+### Editing Colours in Property Files
+
+One complaint that people do have about SciTE is that all customization is done with the editor itself. Personally, I can't look at a hex colour specification and tell you what colour is represented, which is one reason I included a colour dialog in SciTE-GUI.
+
+edit_colour.lua shows how to use `gui.colour_dlg` to view and change the colour specifications found in SciTE property files, CSS styles, etc.  The mildly tricky part is to extract the colour specification at the current editor position:
+
+    function edit_colour ()
+        local function getch (i)
+            return editor:textrange(i,i+1)
+        end
+        local function hexdigit (c)
+            return c:find('[0-9A-F]')==1
+        end
+        local i = editor.CurrentPos
+        -- let's find the extents of this colour field...
+        local ch = getch(i)
+        while i > 0 and ch ~= '#' and hexdigit(ch) do
+            i = i - 1
+            ch = getch(i)
+        end
+        if i == 0 then return end
+        local istart = i
+        i = i + 1 -- skip the '#'
+        while hexdigit(getch(i)) do i = i + 1 end
+        -- extract the colour!
+        local colour = editor:textrange(istart,i)
+        colour = gui.colour_dlg(colour)
+        if colour then -- replace the colour in the document
+            editor:SetSel(istart,i)
+            editor:ReplaceSel(colour)
+        end
+    end
+
+No doubt there is an easier way, perhaps using Scintilla's ability to search for patterns.
+
+## Limitations and Further Possibilities
+
+There are some bugs which I haven't been able to squash yet:
+
+  - Toolbar icons can only be specified with bitmaps without transparency, and they are still appearing with a white background. The library uses the `LoadImage` API call, which has limitations which I don't fully understand.
+  - There are some irritating repaint problems with the side panel splitter.
+
+SciTE-GUI is intended to be a useful but minimal set of GUI functionality. This current implementation is built on my own Win32 class libraries (Yet Another Windows Library, or YAWL for short) and there's a lot more that could be exposed to Lua.  In particular, tree views would be very useful; this would also involve exposing image lists, which would allow icons to be attached to the list views as well.
+
+One of the cuter features of YAWL is that dialogs can be created using automatic layout, given a set of labels and variable bindings. This is currently only used to bring up a single-string prompt box, but it would not be difficult to make fairly arbitrary input forms accessible from Lua.
+
+It would be desirable to make exactly the same GUI API available for SciTE on GTK platforms. While this isn't fully possible (e.g. RTF is generally not a Unix thing) most of this functionality can be done using the Lua-GTK bindings of Wolfgang Oertl together with some Lua wrapping code.  This is very much on my mind, since the SciTE GUI toolkit is designed to make the scite-debug extensions more easier to use on both platforms.
+
+

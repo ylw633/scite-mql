@@ -1,0 +1,77 @@
+Text
+{
+<html>
+<meta http-equiv=Content-Type Content="text-html; charset=windows-1251">
+<meta http-equiv=MSThemeCompatible Content=Yes>
+<style>
+body, table {background-color:white; font-family:MS Shell Dlg; font-size:8pt; overflow:auto;}
+p {text-align:center;}
+a {color:#000080; text-decoration:none;}
+a:hover {color:red;}
+em {color:navy; font-style:normal;}
+ul {margin-left:20pt; margin-top:10pt;}
+input {font:normal bold 8pt MS Shell Dlg; width:30px; color:red;}
+</style>
+<script language="VBScript">
+Sub ChangeLanguage()
+	For i = 0 To self.document.all.LNG.Length - 1
+		If document.all.LNG(i).style.display = "none" Then
+			document.all.LNG(i).style.display = "block"
+		Else
+			document.all.LNG(i).style.display = "none"
+		End If
+	Next
+	If LNG_BTN.Value = "rus" Then
+		LNG_BTN.Value = "eng"
+	Else
+		LNG_BTN.Value = "rus"
+	End If
+End Sub
+</script>
+<body>
+<table width="100%" height="100%" cellpadding="0" cellspacing="0" border="0">
+	<tr><td align=center width="100%" valign="top">
+			<em><b>SciTE 3.25 .99Ru [Pack 03.03.2013]</b></em>
+		</td>
+		<td>
+			<input id="LNG_BTN" type="button" value="rus" hidefocus onClick="ChangeLanguage">
+		</td>
+	</tr>
+	<tr><td colspan="2">
+		<div id="LNG"><ul>
+			<li>Some functionality modifications and improvements
+			<li>Non-standard properties files
+			<li>Many useful scripts included
+		</ul></div>
+		<div id="LNG" style="display:none"><ul>
+			<li>Доработанный код
+			<li>Русифицированный интерфейс и документация
+			<li>Нестандартная структура
+			<li>Оригинальные файлы конфигураций
+			<li>Подключены полезные скрипты
+		</ul></div>
+	</td></tr>
+	<tr><td colspan="2" align="center">
+		<div id="LNG">
+			Documentation can be found in <font color="blue">\doc</font> folder of installation.
+		</div>
+		<div id="LNG" style="display:none">
+			Полное описание - в подкаталоге <font color="blue">\doc</font> установленной программы.
+		</div>
+	</td></tr>
+	<tr><td colspan="2" align="center" valign="bottom" height="100%">
+		<hr size=1>
+		<div id="LNG">
+<p style="margin-top:-4px;"><em><a href="http://forum.ru-board.com/topic.cgi?forum=5&topic=24956&glp" target="_blank">Package has been built by members of forum Ru-Board.</a></em></p>
+		</div>
+		<div id="LNG" style="display:none">
+<p style="margin-top:-4px;"><em><a href="http://forum.ru-board.com/topic.cgi?forum=5&topic=24956&glp" target="_blank">Пакет откомпилирован и собран участниками форума Ru-Board.</a></em></p>
+		</div>
+	</td></tr>
+</table>
+</body></html>
+}
+Path=SciTE
+Title=SciTE Ru-Board Edition
+Shortcut=D,SciTE.exe,"","SciTE Editor","SciTE"
+Setup=tools\SciTE_WinIntegrator.hta

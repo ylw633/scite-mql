@@ -1,0 +1,638 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <title>SciTE Ru-Board Kernel Changes</title>
+</head>
+
+<body>
+  <table bgcolor="#000000" width="100%" cellspacing="0" cellpadding="0" border="0" class="tmenu">
+    <tr>
+      <td><img src="SciTEIco.png" height="64" width="64" alt="Scintilla icon"></td>
+      <td width="100%"><font size="5">SciTE Ru-Board Kernel Changes</font></td>
+    </tr>
+  </table>
+
+  <table bgcolor="#CCCCCC" width="100%" cellspacing="0" cellpadding="8" border="0" class="tmenu">
+    <tr><td>
+      <a href="SciTEDoc_rus.html">Документация</a>&nbsp;&nbsp;
+      <a href="SciTEFAQ_rus.html">FAQ</a>&nbsp;&nbsp;
+      <a href="SciTERegEx_rus.html">Регулярные выражения</a>&nbsp;&nbsp;
+      <a href="SciTEExtension_rus.html">SciTE Extension</a>&nbsp;&nbsp;
+      <a href="SciTELua_rus.html">LUA</a>&nbsp;&nbsp;
+      <a href="SciTEDirector_rus.html">SciTE Director</a>&nbsp;&nbsp;
+      <a href="CommandValues_rus.html">Команды SciTE и Scintilla</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Pack_rus.html">Сборка Ru-Board</a>&nbsp;&nbsp;
+      <nobr>Ядро SciTE-Ru</nobr>&nbsp;&nbsp;
+      <a href="../tools/LuaLib/shell_rus.html">Shell</a>&nbsp;&nbsp;
+      <a href="../tools/Helper/SciTE.Helper_rus.html">SciTE Helper</a>&nbsp;&nbsp;
+      <a href="ScintillaHistory_rus.html">История</a>
+    </td></tr>
+  </table>
+
+    <h1>Текстовый редактор SciTE RU-Board 3.25 .99</h1>
+
+    <p>Все модификации оригинального кода редактора <A href="http://www.scintilla.org">SciTE</A> выполнены энтузиастами <A href="http://forum.ru-board.com/topic.cgi?forum=5&topic=35160&glp">форума Ru-Board</A>.
+
+    <br>Данный файл содержит полный список всех доработок кода относительно исходной версии редактора.
+    <br>Все изменения, внесенные в код редактора, помечались характерными комментариями, что позволяет при желании применить к оригинальному коду любое из них по отдельности.
+    <br>Демонстрацию работы обновленного редактора с многочисленными примерами использования его расширенных возможностей, вы можете увидеть, загрузив <A href="http://scite-ru.org">пакет SciTE-Ru</A>.
+
+    <p>Для удобства восприятия список разбит на три раздела:
+    <ul style="margin-top: 5; font-weight:bold">
+      <li><a href="#1">Интерфейс</a></li>
+      <li><a href="#2">Расширения</a></li>
+      <li><a href="#3">Устранение ошибок</a></li>
+    </ul>
+    </p>
+
+    <h3>
+      <a name="1"></a>
+      Интерфейс
+    </h3>
+
+<h5 id="LangMenuChecker">
+[LangMenuChecker] <span class=desc>(Автор: neo4max)</span></h5>
+Текущий язык отмечается меткой в меню "Подсветка".
+
+<h5 id="UserPropertiesFilesSubmenu">
+[UserPropertiesFilesSubmenu] <span class=desc>(Автор: mhb, arhohryakov)</span></h5>
+Пункты открытия файлов языковых настроек (language.properties) вынесены в отдельное подменю "Edit Properties".
+
+<h5 id="CheckFileExist">
+[CheckFileExist] <span class=desc>(Автор: neo4max)</span></h5>
+Теперь SciTE проверяет наличие редактируемого файла на диске и при его отсутствии выводит соответствующее предупреждение. Кроме этого исправлено детектирование изменения даты редактируемого файла.
+
+<h5 id="find.fillout">
+[find.fillout] <span class=desc>(Авторы: Frank Wunderlich, VladVRO)</span></h5>
+Новый параметр <span class="example">find.fillout</span> в .properties, который позволяет задать способ начального заполнения поля в диалоге поиска:<br>
+&nbsp; 0 (по умолчанию) - если есть выделение и оно не содержит переводов строк, то использовать его, иначе взять слово рядом с курсором (как это и было ранее),<br>
+&nbsp; 1 - использовать выделение, если выделения нет, то оставить поле пустым,<br>
+&nbsp; 2 - всегда оставлять поле пустым.
+
+<h5 id="MoreRecentFiles">
+[MoreRecentFiles] <span class=desc>(Автор: Daniel Cardenas)</span></h5>
+Список последних открывавшихся файлов можно расширить до 30 пунктов используя новый параметр: <div class="example">save.recent.max=30</div>
+
+<h5 id="save.session.multibuffers.only">
+[save.session.multibuffers.only] <span class=desc>(Автор: VladVRO)</span></h5>
+Новый параметр в .properties, который позволяет запретить запись файла сессии при выходе из редактора, если открыта только одна вкладка:
+<div class="example">save.session.multibuffers.only=1</div>
+
+<h5 id="session.close.buffers.onload">
+[session.close.buffers.onload] <span class=desc>(Автор: VladVRO)</span></h5>
+Новый параметр <span class="example">session.close.buffers.onload</span> в .properties позволяет задать закрывать или нет уже открытые файлы при загрузке сессии.<br>
+Например, для того что бы вкладки остались открытыми:
+<div class="example">session.close.buffers.onload=0</div>
+по умолчанию при загрузке сессии все открытые файлы закрываются.
+
+<h5 id="ReadOnlyTabMarker">
+[ReadOnlyTabMarker] <span class=desc>(Авторы: Midas, VladVRO, neo4max)</span></h5>
+Добавлена возможность отображать состояние <i>"только для чтения"</i> с помощью доп. символов в имени вкладки, которые задаются в настройках параметром <span class="example">tabbar.readonly.marker</span>, например:
+<div class="example">tabbar.readonly.marker= R/O</div>
+
+<h5 id="SubMenu">
+[SubMenu] <span class=desc>(Автор: HSolo, Доработка: Дмитрий Маслов)</span></h5>
+Добавлена возможность создания вложенных подменю в меню Tools.<br>
+Они создаются вначале меню и отделены от остальных пунктов разделителем.<br>
+Сначала задаются названия подменю:
+<div class="example">command.submenu.name.2.<i>filepattern</i>=Insert from Text</div>
+если они вложены в другое подменю, то задается номер родительского меню:
+<div class="example">command.submenu.parent.2.<i>filepattern</i>=4</div>
+Затем для команд, входящих в подменю, задается номер родительского меню:
+<div class="example">command.parent.6.<i>filepattern</i>=2<br>
+command.name.6.<i>filepattern</i>=Date and Time</div>
+<br>
+В меню Tools возможно вставлять разделители.<br>
+Например, <span class="example">command.separator.34.<i>filepattern</i>=1</span> вставляет разделитель перед командой 34.<br>
+Так же возможна установка отметки перед выбранным пунктом меню.<br>
+Например, так: <span class="example">command.checked.34.<i>filepattern</i>=1</span>.<br>
+<br>
+Текст всех пунктов меню и подменю Tools русифицируется так же как и основное меню - через файл locale.properties.
+
+<h5 id="ToolsMax">
+[ToolsMax] <span class=desc>(Автор: Moon_aka_Sun, VladVRO)</span></h5>
+Число допустимых пунктов в меню Tools увеличено до 300.<br>
+Для создания пользовательских команд в <span class="example">user.context.menu</span> следует использовать формулу:<br>
+пользовательская команда = 9000 + номер этой команды в меню Tools
+
+<h5 id="ExtendedContextMenu">
+[ExtendedContextMenu] <span class=desc>(Автор: Дмитрий Маслов, VladVRO)</span></h5>
+Новые параметры в .properties позволяют ПОЛНОСТЬЮ настроить контекстные меню:<br>
+<span class="example">user.context.menu.<i>filepattern</i></span> - контекстное меню редактора<br>
+<span class="example">user.tabcontext.menu.<i>filepattern</i></span> - контекстное меню вкладок<br>
+<span class="example">user.outputcontext.menu.<i>filepattern</i></span> - контекстное меню консоли<br>
+С помощью параметров <span class="example">POPUPBEGIN</span> и <span class="example">POPUPEND</span> возможно создание подменю!<br>
+Формат:
+<div class="example">user.context.menu.<i>filepattern</i>=\<br>
+Имя&nbsp;команды1|IDM_COMMAND1|\<br>
+Имя&nbsp;команды2|IDM_COMMAND2|...</div>
+Чтобы вставить разделитель нужно оба поля оставить пустыми
+<div class="example">user.context.menu.<i>filepattern</i>=\<br>
+Имя&nbsp;команды1|IDM_COMMAND1|\<br>
+||\<br>
+Имя&nbsp;команды2|IDM_COMMAND2|...</div>
+Если параметр не задан в настройках, то отображается стандартное контекстное меню.
+
+<h5 id="user.toolbar">
+[user.toolbar] <span class=desc>(Автор: Дмитрий Маслов, VladVRO, UR4LTZ, neo4max)</span></h5>
+Новый параметр <span class="example">user.toolbar.<i>filepattern</i></span> в .properties позволяет ПОЛНОСТЬЮ настроить панель инструментов.<br>
+Формат:
+<div class="example">user.toolbar.<i>filepattern</i>=\<br>
+Всплывающая&nbsp;подсказка1|IDM_COMMAND1|номер&nbsp;иконки1|\<br>
+Всплывающая&nbsp;подсказка2|IDM_COMMAND2|номер&nbsp;иконки2|...</div>
+Чтобы вставить разделитель нужно все три поля оставить пустыми
+<div class="example">user.toolbar.<i>filepattern</i>=\<br>
+Всплывающая&nbsp;подсказка1|IDM_COMMAND1|номер&nbsp;иконки1|\<br>
+|||\<br>
+Всплывающая&nbsp;подсказка2|IDM_COMMAND2|номер&nbsp;иконки2|...</div>
+Если параметр не задан в настройках, то отображается стандартный тулбар.<br><br>
+Новый параметр в настройках позволяет задать пользовательскую библиотеку с иконками:
+<span class="example">user.toolbar.iconlib.<i>filepattern</i>=$(SciteUserHome)\gnome.dll</span><br>
+Кнопки на панели инструментов отображают состояние вкл/откл в зависимости от текущего значения изменяемого кнопкой параметра.<br>
+Так по виду (нажата/отжата) таких кнопок как IDM_WRAP, IDM_READONLY, IDM_VIEWSPACE и т.п. можно видеть текущее состояние соответствующих им установок - wrap, read.only, view.whitespace.
+
+<h5 id="SaveEnabled">
+[SaveEnabled] <span class=desc>(Автор: Дмитрий Маслов, neo4max)</span></h5>
+Кнопки "Save" и "Save All" на панели инструментов становятся неактивными если текущий файл (все открытые файлы) не отличаются от сохраненных.
+
+<h5 id="StyleDefHotspot">
+[StyleDefHotspot] <span class=desc>(Автор: neo4max)</span></h5>
+В строке описания стиля <span class="example">style.<i>lexer</i>.<i>stylenumber</i></span> можно использовать новый параметр <span class="example">hotspot</span>|<span class="example">nothotspot</span>. При наведении мыши, такой текст подчеркивается и вид курсора принимает форму руки.
+
+<h5 id="FindResultListStyle">
+[FindResultListStyle] <span class=desc>(Авторы: VladVRO, Дмитрий Маслов)</span></h5>
+Улучшена наглядность строк, выводимых встроенным инструментом для поиска текста в файлах (Ctrl+Shift+F):<br>
+- путь до файла в каждой строке результата отображается в сокращенном виде, относительным от каталога поиска,<br>
+- в результирующем тексте табуляция заменяется на пробелы, вначале строки пробелы не выводятся, двойные пробелы заменяются одинарными (эта опция отключается, если задать <span class="example">lexer.errorlist.value.separate=2</span>),<br>
+- искомая подстрока может быть выделена в строках результата с помощью задания своего стиля отображения:
+<div class="example">style.errorlist.30=fore:#000000 ,bold</div>
+<br>
+Параметр в .properties <span class="example">lexer.errorlist.findliststyle=0</span> позволяет отключить эту возможность.
+<br>
+<br>
+Добавлена возможность выделить искомую подстроку в строках результата внешнего поиска.
+Новые параметры в .properties <span class="example">lexer.errorlist.findtitle.begin</span> и <span class="example">lexer.errorlist.findtitle.end</span> позволяют задать формат заголовка поиска.
+
+<h5 id="error.line.back">
+[ErrorLineBack] <span class=desc>(Автор: UR4LTZ)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">error.line.back</span><br>
+позволяет задать цвет фона строки с текстом ошибки в окне консоли, отличный от заданного параметром error.marker.back.
+
+<h5 id="ReturnBackAfterRALL">
+[ReturnBackAfterRALL] <span class=desc>(Автор: neo4max)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">find.replace.return.to.start=1</span><br>
+Если 1, то при нажатии на кнопку "Заменить все" (или "Заменить во всех файлах") курсор после замены возвращается на исходную позицию.
+
+<h5 id="find.bookmark">
+[find.bookmark] <span class=desc>(Автор: dB6)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">find.bookmark=0</span><br>
+Если 0, то при нажатии на кнопку "Пометить все" метки (bookmarks) не устанавливаются.
+
+<h5 id="NewFind-MarkerDeleteAll">
+[NewFind-MarkerDeleteAll] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">find.mark.delete=1</span><br>
+Если 1, то при нажатии на кнопку "Пометить все" удаляются все установленные ранее метки (bookmarks) и маркеры.
+
+<h5 id="close_on_dbl_clk">
+[close_on_dbl_clk] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">tabbar.tab.close.on.doubleclick=1</span><br>
+1 - Позволяет закрывать вкладку двойным кликом мыши.
+
+<h5 id="new_on_dbl_clk">
+[new_on_dbl_clk] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+Добавлен функционал: На двойной клик по свободному месту справа от вкладок открывается новый файл (а ля FireFox)
+
+<h5 id="TabsMoving">
+[TabsMoving] <span class=desc>(Автор: VladVRO)</span></h5>
+В меню Вкладки добавлены две команды <span class="example">IDM_MOVETABLEFT</span> и <span class="example">IDM_MOVETABRIGHT</span> позволяющие перемещать текущую вкладку.<br>
+
+<h5 id="TabbarTitleMaxLength">
+[TabbarTitleMaxLength] <span class=desc>(Автор: VladVRO)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">tabbar.title.maxlength=число</span><br>
+накладывает ограничение на длину надписи (имя файла) в табе. Если текст надписи длиннее, то он будет урезан и завершен символом "…"
+
+<h5 id="NewBufferPosition">
+[NewBufferPosition] <span class=desc>(Автор: VladVRO)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">buffers.new.position=число</span><br>
+0 - открывать новую вкладку в конце списка (default), 1 - следующей за текущей, 2 - в начале списка.
+
+<h5 id="warning.couldnotopenfile.disable">
+[warning.couldnotopenfile.disable] <span class=desc>(Автор: mozers)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">warning.couldnotopenfile.disable=1</span><br>
+1 - убирает предупреждение "Не удается открыть файл", появляющееся при открытии несуществующего файла и новый файл с заданным именем создается молча.
+
+<h5 id="ZorderSwitchingOnClose">
+[ZorderSwitchingOnClose] <span class=desc>(Автор: VladVRO)</span></h5>
+Модификация параметра в .properties<br>
+<span class="example">buffers.zorder.switching=1</span><br>
+теперь, если установлена в 1, то после закрытия вкладки редактор возвращается к последней открытой до этого.
+
+<h5 id="SetBookmark">
+[SetBookmark] <span class=desc>(Автор: Midas)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">margin.bookmark.by.single.click=1</span><br>
+включает возможность установки/снятия bookmark-ов по одинарному щелчку мышью на колонке bookmark-ов.
+
+<h5 id="clearbefore">
+[clearbefore] <span class=desc>(Автор: neo4max)</span></h5>
+Переменной <span class="example">command.mode</span> добавлен новый параметр - <span class="example">clearbefore:[yes|no]</span>, со следующей логикой работы:<br>
+* <span class="example">clearbefore</span> отсутствует - поведение, как и раньше, определяется значением <span class="example">clear.before.execute</span><br>
+* <span class="example">clearbefore:yes</span> - как <span class="example">clear.before.execute=1</span><br>
+* <span class="example">clearbefore:no</span>  - как <span class="example">clear.before.execute=0</span>
+
+<h5 id="output.caret">
+[output.caret] <span class=desc>(Автор: VladVRO)</span></h5>
+Новые параметры в .properties<br>
+<span class="example">output.caret.fore</span><br>
+<span class="example">output.caret.line.back</span><br>
+<span class="example">output.caret.line.back.alpha</span><br>
+для задания стиля курсора в окне консоли.
+
+<h5 id="NewIcons">
+[NewIcons] <span class=desc>(Автор: VladVRO)</span></h5>
+Новые иконки для файлов, ассоциированных с SciTE и для файлов сессий.
+
+<h5 id="import">
+[import] <span class=desc>(Автор: mimir, VladVRO)</span></h5>
+Переделан механизм импорта в файлах настроек, теперь редактор сперва делает попытку загрузить файл с явно указанным именем, если не находит, то добавляет расширение ".properties" и повторяет попытку.<br>
+Возможно использование директивы <span class="example">import</span> в файлах *.abbrev
+
+<h5 id="selection.hide.on.deactivate">
+[selection.hide.on.deactivate] <span class=desc>(Автор: mozers)</span></h5>
+Параметр <span class="example">selection.hide.on.deactivate=0</span> позволяет не снимать выделение с текста когда окно SciTE теряет фокус.
+
+<h5 id="scite.userhome">
+[scite.userhome] <span class=desc>(Автор: gansA, mozers, VladVRO)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">scite.userhome</span> позволяет задать путь к каталогу $SciteUserHome для сохранения пользовательских данных (SciTE.recent, SciTE.ses, SciTEUser.properties)<br>
+Позволяет использовать в пути внутренние переменные SciTE, например, так:
+<div class="example">scite.userhome=$(SciteDefaultHome)\home</div>
+
+<h5 id="WarningMessage">
+[WarningMessage] <span class=desc>(Автор: VladVRO)</span></h5>
+Добавлена возможность настроить отображение предупреждения для информационных событий редактора (warning), сообщения задаются параметрами:<br>
+<span class="example">warning.findwrapped.message=текст сообщения</span><br>
+<span class="example">warning.notfound.message=текст сообщения</span><br>
+<span class="example">warning.wrongfile.message=текст сообщения</span><br>
+<span class="example">warning.executeok.message=текст сообщения</span><br>
+<span class="example">warning.executeko.message=текст сообщения</span><br>
+<span class="example">warning.nootherbookmark.message=текст сообщения</span>
+
+<h5 id="autocompleteword.incremental">
+[autocompleteword.incremental] <span class=desc>(Автор: Сергей Кищенко)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">autocompleteword.incremental=1</span> при <span class="example">autocompleteword.automatic=1</span> выводит многовариантную подсказку из найденных вариантов завершения слова. (<a href="http://groups.google.com/group/scite-interest/browse_thread/thread/87ba9fd13989ae84">Подробности</a>)
+
+<h5 id="utf8.auto.check">
+[utf8.auto.check] <span class=desc>(Автор: mhb, neo4max)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">utf8.auto.check</span> позволяет автоматически детектировать текст в кодировке UTF-8 не снабженный BOM заголовком.<br>
+Значение 1 включает детектирование и автоматически добавляет BOM заголовок к редактируемому тексту, 2 - включает детектирование, но не добавляет BOM.
+
+<h5 id="oem2ansi">
+[oem2ansi] <span class=desc>(Автор: gansA)</span></h5>
+Параметр <span class="example">output.code.page.oem2ansi=1</span> включает перекодировку текста, выводимого в окно консоли, из OEM в ANSI.<br>
+Это позволяет редактировать скрипт в кодировке win1251 и видеть его вывод в консоли в кодировке dos866 не прибегая к переключению.
+
+<h5 id="caret">
+[caret] <span class=desc>(Автор: mimir)</span></h5>
+Добавлена возможность настраивать ширину и цвет курсора индивидуально для каждого лексера, например, так:
+<div class="example">caret.fore.$(file.patterns.cpp)=#FF0000<br>
+caret.width.$(file.patterns.cpp)=3</div>
+Это акктуально для тех, у кого для разных языков заданы принципиально отличающиеся цветовые решения, например, с разным (светлым и темным) фоном.
+
+<h5 id="BetterCalltips">
+[BetterCalltips] <span class=desc>(Автор: chupakabra)</span></h5>
+Новые параметры в .properties<br>
+<div class="example">calltip.<i>lexer</i>.automatic<br>
+calltip.*.automatic</div>
+Yстановка этого параметра в 0 означает что не будет происходить автоматическое отображение окошка с calltip'ом при наборе текста, но останется возможность вызвать его вручную.
+<div class="example">calltip.<i>lexer</i>.show.per.page<br>
+calltip.*.show.per.page</div>
+Возможность указать количество определений, отображаемых одновременно в calltip'е. Значение по умолчанию - 1.
+<div class="example">calltip.<i>lexer</i>.word.wrap<br>
+calltip.*.word.wrap</div>
+Опция включает возможность переноса по словам длинных calltip'ов, её значение определяет максимальный размер строки calltip'а в символах, 0 означает что данная функция будет отключена.<br>
+<br>
+Если окошко calltip'а по горизонтали выходит за пределы окна редактора (к примеру, если курсор находится близко к правой границе окна), то смещаем горизонтальную позицию calltip таким образом, чтобы на экране было видно максимальное количество информации.<br>
+<br>
+Добавлена возможность указывать несколько диапазонов подсветки для окошка calltip'а, введены новые команды Scintilla для этих целей (SCI_CALLTIPADDHLT, SCI_CALLTIPCLEARHLT, SCI_CALLTIPUPDATEHLT)
+
+<h5 id="TextSizeMax for Dialog">
+[TextSizeMax for Dialog] <span class=desc>(Автор: dB6)</span></h5>
+Максимально допустимый размер строки в диалогах поиска и замены увеличен до 1024 байт.
+
+<h5 id="ignore_overstrike_change">
+[ignore_overstrike_change] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+Новый параметр в .properties<br>
+<span class="example">change.overwrite.enable=0</span> включает режим игнорирования переключения режима вставка/замена.<br>
+При 1 или отсутствии этого параметра действует режим по умолчанию.<br>
+Добавлена возможность установить этот параметр через SCI_SETOVERTYPE<br>
+0 - режим вставки (дефолтный)<br>
+1 - режим замены<br>
+2 - игнорировать переключение режима<br>
+3 - не игнорировать переключение режима (дефолтный)<br>
+(через SCI_SETOVERTYPE можно переключать режим независимо от установки игнорирования)
+
+    <h3>
+      <a name="2"></a>
+      Расширения
+    </h3>
+
+<h5 id="ForthImprovement">
+[ForthImprovement] <span class=desc>(Автор: VladVRO)</span></h5>
+Улучшены лексеры Forth и Crontab. Добавлен фолдинг и созданы дополнительные группы ключевых слов.<br>
+В лексере Forth исправлен алгоритм поиска закрывающего тега для строки <span class="example">[ ]</span>.
+
+<h5 id="BatchLexerImprovement">
+[BatchLexerImprovement] <span class=desc>(Автор: VladVRO)</span></h5>
+Значительно доработан лексер batch (используется для отображения пакетных файлов *.bat, *.cmd, *.nt).<br>
+Исправлена ошибка обработки круглой открывающей скобки.<br>
+Круглые скобки теперь отображаются стилем <span class="example">SCE_BAT_OPERATOR</span> и по ним сделан фолдинг.<br>
+Добавлено три новых стиля:<br>
+ - <span class="example">SCE_BAT_ENVIRONMENT</span> используется для отображения переменных окружения вида <span class="example"><i>%variable%</i></span>,<br>
+ - <span class="example">SCE_BAT_EXPANSION</span> используется для отображения переменных окружения вида <span class="example"><i>!variable!</i></span>,<br>
+ &nbsp; новый параметр в .properties <span class="example">lexer.batch.enabledelayedexpansion=1</span>
+включает подсветку переменных этого вида, по умолчанию она выключена.<br>
+ - <span class="example">SCE_BAT_CLABEL</span> используется для отображения указателей на метки вида <span class="example"><i>:name</i></span>.
+
+<h5 id="LocalizationFromLua">
+[LocalizationFromLua] <span class=desc>(Автор: VladVRO, neo4max)</span></h5>
+В SciTE Lua Scripting Extension добавлена новая команда:<br>
+<span class="example">scite.GetTranslation(s, [retainIfNotFound])</span>, которая возвращает перевод строки <span class="example"><i>s</i></span>,<br>
+где <span class="example"><i>retainIfNotFound</i></span> - (по умолчанию <span class="example"><i>true</i></span>) указывает на возврат исходного значения в случае, если перевод не найден.<br>
+Переводы строк берутся из файла <span class="example">locale.properties</span>.
+
+<h5 id="OnFinalise">
+[OnFinalise] <span class=desc>(Автор: VladVRO)</span></h5>
+Добавлено новое событие SciTE в Луа API <span class="example">OnFinalise()</span>. Событие возникает при закрытии редактора.
+
+<h5 id="ABAP">
+[ABAP] <span class=desc>(Автор: VladVRO)</span></h5>
+Добавлен новый лексер для языка ABAP/4.
+
+<h5 id="EncodingToLua">
+[EncodingToLua] <span class=desc>(Автор: neo4max)</span></h5>
+В SciTE Lua Scripting Extension добавлены новые команды:<br>
+<span class="example">string.to_utf8(codepage)</span> - конвертирует текст из указанной кодовой страницы в UTF-8<br>
+<span class="example">string.from_utf8(codepage)</span> - конвертирует текст из UTF-8 в указанную кодовую страницу<br>
+Параметр codepage задается в числовом виде.<br>
+<br>
+<span class="example">string.utf8upper()</span> - преобразует utf8-строку в верхний регистр<br>
+<span class="example">string.utf8lower()</span> - преобразует utf8-строку в нижний регистр<br>
+<span class="example">string.utf8len()</span> - возвращает длину (в символах) utf8-строки<br>
+<br>
+Так же добавлена новая функция<br>
+<span class="example">pane:codepage()</span>, где <span class="example">pane</span> - панель редактора (<span class="example">editor</span>|<span class="example">output</span>)<br>
+возвращающая текущую кодировку панели в числовом виде.<br>
+<br>
+Теперь функции <span class="example">os.rename</span>, <span class="example">os.remove</span>, <span class="example">os.execute</span> пытаются трактовать входные аргументы как UTF-8. Если не получается - то в системной кодировке.<br>
+<br>
+Модифицирована функция загрузки внешних библиотек и скриптов - <span class="example">require</span>.<br>
+Теперь у нее появилась возможность загрузки внешних библиотек даже если путь к ним содержит символы, отличные от системной кодировки.
+
+<h5 id="EditorUnicodeMode">
+[EditorUnicodeMode] <span class=desc>(Автор: VladVRO)</span></h5>
+Добавлен новый параметр <span class="example">editor.unicode.mode</span> в который редактор сохраняет текущее значение режима двухбитной кодировки, заданного одним из следующего множества значений:
+<span class="example">IDM_ENCODING_DEFAULT, IDM_ENCODING_UCS2BE, IDM_ENCODING_UCS2LE, IDM_ENCODING_UTF8, IDM_ENCODING_UCOOKIE</span>.
+
+<h5 id="macro">
+[macro] <span class=desc>(Автор: VladVRO)</span></h5>
+Поддержка записи и воспроизведения макросов с помощью LUA
+
+<h5 id="OnMenuCommand">
+[OnMenuCommand] <span class=desc>(Автор: VladVRO)</span></h5>
+Добавлено новое событие SciTE - <span class="example">OnMenuCommand (msg, source)</span><br>
+<span class="example">msg</span> - id функции (SCI_constant)<br>
+<span class="example">source</span> - является вторым входным параметром внутренней функции редактора MenuCommand.<br>
+Он может быть равным IDM_SRCWIN (350) - окно редактора, или IDM_RUNWIN (351) - окно вывода, или еще чему-то тому, где находится фокус.
+
+<h5 id="OnSendEditor">
+[OnSendEditor] <span class=desc>(Автор: VladVRO, neo4max)</span></h5>
+Добавлено новое событие SciTE - <span class="example">OnSendEditor (msg, wp, lp)</span><br>
+Параметры теже что и у функции SendEditor.<br>
+<span class="example">msg</span> - id функции (SCI_constant)<br>
+<span class="example">wp</span> и <span class="example">lp</span> - входные параметры для этой функции, причем wp - числовой параметр, lp - текстовый. В зависимости от функции они могут использоваться или нет.<br>
+OnSendEditor вызывается для команд доступных для записи в макрос и для SCI_SETREADONLY.<br>
+<br>
+Пример вызова скрипта для смены регистра:
+<div class="example">function OnSendEditor (msg)<br>
+&nbsp;&nbsp;if msg == SCI_UPPERCASE then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ChangeCase("U")<br>
+&nbsp;&nbsp;elseif msg == SCI_LOWERCASE then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ChangeCase("L")<br>
+&nbsp;&nbsp;end<br>
+end</div>
+
+<h5 id="OnClick">
+[OnClick] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+Добавлено новое событие SciTE <span class="example">OnClick()</span>. Событие возникает при одиночном клике мыши в окне редактирования или в окне консоли.<br>
+Получает в строке параметров состояния клавиш-модификаторов (Shift, Ctrl, Alt):<br>
+<span class="example">function OnClick(shift, ctrl, alt)</span>
+
+<h5 id="OnDoubleClick">
+[OnDoubleClick] <span class=desc>(Автор: mimir, Дмитрий Маслов)</span></h5>
+Событие <span class="example">OnDoubleClick()</span>, теперь получает состояния клавиш-модификаторов (Shift, Ctrl, Alt):<br>
+<span class="example">function OnDoubleClick(shift, ctrl, alt)</span>
+
+<h5 id="OnHotSpotReleaseClick">
+[OnHotSpotReleaseClick] <span class=desc>(Автор: mozers)</span></h5>
+Добавлено новое событие SciTE <span class="example">OnHotSpotReleaseClick()</span>. Событие возникает при отжатии кнопки мыши в hotspot зоне.<br>
+Получает в строке параметров состояние клавиши-модификатора Ctrl:<br>
+<span class="example">function OnHotSpotReleaseClick(ctrl)</span>
+
+<h5 id="OnKey">
+[OnKey] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+Расширена функция луа <span class="example">OnKey</span>, теперь в нее передается также нажатый символ:<br>
+<span class="example">function OnKey(key, shift, ctrl, alt, char)</span>
+
+<h5 id="OnMouseButtonUp">
+[OnMouseButtonUp] <span class=desc>(Автор: VladVRO)</span></h5>
+Добавлено новое событие SciTE <span class="example">OnMouseButtonUp()</span>. Событие возникает при отжатии кнопки мыши в окне редактирования или в окне консоли.<br>
+Получает в строке параметров состояние клавиши-модификатора Ctrl:<br>
+<span class="example">function OnMouseButtonUp(ctrl)</span>
+
+<h5 id="UserListItemID">
+[UserListItemID] <span class=desc>(Автор: neo4max, Дмитрий Маслов)</span></h5>
+Событие <span class="example">OnUserListSelection</span> возвращает третий параметр, указывающий на позицию выбранного пункта в списке.
+
+<h5 id="MouseClickHandled">
+[MouseClickHandled] <span class=desc>(Автор: VladVRO)</span></h5>
+Добавлено новое сообщение <span class="example">SCI_SETMOUSECAPTURE</span> для ядра Scintilla, позволяющее менять реакцию на события от мыши.<br>
+С его помощью можно сообщить ядру, что нажатие кнопки мыши обработано.<br>
+Пример: <span class="example">SendEditor(SCI_SETMOUSECAPTURE, 0)</span> <br>
+Такое сообщение теперь отправляется, если <span class="example">OnClick()</span> или <span class="example">OnDoubleClick()</span> возвращает <span class="example"><i>true</i></span>.
+
+<h5 id="CheckMenus">
+[CheckMenus] <span class=desc>(Автор: neo4max)</span></h5>
+В SciTE Lua Scripting Extension добавлена новая команда<br>
+<span class="example">scite.CheckMenus()</span> - которая позволяет обновить состояние меню и тулбара SciTE
+
+<h5 id="Perform">
+[Perform] <span class=desc>(Автор: VladVRO)</span></h5>
+В SciTE Lua Scripting Extension добавлена новая команда<br>
+<span class="example">scite.Perform(actionList)</span> - исполняет команды <a href="SciTEDirector_rus.html">SciTE Director Interface</a><br>
+где <span class="example">actionList</span> - одна или несколько команд разделенных символом новой строки.
+
+<h5 id="ReloadStartupScript">
+[ReloadStartupScript] <span class=desc>(Автор: VladVRO)</span></h5>
+В SciTE Lua Scripting Extension добавлена новая команда<br>
+<span class="example">scite.ReloadStartupScript()</span> - которая позволяет перезагрузить стартовый Луа скрипт
+
+<h5 id="GetWordChars">
+[GetWordChars] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+CurrentWordCharacters - новая внутренняя переменная SciTE. Cодержит перечень символов из которых строятся слова текущего языка.
+
+<h5 id="BufferNumber">
+[BufferNumber] <span class=desc>(Автор: VladVRO)</span></h5>
+BufferNumber - новая внутренняя переменная SciTE. Cодержит номер текущего буфера.
+
+<h5 id="InsertAbbreviation">
+[InsertAbbreviation] <span class=desc>(Авторы: mimir, VladVRO, Дмитрий Маслов, neo4max)</span></h5>
+В SciTE Lua Scripting Extension добавлена новая команда<br>
+<span class="example">InsertAbbreviation(string)</span><br>
+где "<span class="example">string</span>" - это текст, по формату аналогичный сокращениям (abbrev), например:
+<div class="example">scite.InsertAbbreviation("&lt;a href="|" title=""&gt;%SEL%&lt;/a&gt;")</div>
+В тексте расшифровки можно использовать пользовательские переменные:<br>
+- <span class="example">%SEL%</span> - выделенный текст<br>
+- <span class="example">%CLP%</span> - текст из буфера обмена<br>
+- <span class="example">%имя_переменной%</span> - значение внутренней переменной SciTE (например, CurrentSelection, FileNameExt, SciteDefaultHome и т.п.)<br>
+При использовании в расшифровке знака процента он удваивается.
+
+<h5 id="ParametersDialogFromLua">
+[ParametersDialogFromLua] <span class=desc>(Автор: VladVRO)</span></h5>
+В SciTE Lua Scripting Extension добавлена новая команда для вызова диалогового окна "Параметры" (Shift+F8)<br>
+<span class="example">scite.ShowParametersDialog(text)</span><br>
+где <span class="example">text</span> - короткий комментарий в окне параметров.<br>
+Возвращает false если пользователь отказался (нажал отмену или Escape) иначе true.<br>
+Пример:
+<div class="example">
+&nbsp;&nbsp;function Dialog()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;props["1"]=props["CurrentSelection"]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;props["2"]=props["SciteDefaultHome"]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if scite.ShowParametersDialog("Please set params") then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print ("1="..props["1"].."\n2="..props["2"].."\n3="..props["3"].."\n4="..props["4"])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print ("Cancel")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;end<br>
+&nbsp;&nbsp;end
+</div>
+
+<h5 id="FileAttr in PROPS">
+[FileAttr in PROPS] <span class=desc>(Автор: Midas)</span></h5>
+Теперь из скриптов доступны дополнительные свойства файла<br>
+<span class="example">FileAttr</span>, <span class="example">FileTime</span>, <span class="example">FileDate</span>.
+
+<h5 id="CalltipBreaks">
+[CalltipBreaks] <span class=desc>(Автор: Mitchell Foral)</span></h5>
+Длинные всплывающие подсказки можно перенести на другую строку (добавлением символа \n в соответствующую строчку в api-файле)
+
+<h5 id="Euphoria">
+[Euphoria] <span class=desc>(Автор: M Duffy, Midas)</span></h5>
+Добавлен новый лексер для языка <a href="http://www.rapideuphoria.com">Euphoria</a>
+
+<h5 id="C_Word">
+[C_Word] <span class=desc>(Автор: mimir)</span></h5>
+Добавлено 3 новых класса ключевых слов для LexCpp (т.е. теперь можно задавать до 4х дополнительных наборов слов с разной подсветкой)
+
+<h5 id="PropsKeysSets">
+[PropsKeysSets] <span class=desc>(Автор: VladVRO)</span></h5>
+Добавлено 4 класса ключевых слов для лексера props.<br>
+Tеперь можно задавать до 4х дополнительных наборов слов с разной подсветкой, причем слова могут содержать символ ~, означающий произвольный набор символов, например <span class="example">block.start.~</span> или <span class="example">braces.~.style</span>.<br>
+В результате постоянная часть переменной будет выделена одним цветом, а переменная часть - другим.
+
+<h5 id="PropsKeywords">
+[PropsKeywords] <span class=desc>(Автор: VladVRO)</span></h5>
+Добавлена подсветка для ключевых слов "import" и "if" в файлах .properties.
+
+<h5 id="GetApplicationProps">
+[GetApplicationProps] <span class=desc>(Автор: VladVRO)</span></h5>
+Новая функция SciTEBase::GetProps() (для разработчиков) позволяет получить доступ к настройкам редактора в любом месте кода редактора.
+
+<h5 id="Zoom">
+[Zoom] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+Теперь в функцию OnSendEditor передается событие SCI_SETZOOM, возникающее при изменении размера шрифта.
+
+    <h3>
+      <a name="3"></a>
+      Устранение ошибок
+    </h3>
+
+<h5 id="FixReplaceOnce">
+[FixReplaceOnce] <span class=desc>(Автор: neo4max)</span></h5>
+Исправлена ошибка в работе диалога "Заменить", в результате которой введенные в диалоговом окне параметры поиска-замены могут быть случайно модифицированы командой editor:findtext<br>
+Добавлено предупреждение, возникающее при нажатии кнопки "Заменить" после уже произведенной последней замены.<br>
+Исправлена ошибка, возникающая при перемещении курсора в процессе последовательной замены.
+
+<h5 id="FixFind">
+[FixFind] <span class=desc>(Автор: neo4max)</span></h5>
+Если документ заканчивается пустой строкой, а в диалоговом окне поиска задан поиск "^$" (в режиме RegExp), то, при нажатии на "Пометить все" возникало зацикливание.
+
+<h5 id="FixEncoding">
+[FixEncoding] <span class=desc>(Автор: neo4max)</span></h5>
+Теперь все калтипы и текст расшифровки аббревиатур отображаются и вставляются в текущей кодировке активного буфера.<br>
+Для этого требуется чтобы соответствующие API и ABBREV файлы были в кодировке UTF-8.
+
+<h5 id="cmdline.spaces.fix">
+[cmdline.spaces.fix] <span class=desc>(Автор: nail333)</span></h5>
+Исправление ошибки с открытием лишней пустой вкладки при наличии пробелов в конце командной строки.
+
+<h5 id="OpenNonExistent">
+[OpenNonExistent] <span class=desc>(Автор: neo4max)</span></h5>
+Исправлена ошибка связанная с открытием несуществующего файла.
+
+<h5 id="PropsColouriseFix">
+[PropsColouriseFix] <span class=desc>(Автор: VladVRO)</span></h5>
+Исправлена подсветка синтаксиса в файлах настроек для длинных строк (более 1024 символов) и строк с символом переноса.
+
+<h5 id="LuaLexerImprovement">
+[LuaLexerImprovement] <span class=desc>(Автор: VladVRO)</span></h5>
+Переделан лексер для языка Lua.<br>
+Теперь символы ":" и "." обрабатываются в качестве разделителя сложного объекта. В настройках ключевых слов лексера как и ранее можно указывать слова вида <span class="example">string.sub</span> или <span class="example">editor:append</span>, и кроме того можно задать функции или поля объекта, например <span class="example">:GetText</span> или <span class="example">.Cursor</span>.
+
+<h5 id="GoMessageImprovement">
+[GoMessageImprovement] <span class=desc>(Автор: VladVRO)</span></h5>
+Сделано перемещение фокуса в окно редактора после позиционирования на строке при клике мышкой в окне консоли на строке с ошибкой или результатом поиска.<br>
+Использована доработка <span class="example">[OnMouseButtonUp]</span>.
+
+<h5 id="fix_invalid_codepage">
+[fix_invalid_codepage] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+Исправлена ошибка при которой не работало переключение в кодировку по умолчанию, если параметр code.page был задан неверно.
+
+<h5 id="English_KeyCode">
+[English_KeyCode] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+Исправлена ошибка при которой назначенные шорткаты переставали работать после переключения раскладки клавиатуры.
+
+<h5 id="InputErr">
+[InputErr] <span class=desc>(Автор: mimir)</span></h5>
+Исправлена ошибка зависания SciTE при использовании <span class="example">command.input</span>.<br>
+Если пользователь забыл выделить текст перед запуском скрипта, то SciTE зависал.
+
+<h5 id="StyleDefault">
+[StyleDefault] <span class=desc>(Автор: VladVRO, Дмитрий Маслов)</span></h5>
+Убраны дефолтовые значения цвета символов (черный) и фона (белый), что позволяет не задавать их явно в файлах настройки во всех стилях для получения соответствующего фона при экспорте файла.<br>
+Если в <span class="example">style.*.32</span> явно не задан цвет символов и фона, то эти параметры берутся из настроек Windows, т.е. равными системным Window Text/Background.
+
+<h5 id="find_in_files_no_empty">
+[find_in_files_no_empty] <span class=desc>(Автор: Дмитрий Маслов)</span></h5>
+Поиск текста в файлах теперь не запускается если в строку поиска ничего не ввели.
+
+<h5 id="FileReaderUnlimitedLen">
+[FileReaderUnlimitedLen] <span class=desc>(Автор: VladVRO)</span></h5>
+Убрано ограничение на длину строк во встроенном поиске по файлам. Раньше в длинных строках поиск работал только до 1001 символа, все остальное в строке игнорировалось.
+
+</body>
+</html>
+

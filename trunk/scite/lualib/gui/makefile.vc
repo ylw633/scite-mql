@@ -1,0 +1,60 @@
+YAWL = \
+   twl.obj            \
+   twl_cntrls.obj     \
+   twl_data.obj       \
+   twl_dialogs.obj    \
+   twl_ini.obj        \
+   twl_layout.obj     \
+   twl_menu.obj       \
+   twl_modal.obj      \
+   twl_splitter.obj   \
+   twl_toolbar.obj
+
+LUA_INCLUDE = ../../src/scite/lua/include
+LIBDIR      = ../lib/
+LIBS        = $(LIBDIR)scite.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib comctl32.lib shell32.lib
+
+# We specify level 4 of warning and disable insignificant warnings as follows.
+# C4100: 'identifier' : unreferenced formal parameter
+# C4189: 'identifier' : local variable is initialized but not referenced
+# C4505: 'function'   : unreferenced local function has been removed
+WARNS  = -W4 -wd4100 -wd4189 -wd4505
+
+DEFS   = -DWIN32 -D_WINDOWS -DNDEBUG -DUNICODE -D_WIN32_IE=0x0500 -D_USRDLL\
+         -D_CRT_SECURE_NO_DEPRECATE=1 -D_SCL_SECURE_NO_DEPRECATE=1 -D_CRT_NONSTDC_NO_DEPRECATE=1
+CFLAGS = -nologo -c -O2b2isy -GR -Gm- -EHsc -Zc:forScope,wchar_t -MT -LD $(DEFS) $(WARNS)
+LFLAGS = -NOLOGO -DLL -RELEASE -OPT:ICF,NOREF,NOWIN98 -MACHINE:X86 -INCREMENTAL:NO
+
+
+gui.dll: gui_ext.obj $(YAWL)
+	link $(LFLAGS) -OUT:gui.dll $(LIBS) gui_ext.obj $(YAWL)
+
+clean:
+	-del /S *.obj *.exp gui.lib
+
+
+gui_ext.obj: gui_ext.cpp yawl.h
+	cl $(CFLAGS) -I$(LUA_INCLUDE) -Fo"gui_ext.obj" gui_ext.cpp
+
+{yawl/}.cpp.obj:
+	cl $(CFLAGS) $< -Fo"$@"
+
+twl.obj: yawl/twl.cpp
+
+twl_ini.obj: yawl/twl_ini.cpp
+
+twl_cntrls.obj: yawl/twl_cntrls.cpp
+
+twl_data.obj: yawl/twl_data.cpp
+
+twl_dialogs.obj: yawl/twl_dialogs.cpp
+
+twl_layout.obj: yawl/twl_layout.cpp
+
+twl_menu.obj: yawl/twl_menu.cpp
+
+twl_modal.obj: yawl/twl_modal.cpp
+
+twl_splitter.obj: yawl/twl_splitter.cpp
+
+twl_toolbar.obj: yawl/twl_toolbar.cpp

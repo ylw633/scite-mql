@@ -1,0 +1,269 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <title>SciTE FAQ</title>
+</head>
+
+<body>
+<table bgcolor="#000000" width="100%" cellspacing="0" cellpadding="0" border="0" class="tmenu">
+    <tr>
+      <td><img src="SciTEIco.png" height="64" width="64" alt="Scintilla icon"></td>
+      <td width="100%"><font size="5">SciTE FAQ</font></td>
+    </tr>
+  </table>
+
+  <table bgcolor="#CCCCCC" width="100%" cellspacing="0" cellpadding="8" border="0" class="tmenu">
+    <tr><td>
+      <a href="SciTEDoc_rus.html">Документация</a>&nbsp;&nbsp;
+      FAQ&nbsp;&nbsp;
+      <a href="SciTERegEx_rus.html">Регулярные выражения</a>&nbsp;&nbsp;
+      <a href="SciTEExtension_rus.html">SciTE Extension</a>&nbsp;&nbsp;
+      <a href="SciTELua_rus.html">LUA</a>&nbsp;&nbsp;
+      <a href="SciTEDirector_rus.html">SciTE Director</a>&nbsp;&nbsp;
+      <a href="CommandValues_rus.html">Команды SciTE и Scintilla</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Pack_rus.html">Сборка Ru-Board</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Kernel_rus.html">Ядро SciTE-Ru</a>&nbsp;&nbsp;
+      <a href="../tools/LuaLib/shell_rus.html">Shell</a>&nbsp;&nbsp;
+      <a href="../tools/Helper/SciTE.Helper_rus.html">SciTE Helper</a>&nbsp;&nbsp;
+      <a href="ScintillaHistory_rus.html">История</a>
+    </td></tr>
+  </table>
+
+    <h3>Перечень ЧАсто задаваемых ВОпросов</h3>
+    <ul>
+    <li><a class="toc" href="#FixedWidth">Как установить использование шрифта фиксированной ширины для всего текста?</a></li>
+    <li><a class="toc" href="#Monospaced">Что случилось с <span class="example">use.monospaced</span>?</a></li>
+    <li><a class="toc" href="#LineNumbers">Почему мой код <span class="example">line.numbers</span> 
+      настройки не работает?</a></li>
+    <li><a class="toc" href="#BlackBackground">Как я могу изменить цвет фона окна редактирования SciTE?</a></li>
+    <li><a class="toc" href="#OutputColour">Как я могу изменить цвет окна вывода?</a></li>
+    <li><a class="toc" href="#HorizontalScrollBar">Как я могу установить горизонтальную полосу прокрутки по ширине текста?</a></li>
+    <li><a class="toc" href="#TabbedMode">Как я могу активировать вкладки в SciTE?</a></li>
+    <li><a class="toc" href="#Autocomplete">Как я могу активировать автодополнение?</a></li>
+    <li><a class="toc" href="#CannotFindFile">Когда я пробую Скомпилировать/Собрать/Запустить мою программу на [какой-то язык], то получаю следующую ошибку: 'The system cannot find the file
+      specified'.</a></li>
+    <li><a class="toc" href="#ToolsMenu">Как я могу добавить [какую то внешнюю программу] в меню "Tools"?</a></li>
+    <li><a class="toc" href="#ToolsNoMenu">Как я могу добавить клавиатурную команду не добавляя ее в меню "Tools"?</a></li>
+    <li><a class="toc" href="#ReplaceInFiles">Есть ли команда, для одновременной замены подстроки в нескольких файлах?</a></li>
+    <li><a class="toc" href="#SpeedUpGTK">Как мне ускорить работу SciTE под
+      GTK+?</a></li>
+    <li><a class="toc" href="#NewlineInRegEx">Можно ли использовать символ новой строки (\n) в регулярном выражении?</a></li>
+    <li><a class="toc" href="#CompilerErrors">Можно ли заставить SciTE понимать сообщения об ошибках, выдаваемые моим компилятором?</a></li>
+    <li><a class="toc" href="#GCCUTF8">Почему, при компиляции с помощью GCC, в сообщениях об ошибках появляются нечитабельные символы?</a></li>
+    <li><a class="toc" href="#WindowsSpaces">Как обеспечить открытие файла, ассоциированного с SciTE, если его путь содержит пробелы?</a></li>
+    <li><a class="toc" href="#ExplicitFolds">Почему закомментированные блоки //{ так же сворачиваются?</a></li>
+    <li><a class="toc" href="#CompDocs">Почему не работает автодополнение и всплывающие подсказки когда я редактирую JavaScript в HTML файле?</a></li>
+    </ul>
+    <h4 id="FixedWidth">
+       Как установить использование шрифта
+       фиксированной ширины для всего текста?
+    </h4>
+    <p>
+       Используйте следующие установки в
+       вашем файле .properties:<br /><div class="example">
+	font.base=$(font.monospace)<br />
+	font.small=$(font.monospace)<br />
+	font.comment=$(font.monospace)<br />
+	font.text=$(font.monospace)<br />
+	font.text.comment=$(font.monospace)<br />
+	font.embedded.base=$(font.monospace)<br />
+	font.embedded.comment=$(font.monospace)<br />
+	font.vbs=$(font.monospace)<br /></div>
+    </p>
+    <h4 id="Monospaced">Что случилось с <span class="example">use.monospaced</span>?
+    </h4>
+    <p>Параметр <span class="example">use.monospaced</span>  был удален,
+    поскольку люди использовали его чтобы
+    установить фиксированный шрифт, и затем
+    требовали чтобы поддержка справилась с
+    его ограничениями. Правильный путь -
+    задать шрифты фиксированного размера,
+    так как описано <a class="toc" href="#FixedWidth">выше</a>.
+    </p>
+    <h4 id="LineNumbers">
+       Почему мой код <span class="example">line.numbers</span>  настройки не работает?
+    </h4>
+    <p>
+       <span class="example">line.numbers</span> был заменен двумя свойствами:
+    <span class="example">line.margin.visible</span>
+    и <span class="example">line.margin.width</span>  что подробно описано в <a href="SciTEDoc.html">
+       the main SciTE document</a>.
+    </p>
+    <h4 id="BlackBackground">
+       Как я могу изменить цвет фона окна
+       редактирования SciTE?
+    </h4>
+    <p>
+       Тебе нужно изменить настройки оформления.
+       Изменения, касающиеся всех
+       редактируемых файлов (независимо от их
+       типа), сосредоточены в файле глобальных настроек.
+       Там можно поменять и стиль оформления и цвета каретки по умолчанию, там-же
+       можно изменить и другие настройки оформления:<br /><div class="example">
+       style.*.32=$(font.base),back:#000000,fore:#ffffff<br />
+       caret.fore=#FFFFFF</div>
+    </p>
+    <h4 id="OutputColour">
+       Как я могу изменить цвет окна вывода?
+    </h4>
+    <p>Панель вывода предназначена для вывода
+    ошибок и предупреждений и стиль ее
+    определен в "errorlist" lexer. Параметры стиля
+    &quot;errorlist&quot; по умолчанию располагаются в
+    файле others.properties. Для изменения фона в окне
+    вывода на черный и цвета шрифта на белый, установите:<br /><div class="example">
+       style.errorlist.32=$(font.small),back:#000000<br />
+       style.errorlist.0=fore:#FFFFFF</div>
+    </p>
+    <h4 id="HorizontalScrollBar">
+       Как я могу установить горизонтальную
+       полосу прокрутки по ширине текста?
+    </h4>
+    <p>
+       Во избежании понижения производительности горизонтальная прокрутка автоматически не
+       устанавливается. Вы можете использовать
+       параметр <span class="example">horizontal.scroll.width</span>  для изменения
+       области горизонтальной прокрутки.
+    </p>
+    <h4 id="TabbedMode">
+        Как я могу активировать вкладки в SciTE?
+    </h4>
+    <p>Отображение вкладок доступно только в Windows
+    и GTK+ 2, и не доступно в GTK+ 1. В вашем файле SciTEGlobal.properties
+    необходимо установить максимально
+    допустимое количество открытых файлов,
+    например, <span class="example">buffers=10</span>
+    . Для того, чтобы вкладки были видны при
+    старте SciTE необходимо установить <span class="example">tabbar.visible=1</span>.
+    Установка параметра <span class="example">tabbar.hide.one=0</span> 
+    всегда показывает вкладки, а 1 скрывает
+    их, если открыт только один файл.
+        <span class="example">tabbar.multiline=1</span>  разделяет вкладки по строкам если это необходимо.
+    </p>
+    <h4 id="Autocomplete">
+        Как я могу активировать автодополнение?
+    </h4>
+    <p>Войдите в меню &quot;Настройки&quot; | &quot;Открыть
+    файл глобальных настроек&quot; и снимите
+    комментарий со строки
+        <div class="example">autocompleteword.automatic=1</div>
+    </p>
+    <h4 id="CannotFindFile">Когда я пробую
+    Скомпилировать/Собрать/Запустить мою программу на [какой-то язык],
+    то получаю следующую ошибку:
+        'The system cannot find the file specified' (система не может найти указанный файл).
+    </h4>
+    <p>
+        Убедитесь, что путь к вашему компилятору указан правильно. Попробуйте запустить из консоли ту
+        же команду, что и SciTE и посмотрите сработает ли
+        она. Так же вы можете проверить свойства в файле "[язык].properties" для проверки используемой
+        команды. Если у вас есть другой
+        компилятор или вы используете другие параметры, отредактируйте
+        команды под ваши нужды. Строки для редактирования:<div class="example">
+        command.compile.filepattern=<br />
+        command.build.filepattern=<br />
+        command.go.filepattern=</div>
+    </p>
+    <h4 id="ToolsMenu">
+       Как я могу добавить [какую то внешнюю программу]
+       в меню &quot;Tools&quot; SciTE?
+    </h4>
+    <p>В вашем файле .properties, нужно добавить несколько строк:
+    </p>
+    <p>
+<span class="example">command.name.number.filepattern</span><br />
+определяет текст который будет показан в меню Tools.<br />
+   (например: <span class="example">command.name.1.$(file.patterns.web)=HTML Tidy</span>)
+    </p>
+    <p>
+<span class="example">command.number.filepattern</span><br />
+задает программу которую SciTE будет запускать
+при выборе данного пункта<br />
+(например: <span class="example">command.1.$(file.patterns.web)=tidy -i -wrap 0 -m $(FilePath)</span> )<br />
+Вы должны указать правильные пути, опции и параметры.
+Так же как вы их вводите в командной строке. Смотрите SciTEDoc.html для дополнительной информации о параметрах и как вызывать диалог
+задания параметров.
+    </p>
+    <p>
+<span class="example">command.is.filter.number.filepattern</span><br />
+    установив этот параметр в значение '1' вы укажете на необходимость перезагрузки
+    редактируемого файла после выполнения команды.<br />
+(например: <span class="example">command.is.filter.1.$(file.patterns.web)=1</span>)
+    </p>
+    <p>
+<span class="example">command.subsystem.number.filepattern</span><br />
+    определяет способ запуска программы в Windows, см.
+    SciTEDoc.html для более детальной информации.<br />
+    (например: <span class="example">command.subsystem.1.$(file.patterns.web)=2</span>)
+    </p>
+    <p>Вы можете установить данную команду не
+    только для определенного типа, но для всех файлов
+    используя шаблон названия файла &quot;*&quot;.
+    Первые 10 команд из меню &quot;Tools&quot; могут быть запущенны сочетанием клавиш
+    Ctrl + номер_команды.
+    </p>
+    <h4 id="ToolsNoMenu">
+       Как я могу добавить клавиатурную команду не добавляя ее в меню "Tools"?
+    </h4>
+    <p>
+	Добавьте команду в меню "Tools", точно так же как <a href="#ToolsMenu">описано выше</a> за исключением того, что название команды необходимо оставить пустым.
+	Теперь необходимо вызов этой команды добавить в параметр <span class="example">user.shortcuts</span> добавляя 1100 (9000 для SciTE-Ru) к номеру команды в меню. Например, так:
+	<div class="example">
+command.name.21.*.properties=<br />
+command.21.*.properties=cmd /c echo $(FileNameExt)<br />
+user.shortcuts=\<br />
+Ctrl+Shift+V|1121|<br />
+	</div>
+    <h4 id="ReplaceInFiles">
+       Есть ли команда, для одновременной замены подстроки в нескольких файлах?
+    </h4>
+    <p>Да, можно заменить заданную строку во всех открытых в SciTE файлах нажав кнопку "Replace in Buffers" в диалоге Замены. Однако эта кнопка скрыта по умолчанию. Для ее отображения установите параметр
+    <span class="example">find.replace.advanced=1</span>.
+    </p>
+    <h4 id="SpeedUpGTK">
+       Как мне ускорить работу SciTE под GTK+?
+    </h4>
+    <p>Автоматический перенос длинных строк замедляет работу SciTE. Это может быть отключено параметром <span class="example">wrap=0</span>.
+    </p>
+    <h4 id="NewlineInRegEx">
+       Можно ли использовать символ новой строки (\n) в регулярном выражении?
+    </h4>
+    <p>
+     Нет.
+    </p>
+    <p>
+     Опция "Преобразовывать backslash-выражения" позволяет использовать \n и \r, но эта опция не работает с регулярными выражениями.
+    </p>
+    <h4 id="CompilerErrors">
+       Можно ли заставить SciTE понимать сообщения об ошибках, выдаваемые моим компилятором?
+    </h4>
+    <p>
+     Набор форматов сообщения об ошибках внедрен в код Scintilla и SciTE. Чтобы добавить поддержку другого компилятора, Вы будете должны добавить новый стиль к scintilla/include/Scintilla.iface после других значений SCE_ERR_*, выполнить HFacer.py, редактировать RecogniseErrorListLine в scintilla/src/LexOthers.cxx, чтобы распознать сообщения об ошибках, и редактировать DecodeMessage в scite/src/SciTEBuffers.cxx, чтобы извлечь имя файла и номер строки вызвавшей ошибку.
+    </p>
+    <h4 id="GCCUTF8">
+       Почему, при компиляции с помощью GCC, в сообщениях об ошибках появляются нечитабельные символы?
+    </h4>
+    <p>Linux часто устанавливают в кодировке UTF-8, например, с такой установкой LANG=en_US.UTF-8. GCC этот параметр воспринимает как необходимость перекодировки любого символа Unicode (включая, например, кавычки), в кодировку UTF-8. Чтобы в окне консоли видеть вывод в кодировке UTF-8, а не ASCII необходимо установить<div class="example">output.code.page=65001</div></p>
+    <h4 id="WindowsSpaces">
+       Как обеспечить открытие файла, ассоциированного с SciTE, если его путь содержит пробелы?
+    </h4>
+    <p>Необходимо вручную откорректировать ассоциацию данного типа файла и SciTE добавив параметр %1 окруженный двойными кавычками. Это может быть сделано или непосредственно в системном реестре или через Проводник - меню Сервис | Свойства папки | Типы файлов | (выберите нужный тип) | Дополнительно | Действия:Open | Отредактируйте поле "Приложение, исполняющее действие:" подобно примеру<br /><div class="example">"C:\bin\SciTE\SciTE.exe" "%1"</div></p>
+    <h4 id="ExplicitFolds">
+       Почему закомментированные блоки //{ так же сворачиваются?
+    </h4>
+    <p>Для C ++ и подобных языков, свертка работает с //{ и //} .Эта особенность может быть отключена <div class="example">fold.comment=0</div></p>
+    <h4 id="CompDocs">
+       Почему не работает автодополнение и всплывающие подсказки когда я редактирую JavaScript в HTML файле?
+    </h4>
+    <p>
+       SciTE определяет содержимое файла и подключает соответствующие обработчики по его расширению (или параметру lexer в ком.строке).<br>
+       При обработке гибридных файлов (например PHP файл может содержать и php и html и js код) необходимо выбрать с помощью меню тот язык программирования, код которого вы собираетесь редактировать.<br>
+       После такого переключения все будет работать нормально. (Если, конечно, соответствующие файлы api и abbrev корректно заданы в файле настроек.)
+    </p>
+  </body>
+</html>
+

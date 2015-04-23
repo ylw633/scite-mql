@@ -1,0 +1,332 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <title>SciTE и Scintilla Команды</title>
+</head>
+
+<body>
+  <table bgcolor="#000000" width="100%" cellspacing="0" cellpadding="0" border="0" class="tmenu">
+    <tr>
+      <td><img src="SciTEIco.png" height="64" width="64" alt="Scintilla icon"></td>
+      <td width="100%"><font size="5">Команды SciTE и Scintilla</font></td>
+    </tr>
+  </table>
+
+  <table bgcolor="#CCCCCC" width="100%" cellspacing="0" cellpadding="8" border="0" class="tmenu">
+    <tr><td>
+      <a href="SciTEDoc_rus.html">Документация</a>&nbsp;&nbsp;
+      <a href="SciTEFAQ_rus.html">FAQ</a>&nbsp;&nbsp;
+      <a href="SciTERegEx_rus.html">Регулярные выражения</a>&nbsp;&nbsp;
+      <a href="SciTEExtension_rus.html">SciTE Extension</a>&nbsp;&nbsp;
+      <a href="SciTELua_rus.html">LUA</a>&nbsp;&nbsp;
+      <a href="SciTEDirector_rus.html">SciTE Director</a>&nbsp;&nbsp;
+      <nobr>Команды SciTE и Scintilla</nobr>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Pack_rus.html">Сборка Ru-Board</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Kernel_rus.html">Ядро SciTE-Ru</a>&nbsp;&nbsp;
+      <a href="../tools/LuaLib/shell_rus.html">Shell</a>&nbsp;&nbsp;
+      <a href="../tools/Helper/SciTE.Helper_rus.html">SciTE Helper</a>&nbsp;&nbsp;
+      <a href="ScintillaHistory_rus.html">История</a>
+    </td></tr>
+  </table>
+
+<h3>Команды меню SciTE</h3>
+<table border=1 cellpadding=2 cellspacing=0 width=100%>
+<tr><th colspan=5>File</th></tr>
+<tr><td>IDM_NEW</td><td>101</td><td>Ctrl+N</td><td>New</td><td>Создать</td></tr>
+<tr><td>IDM_OPEN</td><td>102</td><td>Ctrl+O</td><td>Open</td><td>Открыть</td></tr>
+<tr><td>IDM_OPENSELECTED</td><td>103</td><td>Ctrl+Shift+O</td><td>Open Selected Filename</td><td>Открыть выделенный файл</td></tr>
+<tr><td>IDM_REVERT</td><td>104</td><td>Ctrl+R</td><td>Revert</td><td>Вернуться к сохраненной версии</td></tr>
+<tr><td>IDM_CLOSE</td><td>105</td><td>Ctrl+W, Ctrl+F4</td><td>Close</td><td>Закрыть</td></tr>
+<tr><td>IDM_SAVE</td><td>106</td><td>Ctrl+S</td><td>Save</td><td>Сохранить</td></tr>
+<tr><td>IDM_SAVEAS</td><td>110</td><td>Ctrl+Shift+S</td><td>Save As</td><td>Сохранить как</td></tr>
+<tr><td>IDM_SAVEACOPY</td><td>116</td><td>Ctrl+Shift+P</td><td>Save a Copy</td><td>Сохранить копию</td></tr>
+<tr><td>IDM_COPYPATH</td><td>118</td><td>&nbsp;</td><td>Copy Path</td><td>Копировать путь к файлу</td></tr>
+<tr><td>IDM_ENCODING_DEFAULT</td><td>150</td><td>&nbsp;</td><td>Code Page Property</td><td>Code Page Property</td></tr>
+<tr><td>IDM_ENCODING_UCS2BE</td><td>151</td><td>&nbsp;</td><td>UTF-16 Big Endian</td><td>UTF-16 Обратный порядок байтов (сначала старший байт)</td></tr>
+<tr><td>IDM_ENCODING_UCS2LE</td><td>152</td><td>&nbsp;</td><td>UTF-16 Little Endian</td><td>UTF-16 Прямой порядок байтов (сначала младший байт)</td></tr>
+<tr><td>IDM_ENCODING_UTF8</td><td>153</td><td>&nbsp;</td><td>UTF-8 with BOM</td><td>UTF-8 с заголовком</td></tr>
+<tr><td>IDM_ENCODING_UCOOKIE</td><td>154</td><td>&nbsp;</td><td>UTF-8</td><td>UTF-8</td></tr>
+<tr><td>IDM_SAVEASHTML</td><td>111</td><td>&nbsp;</td><td>Export As HTML</td><td>Экспортировать в формате HTML</td></tr>
+<tr><td>IDM_SAVEASRTF</td><td>112</td><td>&nbsp;</td><td>Export As RTF</td><td>Экспортировать в формате RTF</td></tr>
+<tr><td>IDM_SAVEASPDF</td><td>113</td><td>&nbsp;</td><td>Export As PDF</td><td>Экспортировать в формате PDF</td></tr>
+<tr><td>IDM_SAVEASTEX</td><td>115</td><td>&nbsp;</td><td>Export As LaTeX</td><td>Экспортировать в формате LaTeX</td></tr>
+<tr><td>IDM_SAVEASXML</td><td>117</td><td>&nbsp;</td><td>Export As XML</td><td>Экспортировать в формате XML</td></tr>
+<tr><td>IDM_PRINTSETUP</td><td>130</td><td>&nbsp;</td><td>Page Setup</td><td>Параметры страницы</td></tr>
+<tr><td>IDM_PRINT</td><td>131</td><td>Ctrl+P</td><td>Print</td><td>Печать</td></tr>
+<tr><td>IDM_LOADSESSION</td><td>132</td><td>&nbsp;</td><td>Load Session</td><td>Загрузить сессию</td></tr>
+<tr><td>IDM_SAVESESSION</td><td>133</td><td>&nbsp;</td><td>Save Session</td><td>Сохранить сессию</td></tr>
+<tr><td>IDM_FILER</td><td>114</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>IDM_QUIT</td><td>140</td><td>&nbsp;</td><td>Exit</td><td>Выход</td></tr>
+
+<tr><th colspan=5>Edit</th></tr>
+<tr><td>IDM_UNDO</td><td>201</td><td>Ctrl+Z, Alt+BackSpace</td><td>Undo</td><td>Отменить</td></tr>
+<tr><td>IDM_REDO</td><td>202</td><td>Ctrl+Y, Alt+Shift+BackSpace</td><td>Redo</td><td>Повторить</td></tr>
+<tr><td>IDM_CUT</td><td>203</td><td>Ctrl+X</td><td>Cut</td><td>Вырезать</td></tr>
+<tr><td>IDM_COPY</td><td>204</td><td>Ctrl+C</td><td>Copy</td><td>Копировать</td></tr>
+<tr><td>IDM_PASTE</td><td>205</td><td>Ctrl+V</td><td>Paste</td><td>Вставить</td></tr>
+<tr><td>IDM_DUPLICATE</td><td>250</td><td>Ctrl+D</td><td>Duplicate</td><td>Дублировать</td></tr>
+<tr><td>IDM_CLEAR</td><td>206</td><td>Del</td><td>Delete</td><td>Удалить</td></tr>
+<tr><td>IDM_SELECTALL</td><td>207</td><td>Ctrl+A</td><td>Select All</td><td>Выделить все</td></tr>
+<tr><td>IDM_PASTEANDDOWN</td><td>208</td><td>&nbsp;</td><td>Paste and Down</td><td>Вставить и сместить курсор вниз</td></tr>
+<tr><td>IDM_COPYASRTF</td><td>245</td><td>&nbsp;</td><td>Copy as RTF</td><td>Копировать в формате RTF</td></tr>
+<tr><td>IDM_MATCHBRACE</td><td>230</td><td>Ctrl+E</td><td>Match Brace</td><td>Найти парную скобку</td></tr>
+<tr><td>IDM_SELECTTOBRACE</td><td>231</td><td>Ctrl+Shift+E</td><td>Select to Brace</td><td>Выделить до другой скобки</td></tr>
+<tr><td>IDM_SHOWCALLTIP</td><td>232</td><td>Ctrl+Shift+Space</td><td>Show Calltip</td><td>Показать подсказку</td></tr>
+<tr><td>IDM_COMPLETE</td><td>233</td><td>Ctrl+Space, Ctrl+I</td><td>Complete Symbol</td><td>Завершить символ</td></tr>
+<tr><td>IDM_COMPLETEWORD</td><td>234</td><td>Ctrl+Return</td><td>Complete Word</td><td>Завершить слово</td></tr>
+<tr><td>IDM_ABBREV</td><td>242</td><td>Ctrl+B</td><td>Expand Abbreviation</td><td>Расшифровать сокращение</td></tr>
+<tr><td>IDM_INS_ABBREV</td><td>247</td><td>Ctrl+Shift+R</td><td>Insert Abbreviation</td><td>Вставить сокращение</td></tr>
+<tr><td>IDM_BLOCK_COMMENT</td><td>243</td><td>Ctrl+Q</td><td>Block Comment or Uncomment</td><td>Закомментировать или раскомментировать текст</td></tr>
+<tr><td>IDM_BOX_COMMENT</td><td>246</td><td>Ctrl+Shift+B</td><td>Box Comment</td><td>Блочный комментарий</td></tr>
+<tr><td>IDM_STREAM_COMMENT</td><td>244</td><td>Ctrl+Shift+Q</td><td>Stream Comment</td><td>Потоковый комментарий</td></tr>
+<tr><td>IDM_UPRCASE</td><td>240</td><td>Ctrl+Shift+U</td><td>Make Selection Uppercase</td><td>Перевести в верхний регистр</td></tr>
+<tr><td>IDM_LWRCASE</td><td>241</td><td>Ctrl+U</td><td>Make Selection Lowercase</td><td>Перевести в нижний регистр</td></tr>
+<tr><td>IDM_JOIN</td><td>248</td><td>&nbsp;</td><td>Paragraph Join</td><td>Абзац Объединить</td></tr>
+<tr><td>IDM_SPLIT</td><td>249</td><td>&nbsp;</td><td>Paragraph Split</td><td>Абзац Разделить</td></tr>
+
+<tr><th colspan=5>Search</th></tr>
+<tr><td>IDM_FIND</td><td>210</td><td>Ctrl+F</td><td>Find</td><td>Найти</td></tr>
+<tr><td>IDM_FINDNEXT</td><td>211</td><td>F3</td><td>Find Next</td><td>Найти далее</td></tr>
+<tr><td>IDM_FINDNEXTBACK</td><td>212</td><td>Shift+F3</td><td>Find Previous</td><td>Предыдущее совпадение</td></tr>
+<tr><td>IDM_FINDNEXTSEL</td><td>213</td><td>Ctrl+F3</td><td>Find selection</td><td>Найти выделенное</td></tr>
+<tr><td>IDM_FINDNEXTBACKSEL</td><td>214</td><td>Ctrl+Shift+F3</td><td>Find selection backwards</td><td>Найти выделенное в обратном порядке</td></tr>
+<tr><td>IDM_FINDINFILES</td><td>215</td><td>Ctrl+Shift+F</td><td>Find in Files</td><td>Найти в файлах</td></tr>
+<tr><td>IDM_REPLACE</td><td>216</td><td>Ctrl+H</td><td>Replace</td><td>Заменить</td></tr>
+<tr><td>IDM_INCSEARCH </td><td>252</td><td>Ctrl+Alt+I</td><td>Incremental Search</td><td>Быстрый поиск</td></tr>
+<tr><td>IDM_GOTO</td><td>220</td><td>Ctrl+G</td><td>Go to</td><td>Перейти</td></tr>
+<tr><td>IDM_BOOKMARK_NEXT</td><td>221</td><td>F2</td><td>Next Bookmark</td><td>Следующая метка</td></tr>
+<tr><td>IDM_BOOKMARK_PREV</td><td>223</td><td>Shift+F2</td><td>Previous Bookmark</td><td>Предыдущая метка</td></tr>
+<tr><td>IDM_BOOKMARK_TOGGLE</td><td>222</td><td>Ctrl+F2</td><td>Toggle Bookmark</td><td>Добавить или удалить метку</td></tr>
+<tr><td>IDM_BOOKMARK_CLEARALL</td><td>224</td><td>&nbsp;</td><td>Clear All Bookmarks</td><td>Удалить все метки</td></tr>
+<tr><td>IDM_BOOKMARK_NEXT_SELECT</td><td>225</td><td>Alt+F2</td><td>Select to next bookmark</td><td>Выделить до следующей метки</td></tr>
+<tr><td>IDM_BOOKMARK_PREV_SELECT</td><td>226</td><td>Alt+Shift+F2</td><td>Select to previous bookmark</td><td>Выделить до предыдущей метки</td></tr>
+
+<tr><th colspan=5>View</th></tr>
+<tr><td>IDM_EXPAND</td><td>235</td><td>Ctrl+KeypadMultiply</td><td>Toggle current fold</td><td>Свернуть или развернуть текущий блок текста</td></tr>
+<tr><td>IDM_TOGGLE_FOLDALL</td><td>236</td><td>&nbsp;</td><td>Toggle all folds</td><td>Свернуть или развернуть все блоки текста</td></tr>
+<tr><td>IDM_TOGGLE_FOLDRECURSIVE</td><td>237</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>IDM_EXPAND_ENSURECHILDRENVISIBLE</td><td>238</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>IDM_FULLSCREEN</td><td>961</td><td>F11</td><td>Full Screen</td><td>Полноэкранный режим</td></tr>
+<tr><td>IDM_VIEWTOOLBAR</td><td>408</td><td>&nbsp;</td><td>Tool Bar</td><td>Панель инструментов</td></tr>
+<tr><td>IDM_VIEWTABBAR</td><td>410</td><td>&nbsp;</td><td>Tab Bar</td><td>Вкладки</td></tr>
+<tr><td>IDM_VIEWSTATUSBAR</td><td>411</td><td>&nbsp;</td><td>Status Bar</td><td>Строка состояния</td></tr>
+<tr><td>IDM_VIEWSPACE</td><td>402</td><td>Ctrl+Shift+8</td><td>Whitespace</td><td>Пробелы</td></tr>
+<tr><td>IDM_VIEWEOL</td><td>403</td><td>Ctrl+Shift+9</td><td>End of Line</td><td>Символы перевода строк</td></tr>
+<tr><td>IDM_VIEWGUIDES</td><td>404</td><td>&nbsp;</td><td>Indentation Guides</td><td>Направляющие отступа</td></tr>
+<tr><td>IDM_LINENUMBERMARGIN</td><td>407</td><td>&nbsp;</td><td>Line Numbers</td><td>Номера строк</td></tr>
+<tr><td>IDM_SELMARGIN</td><td>405</td><td>&nbsp;</td><td>Margin</td><td>Метки (bookmarks)</td></tr>
+<tr><td>IDM_FOLDMARGIN</td><td>406</td><td>&nbsp;</td><td>Fold Margin</td><td>Поле сворачивания блоков текста</td></tr>
+<tr><td>IDM_TOGGLEOUTPUT</td><td>409</td><td>F8</td><td>Output</td><td>Окно консоли</td></tr>
+<tr><td>IDM_TOGGLEPARAMETERS</td><td>412</td><td>Shift+F8</td><td>Parameters</td><td>Параметры</td></tr>
+
+<tr><th colspan=5>&nbsp;</th></tr>
+<tr><td>IDM_PREVMATCHPPC</td><td>260</td><td>Ctrl+J</td><td>Find matching preprocessor conditional backwards, skipping nested ones</td><td>&nbsp;</td></tr>
+<tr><td>IDM_SELECTTOPREVMATCHPPC</td><td>261</td><td>Ctrl+Shift+J</td><td>Select to matching preprocessor conditional backwards</td><td>&nbsp;</td></tr>
+<tr><td>IDM_NEXTMATCHPPC</td><td>262</td><td>Ctrl+K</td><td>Find matching preprocessor conditional, skipping nested ones</td><td>&nbsp;</td></tr>
+<tr><td>IDM_SELECTTONEXTMATCHPPC</td><td>263</td><td>Ctrl+Shift+K</td><td>Select to matching preprocessor conditional</td><td>&nbsp;</td></tr>
+
+<tr><th colspan=5>Tools</th></tr>
+<tr><td>IDM_COMPILE</td><td>301</td><td>Ctrl+F7</td><td>Compile</td><td>Компилировать</td></tr>
+<tr><td>IDM_BUILD</td><td>302</td><td>F7</td><td>Build</td><td>Собрать</td></tr>
+<tr><td>IDM_CLEAN</td><td>308</td><td>Shift+F7</td><td>Clean</td><td>Очистить</td></tr>
+<tr><td>IDM_GO</td><td>303</td><td>F5</td><td>Go</td><td>Выполнить</td></tr>
+<tr><td>IDM_STOPEXECUTE</td><td>304</td><td>Ctrl+Break</td><td>Stop Executing</td><td>Остановить выполнение</td></tr>
+<tr><td>IDM_FINISHEDEXECUTE</td><td>305</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>IDM_TOOLS+0&hellip;49</td><td>9000+0&hellip;49</td><td>Ctrl+0&hellip;9</td><td>Run 0&hellip;49 command from menu Tools</td><td>Запуск 0&hellip;49 пункта меню Tools</td></tr>
+<tr><td>IDM_MACROLIST</td><td>314</td><td>Shift+F9</td><td>List Macros</td><td>&nbsp;</td></tr>
+<tr><td>IDM_MACROPLAY</td><td>313</td><td>F9</td><td>Run Current Macro</td><td>&nbsp;</td></tr>
+<tr><td>IDM_MACRORECORD</td><td>311</td><td>Ctrl+F9</td><td>Record Macro</td><td>&nbsp;</td></tr>
+<tr><td>IDM_MACROSTOPRECORD</td><td>312</td><td>Ctrl+Shift+F9</td><td>Stop Recording Macro</td><td>&nbsp;</td></tr>
+<tr><td>IDM_NEXTMSG</td><td>306</td><td>F4</td><td>Next Message</td><td>Следующее сообщение</td></tr>
+<tr><td>IDM_PREVMSG</td><td>307</td><td>Shift+F4</td><td>Previous Message</td><td>Предыдущее сообщение</td></tr>
+<tr><td>IDM_CLEAROUTPUT</td><td>420</td><td>Shift+F5</td><td>Clear Output</td><td>Очистить окно консоли</td></tr>
+<tr><td>IDM_SWITCHPANE</td><td>421</td><td>Ctrl+F6, Ctrl+Shift+F6</td><td>Switch Pane</td><td>Переход между редактирование/консоль</td></tr>
+
+<tr><th colspan=5>Options</th></tr>
+<tr><td>IDM_ONTOP</td><td>960</td><td>&nbsp;</td><td>Always On Top</td><td>Поверх всех окон</td></tr>
+<tr><td>IDM_OPENFILESHERE</td><td>413</td><td>&nbsp;</td><td>Open Files Here</td><td>Открывать только одну копию программы</td></tr>
+<tr><td>IDM_SPLITVERTICAL</td><td>401</td><td>&nbsp;</td><td>Vertical Split</td><td>Консоль - сбоку</td></tr>
+<tr><td>IDM_WRAP</td><td>414</td><td>&nbsp;</td><td>Wrap</td><td>Перенос по словам</td></tr>
+<tr><td>IDM_WRAPOUTPUT</td><td>415</td><td>&nbsp;</td><td>Wrap Output</td><td>Перенос по словам в консоли</td></tr>
+<tr><td>IDM_READONLY</td><td>416</td><td>&nbsp;</td><td>Read-Only</td><td>Только для чтения</td></tr>
+<tr><td>IDM_EOL_CRLF</td><td>430</td><td>&nbsp;</td><td>CR + LF</td><td>Символы перевода строки CR + LF</td></tr>
+<tr><td>IDM_EOL_CR</td><td>431</td><td>&nbsp;</td><td>CR</td><td>Символы перевода строки CR</td></tr>
+<tr><td>IDM_EOL_LF</td><td>432</td><td>&nbsp;</td><td>LF</td><td>Символы перевода строки LF</td></tr>
+<tr><td>IDM_EOL_CONVERT</td><td>433</td><td>&nbsp;</td><td>Convert Line End Characters</td><td>Конвертировать сиволы перевода строки</td></tr>
+<tr><td>IDM_TABSIZE</td><td>440</td><td>Ctrl+Shift+I</td><td>Change Indentation Settings</td><td>Изменить настройки отступа</td></tr>
+<tr><td>IDM_MONOFONT</td><td>450</td><td>Ctrl+F11</td><td>Use Monospaced Font</td><td>Использовать моноширинные шрифты</td></tr>
+<tr><td>IDM_OPENLOCALPROPERTIES</td><td>460</td><td>&nbsp;</td><td>Open Local Options File</td><td>Открыть файл локальных настроек</td></tr>
+<tr><td>IDM_OPENDIRECTORYPROPERTIES</td><td>460</td><td>&nbsp;</td><td>Open Directory Options File</td><td>Открыть файл настроек текущего каталога</td></tr>
+<tr><td>IDM_OPENUSERPROPERTIES</td><td>461</td><td>&nbsp;</td><td>Open User Options File</td><td>Открыть файл пользовательских настроек</td></tr>
+<tr><td>IDM_OPENGLOBALPROPERTIES</td><td>462</td><td>&nbsp;</td><td>Open Global Options File</td><td>Открыть файл глобальных настроек</td></tr>
+<tr><td>IDM_OPENABBREVPROPERTIES</td><td>463</td><td>&nbsp;</td><td>Open Abbreviations File</td><td>Открыть файл настройки сокращений</td></tr>
+<tr><td>IDM_OPENLUAEXTERNALFILE</td><td>464</td><td>&nbsp;</td><td>Open Lua Startup Script</td><td>Открыть файл автоматизации Lua</td></tr>
+
+<tr><th colspan=5>Buffers</th></tr>
+<tr><td>IDM_BUFFER+0&hellip;9</td><td>1200+0&hellip;9</td><td>Alt+1&hellip;0</td><td>Switch to 1&hellip;10 buffer</td><td>Переключение на 1&hellip;10 буфер</td></tr>
+<tr><td>IDM_PREVFILE</td><td>501</td><td>Shift+F6</td><td>Previous file</td><td>Предыдущий файл</td></tr>
+<tr><td>IDM_NEXTFILE</td><td>502</td><td>F6</td><td>Next file</td><td>Следующий файл</td></tr>
+<tr><td>IDM_MOVETABLEFT</td><td>509</td><td>&nbsp;</td><td>Move Tab Left</td><td>Переместить вкладку влево</td></tr>
+<tr><td>IDM_MOVETABRIGHT</td><td>508</td><td>&nbsp;</td><td>Move Tab Right</td><td>Переместить вкладку вправо</td></tr>
+<tr><td>IDM_CLOSEALL</td><td>503</td><td>&nbsp;</td><td>Close all</td><td>Закрыть все</td></tr>
+<tr><td>IDM_SAVEALL</td><td>504</td><td>&nbsp;</td><td>Save All</td><td>Сохранить все</td></tr>
+<tr><td>IDM_PREVFILESTACK</td><td>506</td><td>Ctrl+Shift+Tab</td><td>Previous file</td><td>Предыдущий файл</td></tr>
+<tr><td>IDM_NEXTFILESTACK</td><td>507</td><td>Ctrl+Tab</td><td>Next file</td><td>Следующий файл</td></tr>
+
+<tr><th colspan=5>Help</th></tr>
+<tr><td>IDM_HELP</td><td>901</td><td>F1</td><td>Help</td><td>Справка</td></tr>
+<tr><td>IDM_HELP_SCITE</td><td>903</td><td>&nbsp;</td><td>SciTE Help</td><td>Справка по SciTE</td></tr>
+<tr><td>IDM_ABOUT</td><td>902</td><td>&nbsp;</td><td>About SciTE</td><td>О программе</td></tr>
+
+<tr><th colspan=5>&nbsp;</th></tr>
+<tr><td>IDM_ACTIVATE</td><td>320</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>IDM_ENTERSELECTION</td><td>256</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+</table>
+
+<h3>Клавиатурные команды Scintilla</h3>
+<table border=1 cellpadding=2 cellspacing=0 width=100%>
+<thead><td>Command</td><td>Name</td><td>Explanation</td><td>Перевод</td></thead>
+<tr><td>2547</td><td>AnnotationClearAll</td><td>&nbsp;</td><td>Clear the annotations from all lines</td><td>&nbsp;</td></tr>
+<tr><td>2101</td><td>AutoCCancel</td><td>&nbsp;</td><td>Remove the auto-completion list from the screen.</td><td>&nbsp;</td></tr>
+<tr><td>2104</td><td>AutoCComplete</td><td>&nbsp;</td><td>User has selected an item so remove the list and insert the selection.</td><td>&nbsp;</td></tr>
+<tr><td>2328</td><td>BackTab</td><td>Shift+Tab</td><td>Dedent the selected lines.</td><td>Убрать отступ</td></tr>
+<tr><td>2078</td><td>BeginUndoAction</td><td>&nbsp;</td><td>Start a sequence of actions that is undone and redone as a unit. May be nested.</td><td>&nbsp;</td></tr>
+<tr><td>2201</td><td>CallTipCancel</td><td>&nbsp;</td><td>Remove the call tip from the screen.</td><td>&nbsp;</td></tr>
+<tr><td>4030</td><td>CallTipClearHlt</td><td>&nbsp;</td><td>Delete all highlighted ranges.</td><td>&nbsp;</td></tr>
+<tr><td>4031</td><td>CallTipUpdateHlt</td><td>&nbsp;</td><td>Update calltip window to reflect changes made by CallTipAddHlt and CallTipClearHlt.</td><td>&nbsp;</td></tr>
+<tr><td>2325</td><td>Cancel</td><td>Escape</td><td>Cancel any modes such as call tip or auto-completion list display.</td><td>&nbsp;</td></tr>
+<tr><td>2304</td><td>CharLeft</td><td>Left</td><td>Move caret left one character.</td><td>На символ влево</td></tr>
+<tr><td>2305</td><td>CharLeftExtend</td><td>Shift+Left</td><td>Move caret left one character extending selection to new caret position.</td><td>Выделить символ свлева</td></tr>
+<tr><td>2428</td><td>CharLeftRectExtend</td><td>Alt+Shift+Left</td><td>Move caret left one character, extending rectangular selection to new caret position.</td><td>Выделение прямоугольного блока</td></tr>
+<tr><td>2306</td><td>CharRight</td><td>Right</td><td>Move caret right one character.</td><td>На символ вправо</td></tr>
+<tr><td>2307</td><td>CharRightExtend</td><td>Shift+Right</td><td>Move caret right one character extending selection to new caret position.</td><td>Выделить символ справа</td></tr>
+<tr><td>2429</td><td>CharRightRectExtend</td><td>Alt+Shift+Right</td><td>Move caret right one character, extending rectangular selection to new caret position.</td><td>Выделение прямоугольного блока</td></tr>
+<tr><td>2399</td><td>ChooseCaretX</td><td>&nbsp;</td><td>Set the last x chosen value to be the caret x position.</td><td>&nbsp;</td></tr>
+<tr><td>2180</td><td>Clear</td><td>Delete</td><td>Clear the selection.</td><td>&nbsp;</td></tr>
+<tr><td>2004</td><td>ClearAll</td><td>&nbsp;</td><td>Delete all text in the document.</td><td>&nbsp;</td></tr>
+<tr><td>2072</td><td>ClearAllCmdKeys</td><td>&nbsp;</td><td>Drop all key mappings.</td><td>&nbsp;</td></tr>
+<tr><td>2005</td><td>ClearDocumentStyle</td><td>&nbsp;</td><td>Set all style bytes to 0, remove all folding information.</td><td>&nbsp;</td></tr>
+<tr><td>2408</td><td>ClearRegisteredImages</td><td>&nbsp;</td><td>Clear all the registered XPM images.</td><td>&nbsp;</td></tr>
+<tr><td>2571</td><td>ClearSelections</td><td>&nbsp;</td><td>Clear selections to a single empty stream selection</td><td>&nbsp;</td></tr>
+<tr><td>2178</td><td>Copy</td><td>Ctrl+C, Ctrl+Insert</td><td>Copy the selection to the clipboard.</td><td>Копировать</td></tr>
+<tr><td>2519</td><td>CopyAllowLine</td><td>&nbsp;</td><td>Copy the selection, if selection empty copy the line with the caret</td><td>Копирует выделенный текст и если выбор пустой, копирует симовол перевода строки</td></tr>
+<tr><td>2177</td><td>Cut</td><td>Ctrl+X, Shift+Delete</td><td>Cut the selection to the clipboard.</td><td>Вырезать</td></tr>
+<tr><td>2395</td><td>DelLineLeft</td><td>Ctrl+Shift+BackSpace</td><td>Delete back from the current position to the start of the line.</td><td>Удалить строку слева от курсора</td></tr>
+<tr><td>2396</td><td>DelLineRight</td><td>Ctrl+Shift+Delete</td><td>Delete forwards from the current position to the end of the line.</td><td>Удалить строку справа от курсора</td></tr>
+<tr><td>2335</td><td>DelWordLeft</td><td>Ctrl+BackSpace</td><td>Delete the word to the left of the caret.</td><td>Удалить слово слева от курсора</td></tr>
+<tr><td>2336</td><td>DelWordRight</td><td>Ctrl+Delete</td><td>Delete the word to the right of the caret.</td><td>Удалить слово справа от курсора</td></tr>
+<tr><td>2518</td><td>DelWordRightEnd</td><td>&nbsp;</td><td>Delete the word to the right of the caret, but not the trailing non-word characters.</td><td>Удаляет слово справа от курсора, но не включая прилегающие пробельные символы.</td></tr>
+<tr><td>2326</td><td>DeleteBack</td><td>BackSpace, Shift+BackSpace</td><td>Delete the selection or if no selection, the character before the caret.</td><td>&nbsp;</td></tr>
+<tr><td>2344</td><td>DeleteBackNotLine</td><td>&nbsp;</td><td>Delete the selection or if no selection, the character before the caret. Will not delete the character before at the start of a line.</td><td>&nbsp;</td></tr>
+<tr><td>2318</td><td>DocumentEnd</td><td>Ctrl+End</td><td>Move caret to last position in document.</td><td>Переход к концу документа</td></tr>
+<tr><td>2319</td><td>DocumentEndExtend</td><td>Ctrl+Shift+End</td><td>Move caret to last position in document extending selection to new caret position.</td><td>Выделить фрагмент от курсора до конца документа</td></tr>
+<tr><td>2316</td><td>DocumentStart</td><td>Ctrl+Home</td><td>Move caret to first position in document.</td><td>Переход к началу документа</td></tr>
+<tr><td>2317</td><td>DocumentStartExtend</td><td>Ctrl+Shift+Home</td><td>Move caret to first position in document extending selection to new caret position.</td><td>Выделить фрагмент от курсора до начала документа</td></tr>
+<tr><td>2324</td><td>EditToggleOvertype</td><td>Insert</td><td>Switch from insert to overtype mode or the reverse.</td><td>&nbsp;</td></tr>
+<tr><td>2175</td><td>EmptyUndoBuffer</td><td>&nbsp;</td><td>Delete the undo history.</td><td>&nbsp;</td></tr>
+<tr><td>2079</td><td>EndUndoAction</td><td>&nbsp;</td><td>End a sequence of actions that is undone and redone as a unit.</td><td>&nbsp;</td></tr>
+<tr><td>2642</td><td>FindIndicatorHide</td><td>&nbsp;</td><td>On OS X, hide the find indicator.</td><td>&nbsp;</td></tr>
+<tr><td>2330</td><td>FormFeed</td><td>&nbsp;</td><td>Insert a Form Feed character.</td><td>&nbsp;</td></tr>
+<tr><td>4023</td><td>FreeSubStyles</td><td>&nbsp;</td><td>Free allocated sub styles.</td><td>&nbsp;</td></tr>
+<tr><td>2400</td><td>GrabFocus</td><td>&nbsp;</td><td>Set the focus to this Scintilla widget.</td><td>&nbsp;</td></tr>
+<tr><td>2312</td><td>Home</td><td>&nbsp;</td><td>Move caret to first position on line.</td><td>&nbsp;</td></tr>
+<tr><td>2345</td><td>HomeDisplay</td><td>Alt+Home</td><td>Move caret to first position on display line.</td><td>Переход к началу строки</td></tr>
+<tr><td>2346</td><td>HomeDisplayExtend</td><td>&nbsp;</td><td>Move caret to first position on display line extending selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2313</td><td>HomeExtend</td><td>&nbsp;</td><td>Move caret to first position on line extending selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2430</td><td>HomeRectExtend</td><td>&nbsp;</td><td>Move caret to first position on line, extending rectangular selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2349</td><td>HomeWrap</td><td>&nbsp;</td><td>These are like their namesakes Home(Extend)?, LineEnd(Extend)?, VCHome(Extend)? except they behave differently when word-wrap is enabled: They go first to the start / end of the display line, like (Home|LineEnd)Display The difference is that, the cursor is already at the point, it goes on to the start or end of the document line, as appropriate for (Home|LineEnd|VCHome)(Extend)?.</td><td>&nbsp;</td></tr>
+<tr><td>2450</td><td>HomeWrapExtend</td><td>&nbsp;</td><td>These are like their namesakes Home(Extend)?, LineEnd(Extend)?, VCHome(Extend)? except they behave differently when word-wrap is enabled: They go first to the start / end of the display line, like (Home|LineEnd)Display The difference is that, the cursor is already at the point, it goes on to the start or end of the document line, as appropriate for (Home|LineEnd|VCHome)(Extend)?.</td><td>&nbsp;</td></tr>
+<tr><td>2455</td><td>LineCopy</td><td>Ctrl+Shift+T</td><td>Copy the line containing the caret.</td><td>Скопировать строку</td></tr>
+<tr><td>2337</td><td>LineCut</td><td>Ctrl+L</td><td>Cut the line containing the caret.</td><td>Вырезать строку</td></tr>
+<tr><td>2338</td><td>LineDelete</td><td>Ctrl+Shift+L</td><td>Delete the line containing the caret.</td><td>Удалить строку</td></tr>
+<tr><td>2300</td><td>LineDown</td><td>Down</td><td>Move caret down one line.</td><td>Строка вниз</td></tr>
+<tr><td>2301</td><td>LineDownExtend</td><td>Shift+Down</td><td>Move caret down one line extending selection to new caret position.</td><td>Выделить поток на строку вниз</td></tr>
+<tr><td>2426</td><td>LineDownRectExtend</td><td>Alt+Shift+Down</td><td>Move caret down one line, extending rectangular selection to new caret position.</td><td>Выделение прямоугольного блока</td></tr>
+<tr><td>2404</td><td>LineDuplicate</td><td>&nbsp;</td><td>Duplicate the current line.</td><td>&nbsp;</td></tr>
+<tr><td>2314</td><td>LineEnd</td><td>End</td><td>Move caret to last position on line.</td><td>Переход к концу строки</td></tr>
+<tr><td>2347</td><td>LineEndDisplay</td><td>Alt+End</td><td>Move caret to last position on display line.</td><td>Переход к концу строки</td></tr>
+<tr><td>2348</td><td>LineEndDisplayExtend</td><td>&nbsp;</td><td>Move caret to last position on display line extending selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2315</td><td>LineEndExtend</td><td>Shift+End</td><td>Move caret to last position on line extending selection to new caret position.</td><td>Выделить до конца строки</td></tr>
+<tr><td>2432</td><td>LineEndRectExtend</td><td>Alt+Shift+End</td><td>Move caret to last position on line, extending rectangular selection to new caret position.</td><td>Выделить фрагмент текста до конца строки</td></tr>
+<tr><td>2451</td><td>LineEndWrap</td><td>&nbsp;</td><td>These are like their namesakes Home(Extend)?, LineEnd(Extend)?, VCHome(Extend)? except they behave differently when word-wrap is enabled: They go first to the start / end of the display line, like (Home|LineEnd)Display The difference is that, the cursor is already at the point, it goes on to the start or end of the document line, as appropriate for (Home|LineEnd|VCHome)(Extend)?.</td><td>&nbsp;</td></tr>
+<tr><td>2452</td><td>LineEndWrapExtend</td><td>&nbsp;</td><td>These are like their namesakes Home(Extend)?, LineEnd(Extend)?, VCHome(Extend)? except they behave differently when word-wrap is enabled: They go first to the start / end of the display line, like (Home|LineEnd)Display The difference is that, the cursor is already at the point, it goes on to the start or end of the document line, as appropriate for (Home|LineEnd|VCHome)(Extend)?.</td><td>&nbsp;</td></tr>
+<tr><td>2342</td><td>LineScrollDown</td><td>Ctrl+Down</td><td>Scroll the document down, keeping the caret visible.</td><td>Прокрутка вниз</td></tr>
+<tr><td>2343</td><td>LineScrollUp</td><td>Ctrl+Up</td><td>Scroll the document up, keeping the caret visible.</td><td>Прокрутка вверх</td></tr>
+<tr><td>2339</td><td>LineTranspose</td><td>Ctrl+T</td><td>Switch the current line with the previous.</td><td>Поменять местами строки</td></tr>
+<tr><td>2302</td><td>LineUp</td><td>Up</td><td>Move caret up one line.</td><td>Строка вверх</td></tr>
+<tr><td>2303</td><td>LineUpExtend</td><td>Shift+Up</td><td>Move caret up one line extending selection to new caret position.</td><td>Выделить поток на строку вверх</td></tr>
+<tr><td>2427</td><td>LineUpRectExtend</td><td>Alt+Shift+Up</td><td>Move caret up one line, extending rectangular selection to new caret position.</td><td>Выделение прямоугольного блока</td></tr>
+<tr><td>2288</td><td>LinesJoin</td><td>&nbsp;</td><td>Join the lines in the target.</td><td>&nbsp;</td></tr>
+<tr><td>2340</td><td>LowerCase</td><td>Ctrl+U</td><td>Transform the selection to lower case.</td><td>Перевести в нижний регистр</td></tr>
+<tr><td>2536</td><td>MarginTextClearAll</td><td>&nbsp;</td><td>Clear the margin text on all lines</td><td>&nbsp;</td></tr>
+<tr><td>2401</td><td>MoveCaretInsideView</td><td>&nbsp;</td><td>Move the caret inside current view if it's not there already.</td><td>&nbsp;</td></tr>
+<tr><td>2621</td><td>MoveSelectedLinesDown</td><td>&nbsp;</td><td>Move the selected lines down one line, shifting the line below before the selection</td><td>&nbsp;</td></tr>
+<tr><td>2620</td><td>MoveSelectedLinesUp</td><td>&nbsp;</td><td>Move the selected lines up one line, shifting the line above after the selection</td><td>&nbsp;</td></tr>
+<tr><td>2329</td><td>NewLine</td><td>Return, Shift+Return</td><td>Insert a new line, may use a CRLF, CR or LF depending on EOL mode.</td><td>&nbsp;</td></tr>
+<tr><td>2172</td><td>Null</td><td>&nbsp;</td><td>Null operation.</td><td>&nbsp;</td></tr>
+<tr><td>2322</td><td>PageDown</td><td>PageDown</td><td>Move caret one page down.</td><td>&nbsp;</td></tr>
+<tr><td>2323</td><td>PageDownExtend</td><td>Shift+PageDown</td><td>Move caret one page down extending selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2434</td><td>PageDownRectExtend</td><td>Alt+Shift+PageDown</td><td>Move caret one page down, extending rectangular selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2320</td><td>PageUp</td><td>PageUp</td><td>Move caret one page up.</td><td>&nbsp;</td></tr>
+<tr><td>2321</td><td>PageUpExtend</td><td>Shift+PageUp</td><td>Move caret one page up extending selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2433</td><td>PageUpRectExtend</td><td>Alt+Shift+PageUp</td><td>Move caret one page up, extending rectangular selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2413</td><td>ParaDown</td><td>Ctrl+]</td><td>Move caret between paragraphs (delimited by empty lines).</td><td>Следующий параграф</td></tr>
+<tr><td>2414</td><td>ParaDownExtend</td><td>Ctrl+Shift+]</td><td>Move caret between paragraphs (delimited by empty lines).</td><td>Выделить следующий параграф</td></tr>
+<tr><td>2415</td><td>ParaUp</td><td>Ctrl+[</td><td>Move caret between paragraphs (delimited by empty lines).</td><td>Предыдущий параграф</td></tr>
+<tr><td>2416</td><td>ParaUpExtend</td><td>Ctrl+Shift+[</td><td>Move caret between paragraphs (delimited by empty lines).</td><td>Выделить предыдущий параграф</td></tr>
+<tr><td>2179</td><td>Paste</td><td>Ctrl+V, Shift+Insert</td><td>Paste the contents of the clipboard into the document replacing the selection.</td><td>Вставить</td></tr>
+<tr><td>2011</td><td>Redo</td><td>Ctrl+Y</td><td>Redoes the next action on the undo history.</td><td>Повторить</td></tr>
+<tr><td>2552</td><td>ReleaseAllExtendedStyles</td><td>&nbsp;</td><td>Release all extended (&gt;255) style numbers.</td><td>&nbsp;</td></tr>
+<tr><td>2606</td><td>RotateSelection</td><td>&nbsp;</td><td>Set the main selection to the next selection.</td><td>&nbsp;</td></tr>
+<tr><td>2169</td><td>ScrollCaret</td><td>&nbsp;</td><td>Ensure the caret is visible.</td><td>&nbsp;</td></tr>
+<tr><td>2629</td><td>ScrollToEnd</td><td>&nbsp;</td><td>Scroll to end of document.</td><td>&nbsp;</td></tr>
+<tr><td>2628</td><td>ScrollToStart</td><td>&nbsp;</td><td>Scroll to start of document.</td><td>&nbsp;</td></tr>
+<tr><td>2366</td><td>SearchAnchor</td><td>&nbsp;</td><td>Sets the current caret position to be the search anchor.</td><td>&nbsp;</td></tr>
+<tr><td>2013</td><td>SelectAll</td><td>Ctrl+A</td><td>Select all the text in the document.</td><td>Выделить все</td></tr>
+<tr><td>2469</td><td>SelectionDuplicate</td><td>Ctrl+D</td><td>Duplicate the selection. If selection empty duplicate the line containing the caret.</td><td>Дубликат строки</td></tr>
+<tr><td>2444</td><td>SetCharsDefault</td><td>&nbsp;</td><td>Reset the set of characters for whitespace and word characters to the defaults.</td><td>&nbsp;</td></tr>
+<tr><td>2014</td><td>SetSavePoint</td><td>&nbsp;</td><td>Remember the current position in the undo history as the position at which the document was saved.</td><td>&nbsp;</td></tr>
+<tr><td>3001</td><td>StartRecord</td><td>&nbsp;</td><td>Start notifying the container of all key presses and commands.</td><td>&nbsp;</td></tr>
+<tr><td>3002</td><td>StopRecord</td><td>&nbsp;</td><td>Stop notifying the container of all key presses and commands.</td><td>&nbsp;</td></tr>
+<tr><td>2437</td><td>StutteredPageDown</td><td>&nbsp;</td><td>Move caret to bottom of page, or one page down if already at bottom of page.</td><td>&nbsp;</td></tr>
+<tr><td>2438</td><td>StutteredPageDownExtend</td><td>&nbsp;</td><td>Move caret to bottom of page, or one page down if already at bottom of page, extending selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2435</td><td>StutteredPageUp</td><td>&nbsp;</td><td>Move caret to top of page, or one page up if already at top of page.</td><td>&nbsp;</td></tr>
+<tr><td>2436</td><td>StutteredPageUpExtend</td><td>&nbsp;</td><td>Move caret to top of page, or one page up if already at top of page, extending selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2050</td><td>StyleClearAll</td><td>&nbsp;</td><td>Clear all the styles and make equivalent to the global default style</td><td>&nbsp;</td></tr>
+<tr><td>2058</td><td>StyleResetDefault</td><td>&nbsp;</td><td>Reset the default style to its state at startup</td><td>&nbsp;</td></tr>
+<tr><td>2607</td><td>SwapMainAnchorCaret</td><td>&nbsp;</td><td>Swap that caret and anchor of the main selection.</td><td>&nbsp;</td></tr>
+<tr><td>2327</td><td>Tab</td><td>Tab</td><td>If selection is empty or all on one line replace the selection with a tab character. If more than one line selected, indent the lines.</td><td>Добавить отступ</td></tr>
+<tr><td>2287</td><td>TargetFromSelection</td><td>&nbsp;</td><td>Make the target range start and end be the same as the selection range start and end.</td><td>&nbsp;</td></tr>
+<tr><td>2459</td><td>ToggleCaretSticky</td><td>&nbsp;</td><td>Switch between sticky and non-sticky: meant to be bound to a key.</td><td>&nbsp;</td></tr>
+<tr><td>2176</td><td>Undo</td><td>Ctrl+Z, Alt+BackSpace</td><td>Undo one action in the undo history.</td><td>Отменить</td></tr>
+<tr><td>2341</td><td>UpperCase</td><td>Ctrl+Shift+U</td><td>Transform the selection to upper case.</td><td>Перевести в верхний регистр</td></tr>
+<tr><td>2331</td><td>VCHome</td><td>Home</td><td>Move caret to before first visible character on line. If already there move to first character on line.</td><td>Перейти в начало строки</td></tr>
+<tr><td>2652</td><td>VCHomeDisplay</td><td>&nbsp;</td><td>Move caret to before first visible character on display line. If already there move to first character on display line.</td><td>&nbsp;</td></tr>
+<tr><td>2653</td><td>VCHomeDisplayExtend</td><td>&nbsp;</td><td>Like VCHomeDisplay but extending selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2332</td><td>VCHomeExtend</td><td>Shift+Home</td><td>Like VCHome but extending selection to new caret position.</td><td>Выделить до начала строки</td></tr>
+<tr><td>2431</td><td>VCHomeRectExtend</td><td>Alt+Shift+Home</td><td>Move caret to before first visible character on line. If already there move to first character on line. In either case, extend rectangular selection to new caret position.</td><td>Выделить фрагмент текста до начала строки</td></tr>
+<tr><td>2453</td><td>VCHomeWrap</td><td>&nbsp;</td><td>These are like their namesakes Home(Extend)?, LineEnd(Extend)?, VCHome(Extend)? except they behave differently when word-wrap is enabled: They go first to the start / end of the display line, like (Home|LineEnd)Display The difference is that, the cursor is already at the point, it goes on to the start or end of the document line, as appropriate for (Home|LineEnd|VCHome)(Extend)?.</td><td>&nbsp;</td></tr>
+<tr><td>2454</td><td>VCHomeWrapExtend</td><td>&nbsp;</td><td>These are like their namesakes Home(Extend)?, LineEnd(Extend)?, VCHome(Extend)? except they behave differently when word-wrap is enabled: They go first to the start / end of the display line, like (Home|LineEnd)Display The difference is that, the cursor is already at the point, it goes on to the start or end of the document line, as appropriate for (Home|LineEnd|VCHome)(Extend)?.</td><td>&nbsp;</td></tr>
+<tr><td>2619</td><td>VerticalCentreCaret</td><td>&nbsp;</td><td>Centre current line in window.</td><td>&nbsp;</td></tr>
+<tr><td>2308</td><td>WordLeft</td><td>Ctrl+Left</td><td>Move caret left one word.</td><td>Предыдущее слово</td></tr>
+<tr><td>2439</td><td>WordLeftEnd</td><td>&nbsp;</td><td>Move caret left one word, position cursor at end of word.</td><td>&nbsp;</td></tr>
+<tr><td>2440</td><td>WordLeftEndExtend</td><td>&nbsp;</td><td>Move caret left one word, position cursor at end of word, extending selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2309</td><td>WordLeftExtend</td><td>Ctrl+Shift+Left</td><td>Move caret left one word extending selection to new caret position.</td><td>Выделить предыдущее слово</td></tr>
+<tr><td>2390</td><td>WordPartLeft</td><td>Ctrl+/</td><td>Move to the previous change in capitalisation.</td><td>Предыдущая часть слова</td></tr>
+<tr><td>2391</td><td>WordPartLeftExtend</td><td>Ctrl+Shift+/</td><td>Move to the previous change in capitalisation extending selection to new caret position.</td><td>Выделить предыдущую часть слова</td></tr>
+<tr><td>2392</td><td>WordPartRight</td><td>Ctrl+\</td><td>Move to the change next in capitalisation.</td><td>Следующая часть слова</td></tr>
+<tr><td>2393</td><td>WordPartRightExtend</td><td>Ctrl+Shift+\</td><td>Move to the next change in capitalisation extending selection to new caret position.</td><td>Выделить следующую часть слова</td></tr>
+<tr><td>2310</td><td>WordRight</td><td>Ctrl+Right</td><td>Move caret right one word.</td><td>Следущее слово</td></tr>
+<tr><td>2441</td><td>WordRightEnd</td><td>&nbsp;</td><td>Move caret right one word, position cursor at end of word.</td><td>&nbsp;</td></tr>
+<tr><td>2442</td><td>WordRightEndExtend</td><td>&nbsp;</td><td>Move caret right one word, position cursor at end of word, extending selection to new caret position.</td><td>&nbsp;</td></tr>
+<tr><td>2311</td><td>WordRightExtend</td><td>Ctrl+Shift+Right</td><td>Move caret right one word extending selection to new caret position.</td><td>Выделить следущее слово</td></tr>
+<tr><td>2373</td><td>Zoom</td><td>Ctrl+KeypadDivide</td><td>Restore text size to normal</td><td>Восстановить размер текста по умолчанию</td></tr>
+<tr><td>2333</td><td>ZoomIn</td><td>Ctrl+KeypadPlus</td><td>Magnify the displayed text by increasing the sizes by 1 point.</td><td>Увеличить размер текста</td></tr>
+<tr><td>2334</td><td>ZoomOut</td><td>Ctrl+KeypadMinus</td><td>Make the displayed text smaller by decreasing the sizes by 1 point.</td><td>Уменьшить размер текста</td></tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<html>
+<head>
+<meta http-equiv=Content-Type content="text-html; charset=utf-8">
+<meta http-equiv=MSThemeCompatible content=yes>
+<meta name=author content=mozers™>
+<meta name=generator content=SciTE-Ru>
+<hta:application
+id=HTA
+applicationName=html_HELP
+icon=winhlp32.exe
+innerBorder=no
+scroll=no
+version=2.0.0
+>
+<script language=JavaScript>
+function ParseCmdLine(cmd){
+	var Arr_cmd = cmd.match(/[^ "]+|"[^"]+"/g);
+	for (i=0; i<Arr_cmd.length; i++) {
+		Arr_cmd[i] = Arr_cmd[i].replace(/"/g,'');
+	}
+	return Arr_cmd;
+}
+
+// Читаем аргументы ком.строки
+var Arr_cmd = ParseCmdLine(HTA.commandLine);
+len_cmd = Arr_cmd.length;
+if (len_cmd < 2) {
+	alert ('Command line:\n html_HELP.hta "c:\\full path\\doc.html" [ "find string"]');
+	window.close(false);
+}
+var help_path = Arr_cmd[1];
+var text_find = '';
+if (len_cmd > 2) {
+	text_find = Arr_cmd[2];
+}
+
+function Shortcuts(event){
+	switch(event.keyCode){
+		case 27: //Esc - выход
+			if (idFindText.value) {
+				idFindText.value = '';
+				ClearFounds();
+			} else {
+				window.close(true);
+			}
+			break;
+		case 40: //следующее вхождение
+			if (!idFindForward.disabled) MarkCurrentFound(1);
+			break;
+		case 38: //предыдущее вхождение
+			if (!idFindBack.disabled) MarkCurrentFound(-1);
+			break;
+		case 107: // серый +
+		case 187: // +
+			Zoom(5);
+			break;
+		case 109: // серый -
+		case 189: // -
+			Zoom(-5);
+			break;
+		case 37: // <- влево
+			if ((event.altKey) && (!idHistoryBack.disabled)) HistorySelect(idHistory.selectedIndex - 1);
+			break;
+		case 39: // -> вправо
+			if ((event.altKey) && (!idHistoryForward.disabled)) HistorySelect(idHistory.selectedIndex + 1);
+			break;
+	}
+}
+
+function CopyURL(event){
+	var element = event.srcElement;
+	var id_name = element.name||element.id;
+	if (!id_name){
+		element = element.parentElement;
+		id_name = element.name||element.id;
+	}
+	if (!id_name){
+		element = element.parentElement;
+		id_name = element.name||element.id;
+	}
+	var url = idHTMLDoc.document.URL.replace(/^.*\\(.*?\\.*?)(#.*?)?$/gi, '$1').replace(/\\/gi,'/');
+	url = 'http://scite-ru.bitbucket.org/pack/' + url;
+	var url_tag = '[url=' + url + ']' + url.replace(/^.*\//, '') + '[/url]';
+	if (id_name){url_tag = '[url=' + url + '#' + id_name + ']' + id_name + '[/url]';}
+	window.clipboardData.setData('Text',url_tag);
+	alert('Copy to clipboard:\n' + url_tag);
+}
+
+document.onkeydown = function(){Shortcuts(event)};
+
+// === Find =======================================
+
+var text_old = '';
+var current_id = 0;
+
+// Прокрутка, если текущее выделение не видно
+function ScrollIntoView(){
+	var elem_cr = idHTMLDoc.idFound[current_id].getBoundingClientRect();
+	var win_heigth = document.getElementById("idHTMLDoc").clientHeight;
+	if (elem_cr.bottom > win_heigth) {
+		idHTMLDoc.idFound[current_id].scrollIntoView(false);
+	} else if (elem_cr.top < 0) {
+		idHTMLDoc.idFound[current_id].scrollIntoView(true);
+	}
+}
+
+// Выделение текущего вхождения
+function MarkCurrentFound(i){
+	if (idHTMLDoc.idFound.length > 1) {
+		idHTMLDoc.idFound[current_id].className = '';
+		current_id += i;
+		idHTMLDoc.idFound[current_id].className = 'CurrentFound';
+		ScrollIntoView();
+		idFindForward.disabled = (current_id == idHTMLDoc.idFound.length-1);
+		idFindBack.disabled = (current_id == 0);
+	}
+}
+
+// Маркировка всех вхождений
+function MarkText(text) {
+	var found = 0;
+	var TextRange = idHTMLDoc.document.body.createTextRange();
+	while ((TextRange.findText(text)) && (found < 99)) {
+		TextRange.pasteHTML('<span id="idFound">' + TextRange.htmlText + '</span>');
+		TextRange.collapse(false);
+		found++;
+	}
+	return found;
+}
+
+// Очистка маркировки всех вхождений
+function ClearFounds() {
+	idFindText.style.backgroundColor = "";
+	idFindForward.disabled = true;
+	idFindBack.disabled = true;
+	text_old = '';
+	current_id = 0;
+	var parent;
+	for (var found; found = idHTMLDoc.document.getElementById('idFound');) {
+		parent = found.parentNode;
+		parent.insertBefore(found.firstChild, found);
+		parent.removeChild(found);
+	}
+}
+
+// Поиск текста
+function Find() {
+	if ((idFindText.value) && (idFindText.value != text_old)) {
+		ClearFounds();
+		var found_count = MarkText(idFindText.value);
+		if (found_count) {
+			idHTMLDoc.document.getElementById('idFound').className = 'CurrentFound';
+			if (found_count > 1) {
+				ScrollIntoView();
+				idFindForward.disabled = false;
+			} else {
+				idHTMLDoc.idFound.scrollIntoView(false);
+			}
+		} else {
+			idFindText.style.backgroundColor = "#FF9999";
+		}
+		text_old = idFindText.value;
+	}
+}
+
+// === Zoom ==========================================
+
+var zoom = 100;
+function Zoom(i){
+	zoom = zoom + i;
+	idHTMLDoc.document.body.style.zoom = zoom + "%";
+	idZoom.value = zoom + "%";
+}
+
+// === History ========================================
+
+function btn_disabled(index){
+	idHistoryBack.disabled = (index === 0);
+	idHistoryForward.disabled = (index == idHistory.options.length-1);
+}
+
+function HistorySelect(index){
+	idHistory.selectedIndex = index;
+	idHTMLDoc.location.href=idHistory.options[index].value;
+	btn_disabled(index);
+}
+
+function history_add() {
+	var index = idHistory.selectedIndex;
+	index++;
+	if (!idHistory.options[index]) idHistory.add(idHTMLDoc.document.createElement("option"));
+	idHistory.options[index].text = idHTMLDoc.event.srcElement.outerText;
+	idHistory.options[index].value = idHTMLDoc.event.srcElement.href;
+	idHistory.selectedIndex = index;
+	while (idHistory.options[index+1]) {
+		idHistory.remove(index+1);
+	}
+	btn_disabled(index);
+}
+
+// ==================================================
+
+function WinLoad() {
+	idHTMLDoc.location.href = help_path;
+}
+
+function FrameLoad() {
+	if (idHTMLDoc.document.title) {
+		document.title = idHTMLDoc.document.title + " - [" + HTA.applicationName.replace(/_/g,' ') + ' ' + HTA.version + ']';
+
+		// History
+		if (idHTMLDoc.document.URL == "file://"+help_path) idHistory.options[0].text = idHTMLDoc.document.title;
+		for (i = 0; i < idHTMLDoc.document.links.length; i++) {
+			idHTMLDoc.document.links[i].attachEvent('onclick', history_add);
+		}
+		idHistory.options[0].value = help_path;
+
+		idHTMLDoc.document.onkeydown = function() {parent.Shortcuts(idHTMLDoc.event)};
+		idHTMLDoc.document.ondblclick = function() {parent.CopyURL(idHTMLDoc.event)};
+
+		with (idHTMLDoc.document.createStyleSheet()){
+			addRule('#idFound','background-color:yellow;');
+			addRule('.CurrentFound','border: 1px solid red;');
+		}
+
+		idFindText.value = text_find;
+		if (text_find) {
+			Find();
+			text_find = '';
+		} else {
+			ClearFounds();
+		}
+		with (idFindText.createTextRange()) {
+			collapse(false);
+			select();
+		}
+	}
+}
+
+</script>
+<style type="text/css">
+	body, table  {font:bold 10px MS Shell Dlg; background-color:threedface; cursor:default; margin:0px;}
+	td           {white-space:nowrap;}
+	input,select {font:normal 10px MS Shell Dlg; height:14pt; width:15pt; text-align:center;}
+	input.btn    {font:normal 10pt Marlett;}
+	input.zoom   {font:bold 8pt Verdana;}
+</style>
+<title>html HELP</title>
+</head>
+<body onLoad="WinLoad();">
+<table width="100%" height="100%" cellpadding="0" cellspacing="0" onselectstart="return false;" oncontextmenu="return false;">
+	<tr>
+		<td style="border-bottom: outset 1px; padding-left:6px;">
+			<span disabled>Zoom:</span>
+			<input class="zoom" type="button" value="-" onclick="Zoom(-5);" title="ZoomIn  [Gray-]" hidefocus>
+			<input id="idZoom" type="text" value="100%" style="width:40px;" disabled>
+			<input class="zoom" type="button" value="+" onclick="Zoom(5);" title="ZoomOut  [Gray+]" hidefocus>
+		</td>
+		<td style="border-bottom: outset 1px;">
+			<span disabled>History:</span>
+			<input id="idHistoryBack" class="btn" type="button" value="3" onclick="HistorySelect(idHistory.selectedIndex - 1);" title="Back  [Alt+Left]" hidefocus disabled>
+			<select id="idHistory" style="width:240px;" onchange="HistorySelect(this.selectedIndex)"><option></option></select>
+			<input id="idHistoryForward" class="btn" type="button" value="4" onclick="HistorySelect(idHistory.selectedIndex + 1);" title="Forward  [Alt+Right]" hidefocus disabled>
+		</td>
+		<td  style="border-bottom: outset 1px; text-align:right; padding-right:4px;">
+			<span disabled>Find:</span>
+			<input id="idFindText" type="text" style="width:120px; text-align:left;" onclick="this.value = ''; ClearFounds();" onkeyup="Find();" title="">
+			<input id="idFindBack" class="btn" type="button" value="5" onclick="MarkCurrentFound(-1);" title="Find Prev  [Up]" hidefocus disabled>
+			<input id="idFindForward" class="btn" type="button" value="6" onclick="MarkCurrentFound(1);" title="Find Next  [Down]" hidefocus disabled>
+		</td>
+	</tr>
+	<tr height="100%">
+		<td colspan=3><IFRAME id="idHTMLDoc" onLoad="FrameLoad();" style="width:100%; height:100%;"></IFRAME></td>
+	</tr>
+</table>
+</body>
+</html>

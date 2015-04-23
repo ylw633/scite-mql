@@ -1,0 +1,208 @@
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <title>SciTE Lua Scripting Extension</title>
+</head>
+
+<body>
+  <table bgcolor="#000000" width="100%" cellspacing="0" cellpadding="0" border="0" class="tmenu">
+    <tr>
+      <td><img src="SciTEIco.png" height="64" width="64" alt="Scintilla icon"></td>
+      <td width="100%"><font size="5">SciTE Lua Scripting Extension</font></td>
+    </tr>
+  </table>
+
+  <table bgcolor="#CCCCCC" width="100%" cellspacing="0" cellpadding="8" border="0" class="tmenu">
+    <tr><td>
+      <a href="SciTEDoc_rus.html">Документация</a>&nbsp;&nbsp;
+      <a href="SciTEFAQ_rus.html">FAQ</a>&nbsp;&nbsp;
+      <a href="SciTERegEx_rus.html">Регулярные выражения</a>&nbsp;&nbsp;
+      <a href="SciTEExtension_rus.html">SciTE Extension</a>&nbsp;&nbsp;
+      LUA&nbsp;&nbsp;
+      <a href="SciTEDirector_rus.html">SciTE Director</a>&nbsp;&nbsp;
+      <a href="CommandValues_rus.html">Команды SciTE и Scintilla</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Pack_rus.html">Сборка Ru-Board</a>&nbsp;&nbsp;
+      <a href="SciTE-Ru_Kernel_rus.html">Ядро SciTE-Ru</a>&nbsp;&nbsp;
+      <a href="../tools/LuaLib/shell_rus.html">Shell</a>&nbsp;&nbsp;
+      <a href="../tools/Helper/SciTE.Helper_rus.html">SciTE Helper</a>&nbsp;&nbsp;
+      <a href="ScintillaHistory_rus.html">История</a>
+    </td></tr>
+  </table>
+
+<h3>Замечания к SciTE Lua Scripting Extension</h3>
+SciTE Lua Scripting Extension в качестве движка сценариев использует <i>точную</i> копию Lua 5.1. На данный момент включены все стандартные библиотеки, однако в будущих версиях список библиотек может быть урезан.
+<p>
+Lua is Copyright (C) 1994-2007 Lua.org, PUC-Rio. Полная лицензия на Lua находиться в <tt>luaCOPYRIGHT</tt> в папке с установленным SciTE. Информация о Lua, включая документацию о самом языке находиться на <a href="http://www.lua.org">www.lua.org</a>.
+</p><p>
+О возможностях Lua, вы можете узнать посетив портал сообщества <a href="http://lua-users.org/">lua-users.org</a>,
+<a href="http://lua-users.org/wiki/UsingLuaWithScite">использование Lua со SciTE</a> и <a href="http://lua-users.org/wiki/SciteScripts">несколько примеров скриптов</a>.
+</p>
+<h4>Свойства SciTE и обработчики событий и команды Lua</h4>
+<p>
+Свойства <b>ext.lua.startup.script</b> и <b>extension.<i>filepattern</i></b> можно использовать для объявления команд и обработчиков событий которые будут вызываться SciTE.  Другие свойства начинающиеся с <b>ext.lua</b> также влияют на поведение Lua. Смотрите <a href="SciTEDoc_rus.html">документацию по SciTE</a> для получения большей информации об этом.
+</p><p>
+Объявляя функции в сценарии загрузки или в сценарии активного расширения, вы можете подогнать SciTE под ваши потребности, добавляя новое поведение и функциональность.
+</p><p>
+Вы можете обрабатывать любые из событий объявленных в
+<a href="SciTEExtension_rus.html">интерфейсе расширений Scite (SciTE Extension Interface)</a>.
+Вы просто объявляете функции с теми же именами как и у событий.
+Сейчас поддерживаются: <tt>OnOpen</tt>, <tt>OnClose</tt>, <tt>OnSwitchFile</tt>, <tt>OnSave</tt>,
+<tt>OnBeforeSave</tt>, <tt>OnChar</tt>, <tt>OnKey</tt>,
+<tt>OnSavePointReached</tt>, <tt>OnSavePointLeft</tt>, <tt>OnDwellStart</tt>,
+<tt>OnDoubleClick</tt>, <tt>OnMarginClick</tt>, и <tt>OnUserListSelection</tt>.
+</p><p>
+Для некоторых из этих событий, SciTE помещает один или более аргументов в функцию обработки событий: в обработчики событий <tt>OnOpen</tt>, <tt>OnClose</tt>, <tt>OnSwitchFile</tt>, <tt>OnSave</tt>, и <tt>OnBeforeSave</tt> будет передано имя файла выбранного буфера как первый аргумент.
+Обработчик <tt>OnChar</tt> должен ожидать односимвольный строковый аргумент. 
+An <tt>OnKey</tt> handler should expect an integer keycode and boolean
+shift, control, and alt arguments. The keycode is currently a platform specific value
+but this may change in future.
+<tt>OnDwellStart</tt> will receive the position of the mouse and the
+word under the mouse as arguments and the word will be empty when the mouse starts moving. 
+Обработчик <tt>OnUserListSelection</tt> принимает два аргумента: номер показывающий на тип списка и строку показывающую выбранное значение. Другие обработчики не принимают аргументов.
+</p><p>
+Обработчики событий возвращают логическое значение, показывающее как SciTE должен продолжать обработку события. Возврат значения "истина" показывает что событие полностью обработано и другие обработчики не будут вызываться. Возврат значения "ложь" позволяет другим расширениям обработать тоже событие. В большинстве случаев (но не во всех) обработчик должен вернуть "ложь". Помните что в Lua <b><tt>"not true" = "false" = "nil"</tt></b>. Не как в C++, Python и многих других языках, где <b><tt>"true" = 0</tt></b>.
+</p><p>
+Есть дополнительный обработчик события <tt>OnClear</tt>, он явно не объявлен в Интрефейсе Расширений, но доступен для Lua. Когда SciTE перечитывает свойства (что случается каждый раз когда вы переключаете буферы или открываете новый файл, а также в некоторых других случаях), Расширение Lua удаляет все глобальные свойства, созданные с тех пор когда последний раз перечитывались свойства и востанавливает все глобальные свойства которые были изменены. Затем, если в сценарии загрузки объявлен обработчик <tt>OnClear</tt>, эта функция будет вызвана, так сценарии могут очистить другие изменения, которые могли быть сделаны за рамками Lua (т.е. динамические свойства измененные через объект <b>props</b>; смотрите далее) и/или подогнать окружение Lua соответствующее локальным свойствам для данного буфера.
+</p><p>
+После этого, SciTE читает свойства и в итоге загружает сценарий расширения , если он объявлен. Однако, во время когда событие <tt>OnClear</tt> срабатывает, сценарий расширения еще не загружен. Так обработчик <tt>OnClear</tt> может быть объявлен в сценарии загрузки, но не в сценарии расширения.
+</p><p>
+В добавок к обработчикам событий вы можете объявить новые команды, которые доступны через меню Tools или клавиатуру. Для указания того что команда, что будет обработана Lua, укажите подсистему 3 для команды.  Затем, объявите глобальную функцию с именем команды.
+</p><p>
+Вы также можете использовать предопределённые функции как <tt>dofile</tt> and <tt>dostring</tt>.
+</p><p>
+Что либо указанное после имени команды помещается в функцию Lua как одиночный строковый аргумент. Пример команды использующий встроенную команду dofile:
+</p>
+<div class="example">
+  command.name.1.*=Run My Script<br />
+  command.subsystem.1.*=3<br />
+  command.1.*=dofile $(SciteDefaultHome)/My Script.lua<br />
+</div>
+<p>
+Примечание: командная строка напрямую <b>не распознается</b> как сценарий Lua.
+</p><p>
+Если нет функции совпадающей с именем команды, ошибка не возникнет. Это потому что Lua предполагает что команда есть значение для какого-то другого расширения, например, такого как <a href="SciTEDirector_rus.html">интерфейс SciTE Director</a>. Однако, если функция команды найдена, но произошел сбой во время выполнения, об ошибке будет сообщено.
+</p>
+<h4>Несколько обработчиков</h4>
+<p>
+<a href="http://lua-users.org/wiki/SciteExtMan">Scite Ext Man</a> может помочь в более сложных приложениях, где вам необходимо иметь много скриптов для обработки событий.
+</p>
+<hr noshade="noshade" width="80%" align="left" />
+<h4>Предопределенные функции и объекты Lua:</h4>
+<p>
+Вместе со сценариями Lua вы можете использовать следующие функции и объекты:
+</p><pre><tt>  trace(s) - записывает s в выходную панель (без префиксов, без перевода строки)
+  dostring(s) - выполняет s как сценарий Lua, как Lua 4&#39;s dostring
+  editor - панель редактора
+  output - выходная панель
+  props - псевдотаблица представляющая свойства SciTE
+  buffer - таблица связанная с с текущим буфером или документом
+  scite - пространство имен для функций которые контролируют SciTE.
+</tt></pre><p>
+Все константы объявленные в Scintilla.iface доступны как глобальные переменные Lua. <span class="S100">Они доступны если их имена записаны заглавными буквами с префиксом SCI_.</span><span class="S2">(прим. переводчика - Что выделено синим цветом здесь и ниже, необходимо проверить на корректность, кем нибудь кто разбирается в этом больше)</span>
+</p><p>
+Все функции и объекты объявленные в стандартных библиотеках Lua также доступны. Однако dostring была отключена в Lua 5, она восстановлена так как она может полезна в командах меню Tools.
+</p><p>
+Функция <tt>_ALERT()</tt> объявлена как синоним встроенной <tt>print()</tt>, которая печатает предупреждающие сообщения (с переводом строки) в окно. Это предоставляет корректный способ для Lua выводить сообщения об ошибках пользователю. Вы свободно можете перекрыть объявление <tt>_ALERT</tt> отличающимся объявлением.
+</p><p>
+Псевдотаблица свойств позволяет вам читать и записывать свойства по имени используя нормальную семантику Lua для доступа к таблицам. т.е. <tt>props["property.name"]</tt>. Как с таблицами Lua, вы можете сбрасывать параметр присваивая nil его ключу.
+</p><p>
+Когда вы присваиваете значение параметру через Lua, это перекрывает все значения указаные в конфигурационных файлах для данного параметра. Параметры в файлах при этом не меняются. Если вы позже присвоите nil этому параметру через Lua, это сбросит параметр во время исполнения сценария, позволяя любому параметру из файла настроек восстановить значение.
+</p><p>
+Панели редактора и вывода поддерживают следующие параметры и методы:
+</p><pre><tt>  textrange(startPos, endPos) - получает текст из указаного диапазона
+
+  findtext(text, [flags], [startPos, [endPos]])
+    - возвращает начало и конец первого совпадения или nil если нет совпадений
+    - флаг может быть 0 (по умолчанию) или комбинация <a href="http://scintilla.sourceforge.net/ScintillaDoc.html#searchFlags">констант SCFIND</a>
+      таких как SCFIND_WHOLEWORD, SCFIND_MATCHCASE и SCFIND_REGEXP
+
+  match(text, [flags], [startPos])
+    - возвращает генератор который позволяет перебрать все совпадения
+      т.е. for m in editor:match(text, flags) do ... end
+    - совпавший объект (т.е. счетчик m в предыдущем примере)
+      поддерживает параметры только для чтения pos, len и text
+      и также поддерживает метод replace(replaceText) для
+      поддержки поиска и замены.
+    - если, пока перебирая совпадения, документ был изменен
+      другим способом, не через метод replace,
+      это может быть причиной того что генератор потеряет
+      позиции найденых совпадений.
+    - также, не пытайтесь сохранить совпавший объект для
+      доступа вне цикла; он не будет пригоден к использованию.
+
+  append(text) - добавляет текст в конец документа
+  insert(pos, text) - вставляет текст в указанную позицию
+  remove(startPos, endPos) - удаляет текст в диапазоне
+</tt></pre><p>
+Большинство функций объявленных в Scintilla.iface также доступны как методы панелей. Функции имеющие параметры простых типов (string, boolean, и numeric) полностью поддерживаются. Например, <tt>editor:InsertText(pos, text)</tt> делает то же самое что и <tt>editor:insert(pos, text)</tt>. <span class="S100">Функция имеющая аргумент возвращающий строку, также включает строку в возвращаемое значение. Для обоих строк в аргументе и во возвращаемом значении, если функция документирована как предполагающая длину в первом параметре, вы не должны помещать длину в Lua. Это будет сделано в контексте.</span>
+</p><p>
+Параметры имеющие тип keymod имеют частичную поддержку. Когда функция iface объявлена как получающая keymod, эквивалент Lua предполагает два числа: первое - код клавиши (например <tt>SCK_LEFT</tt> или <tt>string.byte("'")</tt> и второй - модификатор (например <tt>SCMOD_CTRL</tt>).
+</p><p>
+Функции имеющие более сложные параметры не поддерживаются.
+</p><p>
+<span class="S100">Функции которые объявлены возвращать числовой тип добавляют результат к возвращаемому значению. Если функция также имеет строковый результат, он приходит первым, затем числовое значение.</span>
+</p><p>
+Несколько функций объявлено как 'get' или 'set' в файле iface. Это в основном доступно Lua как свойства, например <tt>editor.TabSize = 8</tt>. Некоторые из getters и setters также имеют параметры. Где возможно, они доступны Lua как индексированные параметры, например <tt>editor.StyleBold[SCE_PROPS_DEFAULT] = true</tt>. <span class="S100">Однако, если функция iface объявлена как get / set но неможет быть преобразована в свойство Lua, она доступна как функция Lua.</span>
+</p><p>Перечень доступных функций Scintilla перечислен в данном <a href="http://scite-interest.googlegroups.com/web/SciTELua.api">API-файле</a>.
+Интерфейс Scintilla API описан в <a href="http://scintilla.sourceforge.net/ScintillaDoc.html">ScintillaDoc</a>
+</p><p>
+Пространство имен <tt>scite</tt> включает следующие функции:
+</p><pre><tt>  scite.Open(filename)
+    - открывает файл в новом буфере
+    - активирует файловый буфер если уже открыт.
+
+  scite.SendEditor(SCI_constant, ...)
+    - посылает сообщение панели редактора
+    - эквивалент соответствующей функции или свойства iface
+
+  scite.SendOutput(SCI_constant, ...)
+    - посылает сообщение панели вывода
+
+  scite.ConstantName(number)
+    - возвращает символьное имя константы Scintilla / SciTE
+</tt></pre><p>
+Функция <tt>Open</tt> требует особого внимания. Когда меняется буфер в SciTE, глобальное пространство имен Lua сбрасывается в начальное состояние и загружаются все сценарии расширений связанные с новым буфером. Так, когда вы вызываете Open, это может изменить окружение в котором выполняется ваш текущий сценарий. Когда возможно вы можете избежать конфликтов просто возвращаясь после вызова scite.Open, но когда нет возможности просто держите в уме, что могут быть посторонние эффекты. Локальные переменные, в отличие от глобальные, будут сохранены после смены буфера пока ваш сценарий возвращается.
+</p><p>
+Функции <tt>SendEditor</tt> и <tt>SendOuput</tt> повторяют функциональность объектов редактора и вывода, предоставляя доступ к ним через интерфейс более привычный для разработчиков Scintilla C++. Это может полезно для создания прототипов кода C++ используя Lua. Внутри, <tt>SendEditor</tt> и <tt>SendOutput</tt> передаются в соответствующие функции или свойства iface, так типы их аргументов и возвращаемых значений индентичны. (Однако правила вызова для свойств естественно отличаются.)
+</p><p>
+Функция <tt>ConstantName</tt> может быть полезна для генерирования отладочных сообщений или для поддержки записи макросов.
+</p><p>
+The <tt>MenuCommand</tt> function enables usage of SciTE's menu commands
+as defined in SciTE.h.
+</p>
+
+<h4>Lua 5.1</h4>
+<pre>
+Despite some of the big changes in Lua 5.1 dealing with changes
+in the language, most of the compatibility options have been
+turned on.
+Compatibilities:
+- table.getn still works, but the '#' operator should be used
+- Lua 5.0's varargs are still available
+- Lua 5.0's math.mod is still available, as well as 5.1's
+math.fmod
+- Lua 5.0's string.gfind is still available, as well as 5.1's
+string.gmatch
+- [C API] Lua 5.0's luaL_openlib behavior is still available
+Changes:
+- table.setn was deprecated
+- loadlib was moved into the package table (package.loadlib)
+- Lua 5.0's long string nesting throws an error
+</pre>
+
+
+<hr noshade="noshade" width="80%" align="left" />
+
+<h4>Отключение Lua</h4>
+<p>
+Сейчас Lua загружается по требованию перед первым использованием. Lua может быть загружен через параметр  ext.lua.startup.script, указанием файла lua в параметре extension.<i>filepattern</i> или через использование механизма расширений для объявления команд в меню Tools (т.е. подсистема 3). Если не использовали эти вещи, движок сценариев Lua не загрузиться и для всех практических целей SciTE будет вынужден вести себя также когда Lua не был добавлен.
+</p><p>
+Не смотря на это, все еще есть возможность собрать SciTE без поддержки Lua. Чтобы сделать это просто объявите переменную <tt>NO_LUA</tt> при сборке, т.е. для MSVC <b><tt>nmake -f scite.mak -DNO_LUA</tt></b> или с инструментарием GNU <b><tt>make NO_LUA=1</tt></b>.
+</p>
+<li>Русский перевод: <b><a href="http://forum.ru-board.com/profile.cgi?action=show&member=s_mart" target=_blank>s_mart</a></b>
+</body>
+</html>

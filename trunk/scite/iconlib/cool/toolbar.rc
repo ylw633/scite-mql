@@ -1,0 +1,102 @@
+#include <winver.h>
+#include "toolbar.h"
+
+ICO_NEW                             ICON DISCARDABLE "ico/new.ico"
+ICO_OPEN                            ICON DISCARDABLE "ico/open.ico"
+ICO_SAVE                            ICON DISCARDABLE "ico/save.ico"
+ICO_PRINT                           ICON DISCARDABLE "ico/print.ico"
+ICO_CUT                             ICON DISCARDABLE "ico/cut.ico"
+ICO_COPY                            ICON DISCARDABLE "ico/copy.ico"
+ICO_PASTE                           ICON DISCARDABLE "ico/paste.ico"
+ICO_CLEAR                           ICON DISCARDABLE "ico/clear.ico"
+ICO_UNDO                            ICON DISCARDABLE "ico/undo.ico"
+ICO_REDO                            ICON DISCARDABLE "ico/redo.ico"
+ICO_FIND                            ICON DISCARDABLE "ico/find.ico"
+ICO_REPLACE                         ICON DISCARDABLE "ico/find_and_replace.ico"
+ICO_CLOSE                           ICON DISCARDABLE "ico/close.ico"
+ICO_MACROPLAY                       ICON DISCARDABLE "ico/macroplay.ico"
+ICO_MACROSTOPRECORD                 ICON DISCARDABLE "ico/macrostoprecord.ico"
+ICO_MACRORECORD                     ICON DISCARDABLE "ico/macrorecord.ico"
+ICO_GO                              ICON DISCARDABLE "ico/go.ico"
+ICO_BUILD                           ICON DISCARDABLE "ico/build.ico"
+ICO_COMPILE                         ICON DISCARDABLE "ico/compile.ico"
+ICO_VIEWEOL                         ICON DISCARDABLE "ico/vieweol.ico"
+ICO_SAVEAS                          ICON DISCARDABLE "ico/saveas.ico"
+ICO_MONOFONT                        ICON DISCARDABLE "ico/monofont.ico"
+ICO_READONLY                        ICON DISCARDABLE "ico/readonly.ico"
+ICO_TOGGLEOUTPUT                    ICON DISCARDABLE "ico/toggleoutput.ico"
+ICO_FULLSCREEN                      ICON DISCARDABLE "ico/fullscreen.ico"
+ICO_HELP                            ICON DISCARDABLE "ico/help.ico"
+ICO_OPENGLOBALPROPERTIES            ICON DISCARDABLE "ico/openglobalproperties.ico"
+ICO_OPENUSERPROPERTIES              ICON DISCARDABLE "ico/openuserproperties.ico"
+ICO_OPENABBREVPROPERTIES            ICON DISCARDABLE "ico/openabbrevproperties.ico"
+ICO_WRAP                            ICON DISCARDABLE "ico/wrap.ico"
+ICO_SAVEALL                         ICON DISCARDABLE "ico/saveall.ico"
+ICO_CLOSEALL                        ICON DISCARDABLE "ico/close_all.ico"
+ICO_PRINTSETUP                      ICON DISCARDABLE "ico/page_setup.ico"
+ICO_SESSION_MANAGER                 ICON DISCARDABLE "ico/session_manager.ico"
+ICO_LOADSESSION                     ICON DISCARDABLE "ico/load_session.ico"
+ICO_SAVESESSION                     ICON DISCARDABLE "ico/save_session.ico"
+ICO_SELECTALL                       ICON DISCARDABLE "ico/select_all.ico"
+ICO_SELECTTOBRACE                   ICON DISCARDABLE "ico/select_to_brace.ico"
+ICO_FINDNEXT                        ICON DISCARDABLE "ico/find_next.ico"
+ICO_FINDNEXTBACK                    ICON DISCARDABLE "ico/find_prev.ico"
+ICO_FINDINFILES                     ICON DISCARDABLE "ico/find_in_files.ico"
+ICO_GOTO                            ICON DISCARDABLE "ico/goto_line.ico"
+ICO_BOOKMARK_NEXT                   ICON DISCARDABLE "ico/bookmark_next.ico"
+ICO_BOOKMARK_PREV                   ICON DISCARDABLE "ico/bookmark_prev.ico"
+ICO_BOOKMARK_TOGGLE                 ICON DISCARDABLE "ico/bookmark_toggle.ico"
+ICO_BOOKMARK_CLEARALL               ICON DISCARDABLE "ico/bookmark_clear.ico"
+ICO_LINENUMBERMARGIN                ICON DISCARDABLE "ico/line_numbers.ico"
+ICO_ONTOP                           ICON DISCARDABLE "ico/always_on_top.ico"
+ICO_LIST_OF_FUNCTIONS_PROCEDURES    ICON DISCARDABLE "ico/functions_list.ico"
+ICO_SPELLING                        ICON DISCARDABLE "ico/spelling.ico"
+ICO_CHOICE_COLOR_FROM_A_PALETTE     ICON DISCARDABLE "ico/color.ico"
+ICO_SIDEBAR                         ICON DISCARDABLE "ico/togge_sidebar.ico"
+ICO_REPLACE_SPACES                  ICON DISCARDABLE "ico/replace_spaces.ico"
+ICO_CHANGE_CODEPAGE_RU              ICON DISCARDABLE "ico/oem.ico"
+ICO_OPENAPIFILE                     ICON DISCARDABLE "ico/open_api.ico"
+ICO_OPEN_FAVORITE_FILES             ICON DISCARDABLE "ico/favorite_files.ico"
+ICO_TRIM_TRAL_SPACES                ICON DISCARDABLE "ico/trim_tral_spaces.ico"
+ICO_FAVORITE_FOLDERS                ICON DISCARDABLE "ico/favorite_folders.ico"
+ICO_VIEWSPACE                       ICON DISCARDABLE "ico/view_space.ico"
+ICO_STOPEXECUTE                     ICON DISCARDABLE "ico/stop_execute.ico"
+ICO_HIGHLIGHTIDENTICAL              ICON DISCARDABLE "ico/highlightidentical.ico"
+ICO_HIGHLIGHT                       ICON DISCARDABLE "ico/highlight.ico"
+ICO_FIND_AND_HIGHLIGHT              ICON DISCARDABLE "ico/find_and_highlight.ico"
+ICO_ASTYLE                          ICON DISCARDABLE "ico/astyle.ico"
+ICO_TIDY                            ICON DISCARDABLE "ico/tidy.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 1,0,5,0
+PRODUCTVERSION 1,0,5,0
+FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+FILEFLAGS 0x1L
+#else
+FILEFLAGS 0x0L
+#endif
+FILEOS 0x40004L
+FILETYPE 0x2L
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041904B0"
+        BEGIN
+            VALUE "Comments", "COOL Toolbar - SciTE Ru-Board toolbar icons Lib\0"
+            VALUE "CompanyName", "SciTE Ru-Board\0"
+            VALUE "FileDescription", "COOL Toolbar - SciTE Ru-Board toolbar icons Lib\0"
+            VALUE "FileVersion", "1.0.5\0"
+            VALUE "InternalName", "COOL Toolbar\0"
+            VALUE "LegalCopyright", "Copyright © ur4ltz\0"
+            VALUE "OriginalFilename", "cool.dll\0"
+            VALUE "ProductName", "COOL Toolbar - SciTE Ru-Board toolbar icons Lib\0"
+            VALUE "ProductVersion", "1.0.5\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0419, 0x04B0
+    END
+END
